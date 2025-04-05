@@ -4,70 +4,166 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.imageio.ImageIO;
+import java.io.IOException;
+import java.net.URL;
 
 public class MainFrame extends JFrame {
     private JPanel mainPanel;
     private CardLayout cardLayout;
+    private JButton currentButton;
     
     public MainFrame() {
         setTitle("Hệ thống quản lý bệnh nhân");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(1200, 800);
         setLocationRelativeTo(null);
+        
+        // Create menu bar
+        JMenuBar menuBar = new JMenuBar();
+        
+        // File menu
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem exitItem = new JMenuItem("Thoát");
+        exitItem.addActionListener(e -> System.exit(0));
+        fileMenu.add(exitItem);
+        
+        // Help menu
+        JMenu helpMenu = new JMenu("Trợ giúp");
+        JMenuItem aboutItem = new JMenuItem("Giới thiệu");
+        aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this, 
+            "Hệ thống quản lý bệnh nhân\nVersion 1.0", 
+            "Giới thiệu", 
+            JOptionPane.INFORMATION_MESSAGE));
+        helpMenu.add(aboutItem);
+        
+        menuBar.add(fileMenu);
+        menuBar.add(helpMenu);
+        setJMenuBar(menuBar);
         
         // Create main panel with CardLayout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         
-        // Create navigation panel
-        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton btnPatient = new JButton("Quản lý bệnh nhân");
-        JButton btnSearch = new JButton("Tìm kiếm");
-        JButton btnFile = new JButton("Quản lý file");
+        // Create navigation panel with better styling
+        JPanel navPanel = new JPanel();
+        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
+        navPanel.setBackground(new Color(240, 240, 240));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        navPanel.setPreferredSize(new Dimension(200, 0));
+        
+        // Create styled buttons with icons
+        JButton btnDashboard = createNavButton("Trang chủ", "dashboard.png");
+        JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
+        JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
+        JButton btnFile = createNavButton("Quản lý file", "file.png");
         
         // Add action listeners
-        btnPatient.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cardLayout.show(mainPanel, "PATIENT");
-            }
+        btnDashboard.addActionListener(e -> {
+            cardLayout.show(mainPanel, "DASHBOARD");
+            updateButtonSelection(btnDashboard);
+        });
+        btnPatient.addActionListener(e -> {
+            cardLayout.show(mainPanel, "PATIENT");
+            updateButtonSelection(btnPatient);
+        });
+        btnSearch.addActionListener(e -> {
+            cardLayout.show(mainPanel, "SEARCH");
+            updateButtonSelection(btnSearch);
+        });
+        btnFile.addActionListener(e -> {
+            cardLayout.show(mainPanel, "FILE");
+            updateButtonSelection(btnFile);
         });
         
-        btnSearch.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cardLayout.show(mainPanel, "SEARCH");
-            }
-        });
-        
-        btnFile.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cardLayout.show(mainPanel, "FILE");
-            }
-        });
-        
+        // Add buttons to nav panel
+        navPanel.add(Box.createVerticalStrut(20));
+        navPanel.add(btnDashboard);
+        navPanel.add(Box.createVerticalStrut(10));
         navPanel.add(btnPatient);
+        navPanel.add(Box.createVerticalStrut(10));
         navPanel.add(btnSearch);
+        navPanel.add(Box.createVerticalStrut(10));
         navPanel.add(btnFile);
+        navPanel.add(Box.createVerticalGlue());
         
         // Add panels to main panel
+        mainPanel.add(new DashboardPanel(), "DASHBOARD");
         mainPanel.add(new PatientManagementPanel(), "PATIENT");
         mainPanel.add(new SearchPanel(), "SEARCH");
         mainPanel.add(new FileManagementPanel(), "FILE");
         
+        // Create main content panel
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.add(mainPanel, BorderLayout.CENTER);
+        
         // Add components to frame
         getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(navPanel, BorderLayout.NORTH);
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(navPanel, BorderLayout.WEST);
+        getContentPane().add(contentPanel, BorderLayout.CENTER);
+        
+        // Set initial selection
+        updateButtonSelection(btnDashboard);
+    }
+    
+    private JButton createNavButton(String text, String iconName) {
+        JButton button = new JButton(text);
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        button.setMaximumSize(new Dimension(180, 50));
+        button.setPreferredSize(new Dimension(180, 50));
+        button.setBackground(new Color(240, 240, 240));
+        button.setForeground(Color.BLACK);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        button.setHorizontalAlignment(SwingConstants.LEFT);
+        button.setIconTextGap(15);
+        
+        // Try to load icon
+        try {
+            URL iconUrl = getClass().getResource("/com/utc2/gui/icons/" + iconName);
+            if (iconUrl != null) {
+                ImageIcon icon = new ImageIcon(iconUrl);
+                button.setIcon(icon);
+            }
+        } catch (Exception e) {
+            System.out.println("Could not load icon: " + iconName);
+        }
+        
+        // Add hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (button != currentButton) {
+                    button.setBackground(new Color(220, 220, 220));
+                }
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (button != currentButton) {
+                    button.setBackground(new Color(240, 240, 240));
+                }
+            }
+        });
+        
+        return button;
+    }
+    
+    private void updateButtonSelection(JButton selectedButton) {
+        if (currentButton != null) {
+            currentButton.setBackground(new Color(240, 240, 240));
+            currentButton.setForeground(Color.BLACK);
+        }
+        selectedButton.setBackground(new Color(0, 120, 215));
+        selectedButton.setForeground(Color.WHITE);
+        currentButton = selectedButton;
     }
     
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new MainFrame().setVisible(true);
-            }
-        });
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
     }
 } 

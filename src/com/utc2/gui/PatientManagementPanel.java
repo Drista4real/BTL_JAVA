@@ -2,12 +2,11 @@ package com.utc2.gui;
 
 import com.utc2.backend.Demo1;
 import com.utc2.entity.BENHNHAN;
-import com.utc2.entity.BENHNHANBAOHIEMXAHOI;
-import com.utc2.entity.BENHNHANBAOHIEMYTE;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.io.IOException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -22,60 +21,50 @@ public class PatientManagementPanel extends JPanel {
     public PatientManagementPanel() {
         danhsach = new Demo1();
         initComponents();
-        loadDataTable();
     }
     
     private void initComponents() {
         setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
         
-        // Create table
+        // Create header panel
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        headerPanel.setBackground(new Color(240, 240, 240));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JLabel titleLabel = new JLabel("Quản lý bệnh nhân");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        headerPanel.add(titleLabel);
+        
+        // Create main content panel
+        JPanel contentPanel = new JPanel(new BorderLayout(20, 20));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // Create table panel
+        JPanel tablePanel = new JPanel(new BorderLayout());
         String[] columns = {"Mã bệnh nhân", "Họ tên", "Ngày nhập viện", "Phòng theo yêu cầu", "Loại bảo hiểm"};
         tableModel = new DefaultTableModel(columns, 0);
         patientTable = new JTable(tableModel);
+        patientTable.setRowHeight(30);
+        patientTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         JScrollPane scrollPane = new JScrollPane(patientTable);
+        tablePanel.add(scrollPane, BorderLayout.CENTER);
         
         // Create form panel
         JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin bệnh nhân"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
         // Add form components
-        gbc.gridx = 0; gbc.gridy = 0;
-        formPanel.add(new JLabel("Mã bệnh nhân:"), gbc);
-        gbc.gridx = 1;
-        txtMABN = new JTextField(20);
-        formPanel.add(txtMABN, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 1;
-        formPanel.add(new JLabel("Họ tên:"), gbc);
-        gbc.gridx = 1;
-        txtHoten = new JTextField(20);
-        formPanel.add(txtHoten, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 2;
-        formPanel.add(new JLabel("Ngày nhập viện:"), gbc);
-        gbc.gridx = 1;
-        txtNgaynhapvien = new JTextField(20);
-        formPanel.add(txtNgaynhapvien, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 3;
-        formPanel.add(new JLabel("Loại bảo hiểm:"), gbc);
-        gbc.gridx = 1;
-        cobLoaiBH = new JComboBox<>(new String[]{"y", "x"});
-        formPanel.add(cobLoaiBH, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 4;
-        formPanel.add(new JLabel("Mã BHYT:"), gbc);
-        gbc.gridx = 1;
-        txtMaBHYT = new JTextField(20);
-        formPanel.add(txtMaBHYT, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 5;
-        formPanel.add(new JLabel("Mã BHXH:"), gbc);
-        gbc.gridx = 1;
-        txtMaBHXH = new JTextField(20);
-        formPanel.add(txtMaBHXH, gbc);
+        addFormField(formPanel, gbc, "Mã bệnh nhân:", txtMABN = new JTextField(20), 0);
+        addFormField(formPanel, gbc, "Họ tên:", txtHoten = new JTextField(20), 1);
+        addFormField(formPanel, gbc, "Ngày nhập viện:", txtNgaynhapvien = new JTextField(20), 2);
+        addFormField(formPanel, gbc, "Loại bảo hiểm:", cobLoaiBH = new JComboBox<>(new String[]{"y", "x"}), 3);
+        addFormField(formPanel, gbc, "Mã BHYT:", txtMaBHYT = new JTextField(20), 4);
+        addFormField(formPanel, gbc, "Mã BHXH:", txtMaBHXH = new JTextField(20), 5);
         
         gbc.gridx = 0; gbc.gridy = 6;
         formPanel.add(new JLabel("Phòng theo yêu cầu:"), gbc);
@@ -84,81 +73,71 @@ public class PatientManagementPanel extends JPanel {
         formPanel.add(ckbPhongTYC, gbc);
         
         // Create button panel
-        JPanel buttonPanel = new JPanel();
-        JButton btnThem = new JButton("Thêm");
-        JButton btnXoa = new JButton("Xóa");
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        buttonPanel.setBackground(Color.WHITE);
+        
+        JButton btnThem = createStyledButton("Thêm");
+        JButton btnXoa = createStyledButton("Xóa");
+        JButton btnSua = createStyledButton("Sửa");
+        JButton btnClear = createStyledButton("Xóa form");
         
         btnThem.addActionListener(e -> themBenhNhan());
         btnXoa.addActionListener(e -> xoaBenhNhan());
+        btnSua.addActionListener(e -> suaBenhNhan());
+        btnClear.addActionListener(e -> clearForm());
         
         buttonPanel.add(btnThem);
         buttonPanel.add(btnXoa);
+        buttonPanel.add(btnSua);
+        buttonPanel.add(btnClear);
+        
+        // Add components to content panel
+        contentPanel.add(tablePanel, BorderLayout.CENTER);
+        contentPanel.add(formPanel, BorderLayout.EAST);
+        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
         
         // Add components to main panel
-        add(scrollPane, BorderLayout.CENTER);
-        add(formPanel, BorderLayout.WEST);
-        add(buttonPanel, BorderLayout.SOUTH);
+        add(headerPanel, BorderLayout.NORTH);
+        add(contentPanel, BorderLayout.CENTER);
     }
     
-    private void loadDataTable() {
-        tableModel.setRowCount(0);
-        for (BENHNHAN bn : danhsach.getDanhsach().values()) {
-            SimpleDateFormat fmd = new SimpleDateFormat("dd/MM/yyyy");
-            Object[] row = {
-                bn.getMABN(),
-                bn.getHoten(),
-                fmd.format(bn.getNgaynhapvien()),
-                bn.getPhongTYC(),
-                bn.getLoaiBH()
-            };
-            tableModel.addRow(row);
-        }
+    private void addFormField(JPanel panel, GridBagConstraints gbc, String label, JComponent component, int row) {
+        gbc.gridx = 0; gbc.gridy = row;
+        panel.add(new JLabel(label), gbc);
+        gbc.gridx = 1;
+        panel.add(component, gbc);
+    }
+    
+    private JButton createStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setPreferredSize(new Dimension(100, 35));
+        button.setBackground(new Color(0, 120, 215));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        return button;
     }
     
     private void themBenhNhan() {
-        try {
-            SimpleDateFormat fmd = new SimpleDateFormat("dd/MM/yyyy");
-            Date NgayNV = fmd.parse(txtNgaynhapvien.getText());
-            
-            BENHNHAN benhnhan;
-            if (cobLoaiBH.getSelectedItem().equals("y")) {
-                benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(), txtHoten.getText(), 
-                    NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
-            } else {
-                benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(), txtHoten.getText(), 
-                    NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
-            }
-            
-            danhsach.NhapGUI(benhnhan);
-            danhsach.GhiFile();
-            loadDataTable();
-            JOptionPane.showMessageDialog(this, "Thêm mới bệnh nhân thành công");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Thêm mới bệnh nhân thất bại: " + e.getMessage());
-        }
+        // TODO: Implement add patient
     }
     
     private void xoaBenhNhan() {
-        int row = patientTable.getSelectedRow();
-        if (row >= 0) {
-            String maBN = (String) tableModel.getValueAt(row, 0);
-            int result = JOptionPane.showConfirmDialog(this, 
-                "Bạn có chắc chắn muốn xóa bệnh nhân này?", 
-                "Xác nhận xóa", 
-                JOptionPane.YES_NO_OPTION);
-            
-            if (result == JOptionPane.YES_OPTION) {
-                danhsach.Xoa(maBN);
-                try {
-                    danhsach.GhiFile();
-                    loadDataTable();
-                    JOptionPane.showMessageDialog(this, "Xóa bệnh nhân thành công");
-                } catch (IOException e) {
-                    JOptionPane.showMessageDialog(this, "Lỗi khi ghi file: " + e.getMessage());
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn bệnh nhân cần xóa");
-        }
+        // TODO: Implement delete patient
+    }
+    
+    private void suaBenhNhan() {
+        // TODO: Implement edit patient
+    }
+    
+    private void clearForm() {
+        txtMABN.setText("");
+        txtHoten.setText("");
+        txtNgaynhapvien.setText("");
+        cobLoaiBH.setSelectedIndex(0);
+        txtMaBHYT.setText("");
+        txtMaBHXH.setText("");
+        ckbPhongTYC.setSelected(false);
     }
 } 
