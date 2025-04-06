@@ -12,7 +12,7 @@ public class SearchPanel extends JPanel {
     private JTable searchTable;
     
     public SearchPanel() {
-        danhsach = new Demo1();
+        danhsach = new Demo1(this);
         initComponents();
     }
     

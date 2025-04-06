@@ -1,6 +1,7 @@
 package com.utc2.gui;
 
 import com.utc2.backend.Demo1;
+import com.utc2.entity.BENHNHAN;
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
@@ -11,7 +12,7 @@ public class DashboardPanel extends JPanel {
     private Map<String, JLabel> statLabels;
     
     public DashboardPanel() {
-        danhsach = new Demo1();
+        danhsach = new Demo1(this);
         statLabels = new HashMap<>();
         initComponents();
     }
@@ -70,10 +71,29 @@ public class DashboardPanel extends JPanel {
     }
     
     private void updateStats() {
-        // TODO: Cập nhật thống kê từ danhsach
-        statLabels.get("Tổng số bệnh nhân").setText("0");
-        statLabels.get("Bệnh nhân BHYT").setText("0");
-        statLabels.get("Bệnh nhân BHXH").setText("0");
-        statLabels.get("Phòng theo yêu cầu").setText("0");
+        int totalPatients = danhsach.getDanhsach().size();
+        int bhytCount = 0;
+        int bhxhCount = 0;
+        int phongYCCount = 0;
+
+        for (BENHNHAN bn : danhsach.getDanhsach().values()) {
+            if (bn.getLoaiBH() == 'y') {
+                bhytCount++;
+            } else {
+                bhxhCount++;
+            }
+            if (bn.getPhongTYC()) {
+                phongYCCount++;
+            }
+        }
+
+        statLabels.get("Tổng số bệnh nhân").setText(String.valueOf(totalPatients));
+        statLabels.get("Bệnh nhân BHYT").setText(String.valueOf(bhytCount));
+        statLabels.get("Bệnh nhân BHXH").setText(String.valueOf(bhxhCount));
+        statLabels.get("Phòng theo yêu cầu").setText(String.valueOf(phongYCCount));
+    }
+
+    public void refreshStats() {
+        updateStats();
     }
 } 

@@ -12,6 +12,8 @@ public class MainFrame extends JFrame {
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JButton currentButton;
+    private static MainFrame instance;
+    private DashboardPanel dashboardPanel;
     
     public MainFrame() {
         setTitle("Hệ thống quản lý bệnh nhân");
@@ -104,6 +106,8 @@ public class MainFrame extends JFrame {
         
         // Thiết lập nút được chọn ban đầu
         updateButtonSelection(btnDashboard);
+        instance = this;
+        dashboardPanel = new DashboardPanel();
     }
     
     private JButton createNavButton(String text, String iconName) {
@@ -155,6 +159,14 @@ public class MainFrame extends JFrame {
         selectedButton.setBackground(new Color(0, 120, 215));
         selectedButton.setForeground(Color.WHITE);
         currentButton = selectedButton;
+    }
+    
+    public static MainFrame getInstance() {
+        return instance;
+    }
+
+    public DashboardPanel getDashboardPanel() {
+        return dashboardPanel;
     }
     
     public static void main(String[] args) {

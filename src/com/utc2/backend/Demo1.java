@@ -60,9 +60,11 @@ public class Demo1 {
             Danhsach.clear();
             File file = new File("data/DSBENHNHAN.txt");
             if (!file.exists()) {
+                System.out.println("File không tồn tại: " + file.getAbsolutePath());
                 return;
             }
             
+            System.out.println("Đang đọc file: " + file.getAbsolutePath());
             Scanner scr = new Scanner(new FileReader(file));
             String mabn = null, hoten = null, mabh = null;
             Date nnv = null;
@@ -72,6 +74,7 @@ public class Demo1 {
             
             while (scr.hasNextLine()) {
                 String thongtin = scr.nextLine();
+                System.out.println("Đọc dòng: " + thongtin);
                 
                 if(thongtin.equals("@") && flag==true) {
                     BENHNHAN benhnhan = null;
@@ -80,6 +83,7 @@ public class Demo1 {
                     else
                         benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn, hoten, nnv, mabh, phongtyc);
                     Danhsach.put(benhnhan.getMABN(), benhnhan);
+                    System.out.println("Đã thêm bệnh nhân: " + benhnhan.getMABN());
                     flag=false;
                 }
                 
@@ -88,50 +92,43 @@ public class Demo1 {
                 }
                 else {
                     int vitri = thongtin.indexOf(":");
+                    if (vitri == -1) continue;
+                    
                     String thuoctinh = thongtin.substring(0, vitri);
                     String value = thongtin.substring(vitri + 2, thongtin.length());      
 
                     switch(thuoctinh) {
                         case "Mabenhnhan":
-                        {
                             mabn = value;
                             break;
-                        }
                         case "Hoten":
-                        {
                             hoten = value;
                             break;
-                        }
                         case "Ngaynhapvien":
-                        {
-                            SimpleDateFormat d=new SimpleDateFormat("dd/MM/yyyy");
+                            SimpleDateFormat d = new SimpleDateFormat("dd/MM/yyyy");
                             nnv = d.parse(value);  
                             break;
-                        }
                         case "Phongtheoyeucau":
-                        {
                             phongtyc = Boolean.parseBoolean(value);
                             break;
-                        }
                         case "Loaibaohiem":
-                        {
                             lbn = value.charAt(0);
                             break;
-                        }
                         case "Mabaohiem":
-                        {
                             mabh = value;
                             break;
-                        }
                     }  
                 }
             }
-            BENHNHAN benhnhan=null;
-            if(lbn == 'y')
-                benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn, hoten, nnv, mabh, phongtyc);
-            else
-                benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn, hoten, nnv, mabh, phongtyc);
-            Danhsach.put(benhnhan.getMABN(), benhnhan);
+            
+            if (flag) {
+                BENHNHAN benhnhan = null;
+                if(lbn == 'y')
+                    benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn, hoten, nnv, mabh, phongtyc);
+                else
+                    benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn, hoten, nnv, mabh, phongtyc);
+                Danhsach.put(benhnhan.getMABN(), benhnhan);
+            }
             
             scr.close();                           
         } catch (Exception e) {
@@ -148,8 +145,13 @@ public class Demo1 {
     }
     
     public BENHNHAN Tim(String mabn) {
+        if (mabn == null || mabn.trim().isEmpty()) {
+            return null;
+        }
+        
+        mabn = mabn.trim();
         for (BENHNHAN bn : this.Danhsach.values()) {
-            if (bn.getMABN().equalsIgnoreCase(mabn.trim())) {
+            if (bn.getMABN().equals(mabn)) {
                 return bn;
             }
         }

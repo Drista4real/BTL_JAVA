@@ -10,7 +10,7 @@ public class FileManagementPanel extends JPanel {
     private Demo1 danhsach;
     
     public FileManagementPanel() {
-        danhsach = new Demo1();
+        danhsach = new Demo1(this);
         initComponents();
     }
     
@@ -33,7 +33,7 @@ public class FileManagementPanel extends JPanel {
         });
         
         btnDocFile.addActionListener(e -> {
-            File file = new File("D:/JAVAOOP/Doancanhan/QLbenhnhangui/DSBENHNHAN.txt");
+            File file = new File("data/DSBENHNHAN.txt");
             if (file.exists()) {
                 danhsach.DocFile();
                 JOptionPane.showMessageDialog(this, "Đọc file thành công");

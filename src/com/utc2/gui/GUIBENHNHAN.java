@@ -19,13 +19,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.JPanel;
+import java.text.ParseException;
 
 /**
  *
  * @author son
  */
 public class GUIBENHNHAN extends javax.swing.JFrame {
-    Demo1 danhsach = new Demo1();
+    private JPanel mainPanel = new JPanel();
+    Demo1 danhsach = new Demo1(mainPanel);
     String col[] = {"Mã bệnh nhân", "Họ tên", "Ngày nhập viện", " Phòng theo yêu cầu", "Loại bảo hiểm"};
     DefaultTableModel tableModel;
     DefaultTableModel model;
@@ -39,7 +42,13 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
         this.cobLoaiBH.addItem("y");
         this.cobLoaiBH.addItem("x");
 
-        danhsach = new Demo1();
+        danhsach = new Demo1(mainPanel);
+        try {
+            danhsach.DocFile();
+            LoadDataTable();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi đọc file: " + e.getMessage());
+        }
         setSize(600, 600);
     }
     
@@ -252,7 +261,10 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             } else {
                 benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(), txtHoten.getText(), NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
             }
+        } catch (ParseException e) {
+            JOptionPane.showMessageDialog(this, "Ngày nhập viện không đúng định dạng (dd/MM/yyyy)");
         } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi thêm bệnh nhân: " + e.getMessage());
         }
         return benhnhan;
     }
@@ -262,6 +274,8 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             this.danhsach.NhapGUI(benhnhan);
             try {
                 this.danhsach.GhiFile();
+                // Cập nhật thống kê
+                MainFrame.getInstance().getDashboardPanel().refreshStats();
             } catch (IOException ex) {
                 Logger.getLogger(GUIBENHNHAN.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -275,6 +289,13 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
         int result = JOptionPane.showConfirmDialog(this, "Bạn có xóa thông tin này không!", "Thông báo", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (result == JOptionPane.YES_OPTION) {
             this.danhsach.Xoa(txtMABN.getText());
+            try {
+                this.danhsach.GhiFile();
+                // Cập nhật thống kê
+                MainFrame.getInstance().getDashboardPanel().refreshStats();
+            } catch (IOException ex) {
+                Logger.getLogger(GUIBENHNHAN.class.getName()).log(Level.SEVERE, null, ex);
+            }
             JOptionPane.showMessageDialog(this, "Thông tin bệnh nhân đã xóa thành công");
         } else {
             JOptionPane.showMessageDialog(this, "Thông tin bệnh nhân không được xóa");
@@ -305,20 +326,46 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
     }
 
     private void btnTimActionPerformed(java.awt.event.ActionEvent evt) {                                       
-        String maBN = JOptionPane.showInputDialog(null, "Nhập Mã NV Cần Tìm: ");
+        String maBN = JOptionPane.showInputDialog(this, "Nhập mã bệnh nhân cần tìm:");
+        if (maBN == null || maBN.trim().isEmpty()) {
+            return;
+        }
+        
         BENHNHAN bn = danhsach.Tim(maBN);
+        if (bn == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy bệnh nhân có mã: " + maBN);
+            return;
+        }
 
+        // Tạo model mới cho bảng
         DefaultTableModel model = new DefaultTableModel();
-        model.addColumn("Mã BN");
-        model.addColumn("Họ Tên");
+        model.addColumn("Mã bệnh nhân");
+        model.addColumn("Họ tên");
         model.addColumn("Ngày nhập viện");
-        model.addColumn("Phòng YC");
-        model.addColumn("Loại BH");
-        model.addColumn("Tính Tiền");
+        model.addColumn("Phòng theo yêu cầu");
+        model.addColumn("Loại bảo hiểm");
+        model.addColumn("Mã bảo hiểm");
 
-        model.addRow(bn.toArray());
+        // Thêm dữ liệu vào bảng
+        SimpleDateFormat fmd = new SimpleDateFormat("dd/MM/yyyy");
+        String maBH = "";
+        if (bn instanceof BENHNHANBAOHIEMYTE) {
+            maBH = ((BENHNHANBAOHIEMYTE) bn).getMSBH();
+        } else {
+            maBH = ((BENHNHANBAOHIEMXAHOI) bn).getMBHXH();
+        }
+
+        model.addRow(new Object[]{
+            bn.getMABN(),
+            bn.getHoten(),
+            fmd.format(bn.getNgaynhapvien()),
+            bn.getPhongTYC() ? "Có" : "Không",
+            bn.getLoaiBH() == 'y' ? "BHYT" : "BHXH",
+            maBH
+        });
+
         tab_DSBENHNHAN.setModel(model);
-
+        setvalue(bn);
     }                                      
 
     private void tab_DSBENHNHANMouseClicked(java.awt.event.MouseEvent evt) {                                            
