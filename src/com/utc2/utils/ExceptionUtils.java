@@ -6,9 +6,12 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 public class ExceptionUtils {
     private static final Logger LOGGER = Logger.getLogger(ExceptionUtils.class.getName());
+    private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+    private static final String PHONE_PATTERN = "^(0|\\+84)[0-9]{9}$";
     
     public static void handleFileException(JPanel panel, IOException e) {
         String message = "Lỗi khi thao tác với file: " + e.getMessage();
@@ -31,5 +34,21 @@ public class ExceptionUtils {
     public static void handleValidationException(JPanel panel, String message) {
         LOGGER.log(Level.WARNING, message);
         JOptionPane.showMessageDialog(panel, message, "Lỗi Xác thực", JOptionPane.WARNING_MESSAGE);
+    }
+
+    public static boolean validateEmail(JPanel panel, String email) {
+        if (!Pattern.matches(EMAIL_PATTERN, email)) {
+            handleValidationException(panel, "Email không hợp lệ! Vui lòng nhập đúng định dạng (vd: example@email.com)");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean validatePhone(JPanel panel, String phone) {
+        if (!Pattern.matches(PHONE_PATTERN, phone)) {
+            handleValidationException(panel, "Số điện thoại không hợp lệ! Vui lòng nhập đúng định dạng (vd: 0123456789 hoặc +84123456789)");
+            return false;
+        }
+        return true;
     }
 } 

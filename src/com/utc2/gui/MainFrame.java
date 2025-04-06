@@ -12,6 +12,7 @@ import java.awt.Graphics2D;
 import java.awt.FontMetrics;
 import java.awt.geom.Ellipse2D;
 import java.awt.RenderingHints;
+import com.utc2.entity.User;
 
 public class MainFrame extends JFrame {
     private JPanel mainPanel;
@@ -19,6 +20,10 @@ public class MainFrame extends JFrame {
     private JButton currentButton;
     private static MainFrame instance;
     private DashboardPanel dashboardPanel;
+    private User currentUser;
+    private JLabel userNameLabel;
+    private JLabel avatarLabel;
+    private JButton logoutButton;
     
     public MainFrame() {
         setTitle("Hệ thống quản lý bệnh nhân");
@@ -52,6 +57,9 @@ public class MainFrame extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         
+        // Thêm login panel
+        mainPanel.add(new LoginPanel(this), "LOGIN");
+        
         // Tạo panel điều hướng với kiểu dáng tốt hơn
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
@@ -66,7 +74,7 @@ public class MainFrame extends JFrame {
         avatarPanel.setMaximumSize(new Dimension(200, 200));
         avatarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        JLabel avatarLabel = new JLabel();
+        avatarLabel = new JLabel();
         try {
             ImageIcon originalIcon = new ImageIcon("src/com/utc2/images/z6478241104532_86b43c55064d8b1bb9341aef36c66830.jpg");
             Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
@@ -111,13 +119,20 @@ public class MainFrame extends JFrame {
         avatarPanel.add(avatarLabel, BorderLayout.CENTER);
         
         // Thêm tên người dùng
-        JLabel userNameLabel = new JLabel("Admin", SwingConstants.CENTER);
+        JPanel userPanel = new JPanel();
+        userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS));
+        userPanel.setBackground(new Color(240, 240, 240));
+        userPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        userNameLabel = new JLabel("", SwingConstants.CENTER);
         userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        userNameLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        userNameLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
+        
+        userPanel.add(userNameLabel);
         
         navPanel.add(avatarPanel);
-        navPanel.add(userNameLabel);
+        navPanel.add(userPanel);
         navPanel.add(Box.createVerticalStrut(20));
         
         // Tạo các nút với icon
@@ -125,6 +140,7 @@ public class MainFrame extends JFrame {
         JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
         JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
         JButton btnFile = createNavButton("Quản lý file", "file.png");
+        JButton btnLogout = createNavButton("Đăng xuất", "logout.png");
         
         // Thêm các sự kiện
         btnDashboard.addActionListener(e -> {
@@ -143,6 +159,7 @@ public class MainFrame extends JFrame {
             cardLayout.show(mainPanel, "FILE");
             updateButtonSelection(btnFile);
         });
+        btnLogout.addActionListener(e -> logout());
         
         // Thêm các nút vào panel điều hướng
         navPanel.add(btnDashboard);
@@ -152,6 +169,8 @@ public class MainFrame extends JFrame {
         navPanel.add(btnSearch);
         navPanel.add(Box.createVerticalStrut(10));
         navPanel.add(btnFile);
+        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(btnLogout);
         
         // Thêm các panel vào panel chính
         mainPanel.add(new DashboardPanel(), "DASHBOARD");
@@ -168,8 +187,8 @@ public class MainFrame extends JFrame {
         getContentPane().add(navPanel, BorderLayout.WEST);
         getContentPane().add(contentPanel, BorderLayout.CENTER);
         
-        // Thiết lập nút được chọn ban đầu
-        updateButtonSelection(btnDashboard);
+        // Hiển thị màn hình đăng nhập ban đầu
+        showLoginScreen();
         instance = this;
         dashboardPanel = new DashboardPanel();
     }
@@ -231,6 +250,157 @@ public class MainFrame extends JFrame {
 
     public DashboardPanel getDashboardPanel() {
         return dashboardPanel;
+    }
+    
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+        if (user != null) {
+            userNameLabel.setText(user.getFullName());
+            // Cập nhật chữ cái đầu cho avatar mặc định
+            if (avatarLabel != null && avatarLabel.getIcon() == null) {
+                String firstLetter = String.valueOf(user.getFullName().charAt(0)).toUpperCase();
+                BufferedImage image = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g2d = image.createGraphics();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Vẽ nền tròn
+                g2d.setColor(new Color(200, 200, 200));
+                g2d.fillOval(0, 0, 150, 150);
+                
+                // Vẽ chữ cái
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (150 - fm.stringWidth(firstLetter)) / 2;
+                int y = ((150 - fm.getHeight()) / 2) + fm.getAscent();
+                g2d.drawString(firstLetter, x, y);
+                
+                g2d.dispose();
+                avatarLabel.setIcon(new ImageIcon(image));
+            }
+        }
+    }
+
+    public void showLoginScreen() {
+        getContentPane().removeAll();
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        revalidate();
+        repaint();
+        cardLayout.show(mainPanel, "LOGIN");
+    }
+
+    public void showMainContent() {
+        getContentPane().removeAll();
+        
+        // Thêm thanh nav và nội dung chính
+        JPanel navPanel = createNavPanel();
+        getContentPane().add(navPanel, BorderLayout.WEST);
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        
+        revalidate();
+        repaint();
+        cardLayout.show(mainPanel, "DASHBOARD");
+    }
+
+    private JPanel createNavPanel() {
+        JPanel navPanel = new JPanel();
+        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
+        navPanel.setBackground(new Color(240, 240, 240));
+        navPanel.setPreferredSize(new Dimension(250, getHeight()));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Thêm avatar
+        JPanel avatarPanel = new JPanel();
+        avatarPanel.setLayout(new BorderLayout());
+        avatarPanel.setBackground(new Color(240, 240, 240));
+        avatarPanel.setMaximumSize(new Dimension(200, 200));
+        avatarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        avatarLabel = new JLabel();
+        if (currentUser != null) {
+            String firstLetter = String.valueOf(currentUser.getFullName().charAt(0)).toUpperCase();
+            BufferedImage image = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = image.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Vẽ nền tròn
+            g2d.setColor(new Color(200, 200, 200));
+            g2d.fillOval(0, 0, 150, 150);
+            
+            // Vẽ chữ cái
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
+            FontMetrics fm = g2d.getFontMetrics();
+            int x = (150 - fm.stringWidth(firstLetter)) / 2;
+            int y = ((150 - fm.getHeight()) / 2) + fm.getAscent();
+            g2d.drawString(firstLetter, x, y);
+            
+            g2d.dispose();
+            avatarLabel.setIcon(new ImageIcon(image));
+        }
+        avatarLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarPanel.add(avatarLabel, BorderLayout.CENTER);
+
+        // Thêm tên người dùng
+        JPanel userPanel = new JPanel();
+        userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS));
+        userPanel.setBackground(new Color(240, 240, 240));
+        userPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        userNameLabel = new JLabel(currentUser != null ? currentUser.getFullName() : "", SwingConstants.CENTER);
+        userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        userNameLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
+
+        userPanel.add(userNameLabel);
+
+        navPanel.add(avatarPanel);
+        navPanel.add(userPanel);
+        navPanel.add(Box.createVerticalStrut(20));
+
+        // Tạo các nút điều hướng
+        JButton btnDashboard = createNavButton("Trang chủ", "home.png");
+        JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
+        JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
+        JButton btnFile = createNavButton("Quản lý file", "file.png");
+        JButton btnLogout = createNavButton("Đăng xuất", "logout.png");
+
+        // Thêm sự kiện cho các nút
+        btnDashboard.addActionListener(e -> {
+            cardLayout.show(mainPanel, "DASHBOARD");
+            updateButtonSelection(btnDashboard);
+        });
+        btnPatient.addActionListener(e -> {
+            cardLayout.show(mainPanel, "PATIENT");
+            updateButtonSelection(btnPatient);
+        });
+        btnSearch.addActionListener(e -> {
+            cardLayout.show(mainPanel, "SEARCH");
+            updateButtonSelection(btnSearch);
+        });
+        btnFile.addActionListener(e -> {
+            cardLayout.show(mainPanel, "FILE");
+            updateButtonSelection(btnFile);
+        });
+        btnLogout.addActionListener(e -> logout());
+
+        // Thêm các nút vào panel điều hướng
+        navPanel.add(btnDashboard);
+        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(btnPatient);
+        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(btnSearch);
+        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(btnFile);
+        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(btnLogout);
+
+        return navPanel;
+    }
+
+    private void logout() {
+        currentUser = null;
+        showLoginScreen();
     }
     
     public static void main(String[] args) {
