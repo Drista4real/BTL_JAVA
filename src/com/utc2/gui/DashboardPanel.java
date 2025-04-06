@@ -20,7 +20,7 @@ public class DashboardPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         
-        // Create header panel
+        // Tạo panel tiêu đề
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         headerPanel.setBackground(new Color(240, 240, 240));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -29,21 +29,21 @@ public class DashboardPanel extends JPanel {
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         headerPanel.add(titleLabel);
         
-        // Create stats panel
+        // Tạo panel thống kê
         JPanel statsPanel = new JPanel(new GridLayout(2, 2, 20, 20));
         statsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create stat cards
+        // Tạo các card thống kê
         addStatCard(statsPanel, "Tổng số bệnh nhân", "0", new Color(0, 120, 215));
         addStatCard(statsPanel, "Bệnh nhân BHYT", "0", new Color(40, 167, 69));
         addStatCard(statsPanel, "Bệnh nhân BHXH", "0", new Color(255, 193, 7));
         addStatCard(statsPanel, "Phòng theo yêu cầu", "0", new Color(220, 53, 69));
         
-        // Add components to main panel
+        // Thêm các thành phần vào panel chính
         add(headerPanel, BorderLayout.NORTH);
         add(statsPanel, BorderLayout.CENTER);
         
-        // Update stats
+        // Cập nhật thống kê
         updateStats();
     }
     
@@ -70,7 +70,7 @@ public class DashboardPanel extends JPanel {
     }
     
     private void updateStats() {
-        // TODO: Update stats from danhsach
+        // TODO: Cập nhật thống kê từ danhsach
         statLabels.get("Tổng số bệnh nhân").setText("0");
         statLabels.get("Bệnh nhân BHYT").setText("0");
         statLabels.get("Bệnh nhân BHXH").setText("0");

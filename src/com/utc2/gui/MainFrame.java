@@ -19,16 +19,16 @@ public class MainFrame extends JFrame {
         setSize(1200, 800);
         setLocationRelativeTo(null);
         
-        // Create menu bar
+        // Tạo thanh menu
         JMenuBar menuBar = new JMenuBar();
         
-        // File menu
+        // Menu File
         JMenu fileMenu = new JMenu("File");
         JMenuItem exitItem = new JMenuItem("Thoát");
         exitItem.addActionListener(e -> System.exit(0));
         fileMenu.add(exitItem);
         
-        // Help menu
+        // Menu Trợ giúp
         JMenu helpMenu = new JMenu("Trợ giúp");
         JMenuItem aboutItem = new JMenuItem("Giới thiệu");
         aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this, 
@@ -41,24 +41,24 @@ public class MainFrame extends JFrame {
         menuBar.add(helpMenu);
         setJMenuBar(menuBar);
         
-        // Create main panel with CardLayout
+        // Tạo panel chính với CardLayout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         
-        // Create navigation panel with better styling
+        // Tạo panel điều hướng với kiểu dáng tốt hơn
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
         navPanel.setBackground(new Color(240, 240, 240));
         navPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
         navPanel.setPreferredSize(new Dimension(200, 0));
         
-        // Create styled buttons with icons
+        // Tạo các nút với icon
         JButton btnDashboard = createNavButton("Trang chủ", "dashboard.png");
         JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
         JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
         JButton btnFile = createNavButton("Quản lý file", "file.png");
         
-        // Add action listeners
+        // Thêm các sự kiện
         btnDashboard.addActionListener(e -> {
             cardLayout.show(mainPanel, "DASHBOARD");
             updateButtonSelection(btnDashboard);
@@ -76,7 +76,7 @@ public class MainFrame extends JFrame {
             updateButtonSelection(btnFile);
         });
         
-        // Add buttons to nav panel
+        // Thêm các nút vào panel điều hướng
         navPanel.add(Box.createVerticalStrut(20));
         navPanel.add(btnDashboard);
         navPanel.add(Box.createVerticalStrut(10));
@@ -87,22 +87,22 @@ public class MainFrame extends JFrame {
         navPanel.add(btnFile);
         navPanel.add(Box.createVerticalGlue());
         
-        // Add panels to main panel
+        // Thêm các panel vào panel chính
         mainPanel.add(new DashboardPanel(), "DASHBOARD");
         mainPanel.add(new PatientManagementPanel(), "PATIENT");
         mainPanel.add(new SearchPanel(), "SEARCH");
         mainPanel.add(new FileManagementPanel(), "FILE");
         
-        // Create main content panel
+        // Tạo panel nội dung chính
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.add(mainPanel, BorderLayout.CENTER);
         
-        // Add components to frame
+        // Thêm các thành phần vào frame
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(navPanel, BorderLayout.WEST);
         getContentPane().add(contentPanel, BorderLayout.CENTER);
         
-        // Set initial selection
+        // Thiết lập nút được chọn ban đầu
         updateButtonSelection(btnDashboard);
     }
     
@@ -119,7 +119,7 @@ public class MainFrame extends JFrame {
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.setIconTextGap(15);
         
-        // Try to load icon
+        // Thử tải icon
         try {
             URL iconUrl = getClass().getResource("/com/utc2/gui/icons/" + iconName);
             if (iconUrl != null) {
@@ -127,10 +127,10 @@ public class MainFrame extends JFrame {
                 button.setIcon(icon);
             }
         } catch (Exception e) {
-            System.out.println("Could not load icon: " + iconName);
+            System.out.println("Không thể tải icon: " + iconName);
         }
         
-        // Add hover effect
+        // Thêm hiệu ứng hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 if (button != currentButton) {
