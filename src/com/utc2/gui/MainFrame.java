@@ -7,6 +7,11 @@ import java.awt.event.ActionListener;
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.net.URL;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
+import java.awt.FontMetrics;
+import java.awt.geom.Ellipse2D;
+import java.awt.RenderingHints;
 
 public class MainFrame extends JFrame {
     private JPanel mainPanel;
@@ -18,7 +23,7 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         setTitle("Hệ thống quản lý bệnh nhân");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 800);
+        setSize(1200, 700);
         setLocationRelativeTo(null);
         
         // Tạo thanh menu
@@ -51,11 +56,72 @@ public class MainFrame extends JFrame {
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
         navPanel.setBackground(new Color(240, 240, 240));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
-        navPanel.setPreferredSize(new Dimension(200, 0));
+        navPanel.setPreferredSize(new Dimension(250, getHeight()));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // Thêm avatar
+        JPanel avatarPanel = new JPanel();
+        avatarPanel.setLayout(new BorderLayout());
+        avatarPanel.setBackground(new Color(240, 240, 240));
+        avatarPanel.setMaximumSize(new Dimension(200, 200));
+        avatarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JLabel avatarLabel = new JLabel();
+        try {
+            ImageIcon originalIcon = new ImageIcon("src/com/utc2/images/z6478241104532_86b43c55064d8b1bb9341aef36c66830.jpg");
+            Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+            
+            // Tạo ảnh tròn
+            BufferedImage circularImage = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = circularImage.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Vẽ hình tròn
+            g2d.setColor(Color.WHITE);
+            g2d.fillOval(0, 0, 150, 150);
+            
+            // Cắt ảnh thành hình tròn
+            g2d.setClip(new Ellipse2D.Float(0, 0, 150, 150));
+            g2d.drawImage(scaledImage, 0, 0, null);
+            g2d.dispose();
+            
+            avatarLabel.setIcon(new ImageIcon(circularImage));
+        } catch (Exception e) {
+            // Tạo avatar mặc định hình tròn
+            BufferedImage image = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = image.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Vẽ nền tròn
+            g2d.setColor(new Color(200, 200, 200));
+            g2d.fillOval(0, 0, 150, 150);
+            
+            // Vẽ chữ cái
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
+            FontMetrics fm = g2d.getFontMetrics();
+            int x = (150 - fm.stringWidth("A")) / 2;
+            int y = ((150 - fm.getHeight()) / 2) + fm.getAscent();
+            g2d.drawString("A", x, y);
+            
+            g2d.dispose();
+            avatarLabel.setIcon(new ImageIcon(image));
+        }
+        avatarLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarPanel.add(avatarLabel, BorderLayout.CENTER);
+        
+        // Thêm tên người dùng
+        JLabel userNameLabel = new JLabel("Admin", SwingConstants.CENTER);
+        userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        userNameLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        
+        navPanel.add(avatarPanel);
+        navPanel.add(userNameLabel);
+        navPanel.add(Box.createVerticalStrut(20));
         
         // Tạo các nút với icon
-        JButton btnDashboard = createNavButton("Trang chủ", "dashboard.png");
+        JButton btnDashboard = createNavButton("Trang chủ", "home.png");
         JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
         JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
         JButton btnFile = createNavButton("Quản lý file", "file.png");
@@ -79,7 +145,6 @@ public class MainFrame extends JFrame {
         });
         
         // Thêm các nút vào panel điều hướng
-        navPanel.add(Box.createVerticalStrut(20));
         navPanel.add(btnDashboard);
         navPanel.add(Box.createVerticalStrut(10));
         navPanel.add(btnPatient);
@@ -87,7 +152,6 @@ public class MainFrame extends JFrame {
         navPanel.add(btnSearch);
         navPanel.add(Box.createVerticalStrut(10));
         navPanel.add(btnFile);
-        navPanel.add(Box.createVerticalGlue());
         
         // Thêm các panel vào panel chính
         mainPanel.add(new DashboardPanel(), "DASHBOARD");

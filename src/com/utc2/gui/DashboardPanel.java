@@ -18,37 +18,75 @@ public class DashboardPanel extends JPanel {
     }
     
     private void initComponents() {
-        setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
+        setLayout(new BorderLayout(20, 20));
+        setBackground(new Color(240, 240, 240));
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Tạo panel tiêu đề
-        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        headerPanel.setBackground(new Color(240, 240, 240));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Panel chính
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 20));
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        JLabel titleLabel = new JLabel("Tổng quan hệ thống");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        headerPanel.add(titleLabel);
-        
-        // Tạo panel thống kê
+        // Panel thống kê
         JPanel statsPanel = new JPanel(new GridLayout(2, 2, 20, 20));
-        statsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        statsPanel.setBackground(Color.WHITE);
         
-        // Tạo các card thống kê
-        addStatCard(statsPanel, "Tổng số bệnh nhân", "0", new Color(0, 120, 215));
-        addStatCard(statsPanel, "Bệnh nhân BHYT", "0", new Color(40, 167, 69));
-        addStatCard(statsPanel, "Bệnh nhân BHXH", "0", new Color(255, 193, 7));
-        addStatCard(statsPanel, "Phòng theo yêu cầu", "0", new Color(220, 53, 69));
+        addStatCard(statsPanel, "Tổng số bệnh nhân", "0");
+        addStatCard(statsPanel, "Bệnh nhân BHYT", "0");
+        addStatCard(statsPanel, "Bệnh nhân BHXH", "0");
+        addStatCard(statsPanel, "Phòng theo yêu cầu", "0");
         
-        // Thêm các thành phần vào panel chính
-        add(headerPanel, BorderLayout.NORTH);
-        add(statsPanel, BorderLayout.CENTER);
+        // Panel dưới
+        JPanel bottomPanel = new JPanel(new GridLayout(1, 2, 20, 20));
+        bottomPanel.setBackground(Color.WHITE);
+        
+        // Panel lịch hẹn
+        JPanel appointmentPanel = createTablePanel("Lịch hẹn hôm nay", 
+            new String[]{"Giờ khám", "Tên bệnh nhân", "Bác sĩ", "Ghi chú"});
+        
+        // Panel bệnh nhân cần chú ý
+        JPanel attentionPanel = createTablePanel("Bệnh nhân cần chú ý",
+            new String[]{"Tên bệnh nhân", "Lý do", "Mức độ"});
+        
+        bottomPanel.add(appointmentPanel);
+        bottomPanel.add(attentionPanel);
+        
+        mainPanel.add(statsPanel, BorderLayout.NORTH);
+        mainPanel.add(bottomPanel, BorderLayout.CENTER);
+        
+        add(mainPanel, BorderLayout.CENTER);
         
         // Cập nhật thống kê
         updateStats();
     }
     
-    private void addStatCard(JPanel panel, String title, String value, Color color) {
+    private JPanel createTablePanel(String title, String[] columns) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        
+        JTable table = new JTable(new Object[0][columns.length], columns);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        table.setRowHeight(30);
+        table.setEnabled(false);
+        
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    private void addStatCard(JPanel panel, String title, String value) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -61,7 +99,6 @@ public class DashboardPanel extends JPanel {
         
         JLabel valueLabel = new JLabel(value);
         valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        valueLabel.setForeground(color);
         
         card.add(titleLabel, BorderLayout.NORTH);
         card.add(valueLabel, BorderLayout.CENTER);
