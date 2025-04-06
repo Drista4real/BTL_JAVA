@@ -7,15 +7,17 @@ package com.utc2.backend;
 import com.utc2.entity.BENHNHAN;
 import com.utc2.entity.BENHNHANBAOHIEMXAHOI;
 import com.utc2.entity.BENHNHANBAOHIEMYTE;
+import com.utc2.utils.ExceptionUtils;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Scanner;
-
+import javax.swing.JPanel;
 
 public class Demo1 {
-    Hashtable<String, BENHNHAN> Danhsach;
-    BufferedReader br;
+    private Hashtable<String, BENHNHAN> Danhsach;
+    private BufferedReader br;
+    private JPanel parentPanel;
 
     public Hashtable<String, BENHNHAN> getDanhsach() {
         return Danhsach;
@@ -25,15 +27,22 @@ public class Demo1 {
         this.Danhsach = Danhsach;
     }
 
-    public Demo1() {
-        Danhsach = new Hashtable<String, BENHNHAN>();
+    public Demo1(JPanel parentPanel) {
+        this.Danhsach = new Hashtable<String, BENHNHAN>();
+        this.parentPanel = parentPanel;
     }
     
     public void GhiFile() throws IOException {
         FileWriter fw = null;
         
         try {
-            fw = new FileWriter("D:/JAVAOOP/Doancanhan/QLbenhnhangui/DSBENHNHAN.txt");
+            // Tạo thư mục nếu chưa tồn tại
+            File directory = new File("data");
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            
+            fw = new FileWriter("data/DSBENHNHAN.txt");
             String str = "";
             for(BENHNHAN vbn: this.Danhsach.values()) {
                 str += vbn.toString();
@@ -41,13 +50,20 @@ public class Demo1 {
             fw.write(str);
             fw.close(); 
         } catch (IOException e) {
+            ExceptionUtils.handleFileException(parentPanel, e);
+            throw e;
         }
     }
     
     public void DocFile() {
         try {
             Danhsach.clear();
-            Scanner scr = new Scanner(new FileReader("D:/JAVAOOP/Doancanhan/QLbenhnhangui/DSBENHNHAN.txt"));
+            File file = new File("data/DSBENHNHAN.txt");
+            if (!file.exists()) {
+                return;
+            }
+            
+            Scanner scr = new Scanner(new FileReader(file));
             String mabn = null, hoten = null, mabh = null;
             Date nnv = null;
             boolean phongtyc = false;
@@ -119,6 +135,7 @@ public class Demo1 {
             
             scr.close();                           
         } catch (Exception e) {
+            ExceptionUtils.handleGeneralException(parentPanel, e);
         }       
     }
     
@@ -138,7 +155,6 @@ public class Demo1 {
         }
         return null;
     }
-    
     
     public void Xoa(String mabn) {
         this.Danhsach.remove(mabn);

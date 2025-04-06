@@ -2,11 +2,16 @@ package com.utc2.gui;
 
 import com.utc2.backend.Demo1;
 import com.utc2.entity.BENHNHAN;
+import com.utc2.entity.BENHNHANBAOHIEMYTE;
+import com.utc2.entity.BENHNHANBAOHIEMXAHOI;
+import com.utc2.utils.ExceptionUtils;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -19,8 +24,14 @@ public class PatientManagementPanel extends JPanel {
     private JCheckBox ckbPhongTYC;
     
     public PatientManagementPanel() {
-        danhsach = new Demo1();
+        danhsach = new Demo1(this);
+        try {
+            danhsach.DocFile();
+        } catch (Exception e) {
+            ExceptionUtils.handleGeneralException(this, e);
+        }
         initComponents();
+        loadDataToTable();
     }
     
     private void initComponents() {
@@ -119,16 +130,151 @@ public class PatientManagementPanel extends JPanel {
         return button;
     }
     
+    private void loadDataToTable() {
+        tableModel.setRowCount(0); // Xóa dữ liệu cũ
+        SimpleDateFormat fmd = new SimpleDateFormat("dd/MM/yyyy");
+        
+        for (BENHNHAN bn : danhsach.getDanhsach().values()) {
+            Object[] row = {
+                bn.getMABN(),
+                bn.getHoten(),
+                fmd.format(bn.getNgaynhapvien()),
+                bn.getPhongTYC() ? "Có" : "Không",
+                bn.getLoaiBH()
+            };
+            tableModel.addRow(row);
+        }
+    }
+    
     private void themBenhNhan() {
-        // TODO: Implement add patient
+        try {
+            // Kiểm tra các trường bắt buộc
+            if (txtMABN.getText().trim().isEmpty() || txtHoten.getText().trim().isEmpty() || 
+                txtNgaynhapvien.getText().trim().isEmpty()) {
+                ExceptionUtils.handleValidationException(this, "Vui lòng nhập đầy đủ thông tin bắt buộc");
+                return;
+            }
+
+            // Parse ngày nhập viện
+            SimpleDateFormat fmd = new SimpleDateFormat("dd/MM/yyyy");
+            Date NgayNV;
+            try {
+                NgayNV = fmd.parse(txtNgaynhapvien.getText());
+            } catch (ParseException e) {
+                ExceptionUtils.handleParseException(this, e);
+                return;
+            }
+
+            // Tạo đối tượng bệnh nhân
+            BENHNHAN benhnhan = null;
+            if (cobLoaiBH.getSelectedItem().equals("y")) {
+                if (txtMaBHYT.getText().trim().isEmpty()) {
+                    ExceptionUtils.handleValidationException(this, "Vui lòng nhập mã BHYT");
+                    return;
+                }
+                benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(), txtHoten.getText(), 
+                    NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
+            } else {
+                if (txtMaBHXH.getText().trim().isEmpty()) {
+                    ExceptionUtils.handleValidationException(this, "Vui lòng nhập mã BHXH");
+                    return;
+                }
+                benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(), txtHoten.getText(), 
+                    NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
+            }
+
+            // Thêm bệnh nhân vào danh sách
+            danhsach.NhapGUI(benhnhan);
+            
+            // Lưu vào file
+            try {
+                danhsach.GhiFile();
+            } catch (IOException e) {
+                ExceptionUtils.handleFileException(this, e);
+                return;
+            }
+            
+            // Cập nhật bảng
+            loadDataToTable();
+
+            // Xóa form
+            clearForm();
+            
+            JOptionPane.showMessageDialog(this, "Thêm bệnh nhân thành công");
+        } catch (Exception e) {
+            ExceptionUtils.handleGeneralException(this, e);
+        }
     }
     
     private void xoaBenhNhan() {
-        // TODO: Implement delete patient
+        int selectedRow = patientTable.getSelectedRow();
+        if (selectedRow == -1) {
+            ExceptionUtils.handleValidationException(this, "Vui lòng chọn bệnh nhân cần xóa");
+            return;
+        }
+        
+        String maBN = (String) tableModel.getValueAt(selectedRow, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Bạn có chắc chắn muốn xóa bệnh nhân này?", 
+            "Xác nhận xóa", 
+            JOptionPane.YES_NO_OPTION);
+            
+        if (confirm == JOptionPane.YES_OPTION) {
+            danhsach.Xoa(maBN);
+            try {
+                danhsach.GhiFile();
+            } catch (IOException e) {
+                ExceptionUtils.handleFileException(this, e);
+                return;
+            }
+            loadDataToTable();
+            clearForm();
+            JOptionPane.showMessageDialog(this, "Xóa bệnh nhân thành công");
+        }
     }
     
     private void suaBenhNhan() {
-        // TODO: Implement edit patient
+        int selectedRow = patientTable.getSelectedRow();
+        if (selectedRow == -1) {
+            ExceptionUtils.handleValidationException(this, "Vui lòng chọn bệnh nhân cần sửa");
+            return;
+        }
+        
+        try {
+            String maBN = (String) tableModel.getValueAt(selectedRow, 0);
+            BENHNHAN bn = danhsach.Tim(maBN);
+            
+            if (bn != null) {
+                // Cập nhật thông tin
+                bn.setHoten(txtHoten.getText());
+                try {
+                    bn.setNgaynhapvien(new SimpleDateFormat("dd/MM/yyyy").parse(txtNgaynhapvien.getText()));
+                } catch (ParseException e) {
+                    ExceptionUtils.handleParseException(this, e);
+                    return;
+                }
+                bn.setPhongTYC(ckbPhongTYC.isSelected());
+                
+                if (bn instanceof BENHNHANBAOHIEMYTE) {
+                    ((BENHNHANBAOHIEMYTE)bn).setMSBH(txtMaBHYT.getText());
+                } else {
+                    ((BENHNHANBAOHIEMXAHOI)bn).setMBHXH(txtMaBHXH.getText());
+                }
+                
+                danhsach.SuaGUI(bn);
+                try {
+                    danhsach.GhiFile();
+                } catch (IOException e) {
+                    ExceptionUtils.handleFileException(this, e);
+                    return;
+                }
+                loadDataToTable();
+                clearForm();
+                JOptionPane.showMessageDialog(this, "Sửa thông tin bệnh nhân thành công");
+            }
+        } catch (Exception e) {
+            ExceptionUtils.handleGeneralException(this, e);
+        }
     }
     
     private void clearForm() {
