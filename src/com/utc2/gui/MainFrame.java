@@ -24,6 +24,10 @@ public class MainFrame extends JFrame {
     private JLabel userNameLabel;
     private JLabel avatarLabel;
     private JButton logoutButton;
+    private JPanel navPanel;
+    private PatientManagementPanel patientPanel;
+    private SearchPanel searchPanel;
+    private FileManagementPanel filePanel;
     
     public MainFrame() {
         setTitle("Hệ thống quản lý bệnh nhân");
@@ -57,126 +61,21 @@ public class MainFrame extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         
-        // Thêm login panel
-        mainPanel.add(new LoginPanel(this), "LOGIN");
-        
-        // Tạo panel điều hướng với kiểu dáng tốt hơn
-        JPanel navPanel = new JPanel();
-        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setBackground(new Color(240, 240, 240));
-        navPanel.setPreferredSize(new Dimension(250, getHeight()));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Thêm avatar
-        JPanel avatarPanel = new JPanel();
-        avatarPanel.setLayout(new BorderLayout());
-        avatarPanel.setBackground(new Color(240, 240, 240));
-        avatarPanel.setMaximumSize(new Dimension(200, 200));
-        avatarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        avatarLabel = new JLabel();
-        try {
-            ImageIcon originalIcon = new ImageIcon("src/com/utc2/images/z6478241104532_86b43c55064d8b1bb9341aef36c66830.jpg");
-            Image scaledImage = originalIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-            
-            // Tạo ảnh tròn
-            BufferedImage circularImage = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2d = circularImage.createGraphics();
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            // Vẽ hình tròn
-            g2d.setColor(Color.WHITE);
-            g2d.fillOval(0, 0, 150, 150);
-            
-            // Cắt ảnh thành hình tròn
-            g2d.setClip(new Ellipse2D.Float(0, 0, 150, 150));
-            g2d.drawImage(scaledImage, 0, 0, null);
-            g2d.dispose();
-            
-            avatarLabel.setIcon(new ImageIcon(circularImage));
-        } catch (Exception e) {
-            // Tạo avatar mặc định hình tròn
-            BufferedImage image = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2d = image.createGraphics();
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            // Vẽ nền tròn
-            g2d.setColor(new Color(200, 200, 200));
-            g2d.fillOval(0, 0, 150, 150);
-            
-            // Vẽ chữ cái
-            g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
-            FontMetrics fm = g2d.getFontMetrics();
-            int x = (150 - fm.stringWidth("A")) / 2;
-            int y = ((150 - fm.getHeight()) / 2) + fm.getAscent();
-            g2d.drawString("A", x, y);
-            
-            g2d.dispose();
-            avatarLabel.setIcon(new ImageIcon(image));
-        }
-        avatarLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        avatarPanel.add(avatarLabel, BorderLayout.CENTER);
-        
-        // Thêm tên người dùng
-        JPanel userPanel = new JPanel();
-        userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS));
-        userPanel.setBackground(new Color(240, 240, 240));
-        userPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        userNameLabel = new JLabel("", SwingConstants.CENTER);
-        userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        userNameLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
-        
-        userPanel.add(userNameLabel);
-        
-        navPanel.add(avatarPanel);
-        navPanel.add(userPanel);
-        navPanel.add(Box.createVerticalStrut(20));
-        
-        // Tạo các nút với icon
-        JButton btnDashboard = createNavButton("Trang chủ", "home.png");
-        JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
-        JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
-        JButton btnFile = createNavButton("Quản lý file", "file.png");
-        JButton btnLogout = createNavButton("Đăng xuất", "logout.png");
-        
-        // Thêm các sự kiện
-        btnDashboard.addActionListener(e -> {
-            cardLayout.show(mainPanel, "DASHBOARD");
-            updateButtonSelection(btnDashboard);
-        });
-        btnPatient.addActionListener(e -> {
-            cardLayout.show(mainPanel, "PATIENT");
-            updateButtonSelection(btnPatient);
-        });
-        btnSearch.addActionListener(e -> {
-            cardLayout.show(mainPanel, "SEARCH");
-            updateButtonSelection(btnSearch);
-        });
-        btnFile.addActionListener(e -> {
-            cardLayout.show(mainPanel, "FILE");
-            updateButtonSelection(btnFile);
-        });
-        btnLogout.addActionListener(e -> logout());
-        
-        // Thêm các nút vào panel điều hướng
-        navPanel.add(btnDashboard);
-        navPanel.add(Box.createVerticalStrut(10));
-        navPanel.add(btnPatient);
-        navPanel.add(Box.createVerticalStrut(10));
-        navPanel.add(btnSearch);
-        navPanel.add(Box.createVerticalStrut(10));
-        navPanel.add(btnFile);
-        navPanel.add(Box.createVerticalStrut(10));
-        navPanel.add(btnLogout);
+        // Tạo các panel một lần và lưu lại
+        dashboardPanel = new DashboardPanel();
+        patientPanel = new PatientManagementPanel();
+        searchPanel = new SearchPanel();
+        filePanel = new FileManagementPanel();
         
         // Thêm các panel vào panel chính
-        mainPanel.add(new DashboardPanel(), "DASHBOARD");
-        mainPanel.add(new PatientManagementPanel(), "PATIENT");
-        mainPanel.add(new SearchPanel(), "SEARCH");
-        mainPanel.add(new FileManagementPanel(), "FILE");
+        mainPanel.add(new LoginPanel(this), "LOGIN");
+        mainPanel.add(dashboardPanel, "DASHBOARD");
+        mainPanel.add(patientPanel, "PATIENT");
+        mainPanel.add(searchPanel, "SEARCH");
+        mainPanel.add(filePanel, "FILE");
+        
+        // Tạo navPanel một lần và lưu lại
+        navPanel = createNavPanel();
         
         // Tạo panel nội dung chính
         JPanel contentPanel = new JPanel(new BorderLayout());
@@ -190,43 +89,46 @@ public class MainFrame extends JFrame {
         // Hiển thị màn hình đăng nhập ban đầu
         showLoginScreen();
         instance = this;
-        dashboardPanel = new DashboardPanel();
     }
     
     private JButton createNavButton(String text, String iconName) {
         JButton button = new JButton(text);
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.setMaximumSize(new Dimension(180, 50));
-        button.setPreferredSize(new Dimension(180, 50));
-        button.setBackground(new Color(240, 240, 240));
-        button.setForeground(Color.BLACK);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        button.setPreferredSize(new Dimension(250, 45));
+        button.setMaximumSize(new Dimension(250, 45));
+        button.setMinimumSize(new Dimension(250, 45));
         button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.setIconTextGap(15);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setForeground(Color.WHITE);
+        button.setBackground(new Color(41, 128, 185));
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setMargin(new Insets(0, 25, 0, 0));
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Thử tải icon
+        // Load icon if exists
         try {
             URL iconUrl = getClass().getResource("/com/utc2/gui/icons/" + iconName);
             if (iconUrl != null) {
                 ImageIcon icon = new ImageIcon(iconUrl);
-                button.setIcon(icon);
+                Image img = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                button.setIcon(new ImageIcon(img));
+                button.setIconTextGap(15);
             }
         } catch (Exception e) {
             System.out.println("Không thể tải icon: " + iconName);
         }
         
-        // Thêm hiệu ứng hover
+        // Add hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 if (button != currentButton) {
-                    button.setBackground(new Color(220, 220, 220));
+                    button.setBackground(new Color(52, 152, 219));
                 }
             }
+            
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 if (button != currentButton) {
-                    button.setBackground(new Color(240, 240, 240));
+                    button.setBackground(new Color(41, 128, 185));
                 }
             }
         });
@@ -236,11 +138,10 @@ public class MainFrame extends JFrame {
     
     private void updateButtonSelection(JButton selectedButton) {
         if (currentButton != null) {
-            currentButton.setBackground(new Color(240, 240, 240));
-            currentButton.setForeground(Color.BLACK);
+            currentButton.setBackground(new Color(41, 128, 185));
         }
-        selectedButton.setBackground(new Color(0, 120, 215));
-        selectedButton.setForeground(Color.WHITE);
+        
+        selectedButton.setBackground(new Color(52, 152, 219));
         currentButton = selectedButton;
     }
     
@@ -282,125 +183,137 @@ public class MainFrame extends JFrame {
     }
 
     public void showLoginScreen() {
-        getContentPane().removeAll();
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-        revalidate();
-        repaint();
+        navPanel.setVisible(false);
+        if (currentButton != null) {
+            currentButton.setBackground(new Color(41, 128, 185));
+            currentButton = null;
+        }
         cardLayout.show(mainPanel, "LOGIN");
     }
 
     public void showMainContent() {
-        getContentPane().removeAll();
-        
-        // Thêm thanh nav và nội dung chính
-        JPanel navPanel = createNavPanel();
-        getContentPane().add(navPanel, BorderLayout.WEST);
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-        
-        revalidate();
-        repaint();
+        navPanel.setVisible(true);
+        // Select home button by default
+        Component[] components = navPanel.getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JButton) {
+                JButton button = (JButton) comp;
+                if (button.getText().equals("Trang chủ")) {
+                    updateButtonSelection(button);
+                    break;
+                }
+            }
+        }
         cardLayout.show(mainPanel, "DASHBOARD");
     }
 
     private JPanel createNavPanel() {
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setBackground(new Color(240, 240, 240));
+        navPanel.setBackground(new Color(41, 128, 185));
         navPanel.setPreferredSize(new Dimension(250, getHeight()));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Thêm avatar
+        
+        // Avatar panel
         JPanel avatarPanel = new JPanel();
-        avatarPanel.setLayout(new BorderLayout());
-        avatarPanel.setBackground(new Color(240, 240, 240));
-        avatarPanel.setMaximumSize(new Dimension(200, 200));
+        avatarPanel.setLayout(new BoxLayout(avatarPanel, BoxLayout.Y_AXIS));
+        avatarPanel.setBackground(new Color(41, 128, 185));
+        avatarPanel.setMaximumSize(new Dimension(250, 200));
+        avatarPanel.setPreferredSize(new Dimension(250, 200));
         avatarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
+        
+        // Create default avatar
         avatarLabel = new JLabel();
-        if (currentUser != null) {
-            String firstLetter = String.valueOf(currentUser.getFullName().charAt(0)).toUpperCase();
-            BufferedImage image = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2d = image.createGraphics();
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            // Vẽ nền tròn
-            g2d.setColor(new Color(200, 200, 200));
-            g2d.fillOval(0, 0, 150, 150);
-            
-            // Vẽ chữ cái
-            g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
-            FontMetrics fm = g2d.getFontMetrics();
-            int x = (150 - fm.stringWidth(firstLetter)) / 2;
-            int y = ((150 - fm.getHeight()) / 2) + fm.getAscent();
-            g2d.drawString(firstLetter, x, y);
-            
-            g2d.dispose();
-            avatarLabel.setIcon(new ImageIcon(image));
-        }
-        avatarLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        avatarPanel.add(avatarLabel, BorderLayout.CENTER);
+        avatarLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        avatarLabel.setPreferredSize(new Dimension(120, 120));
+        avatarLabel.setMaximumSize(new Dimension(120, 120));
+        
+        BufferedImage image = new BufferedImage(120, 120, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = image.createGraphics();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setColor(Color.LIGHT_GRAY);
+        g2d.fillOval(0, 0, 120, 120);
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
+        FontMetrics fm = g2d.getFontMetrics();
+        String letter = "P";
+        g2d.drawString(letter, (120 - fm.stringWidth(letter)) / 2, ((120 - fm.getHeight()) / 2) + fm.getAscent());
+        g2d.dispose();
+        avatarLabel.setIcon(new ImageIcon(image));
+        
+        // Add padding above avatar
+        avatarPanel.add(Box.createVerticalStrut(30));
+        avatarPanel.add(avatarLabel);
+        avatarPanel.add(Box.createVerticalStrut(15));
 
-        // Thêm tên người dùng
-        JPanel userPanel = new JPanel();
-        userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS));
-        userPanel.setBackground(new Color(240, 240, 240));
-        userPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        userNameLabel = new JLabel(currentUser != null ? currentUser.getFullName() : "", SwingConstants.CENTER);
+        // User name panel
+        userNameLabel = new JLabel("pha");
         userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        userNameLabel.setForeground(Color.WHITE);
         userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        userNameLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
-
-        userPanel.add(userNameLabel);
+        avatarPanel.add(userNameLabel);
 
         navPanel.add(avatarPanel);
-        navPanel.add(userPanel);
         navPanel.add(Box.createVerticalStrut(20));
 
-        // Tạo các nút điều hướng
+        // Navigation buttons
         JButton btnDashboard = createNavButton("Trang chủ", "home.png");
         JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
         JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
         JButton btnFile = createNavButton("Quản lý file", "file.png");
         JButton btnLogout = createNavButton("Đăng xuất", "logout.png");
 
-        // Thêm sự kiện cho các nút
         btnDashboard.addActionListener(e -> {
             cardLayout.show(mainPanel, "DASHBOARD");
             updateButtonSelection(btnDashboard);
         });
+        
         btnPatient.addActionListener(e -> {
             cardLayout.show(mainPanel, "PATIENT");
             updateButtonSelection(btnPatient);
         });
+        
         btnSearch.addActionListener(e -> {
             cardLayout.show(mainPanel, "SEARCH");
             updateButtonSelection(btnSearch);
         });
+        
         btnFile.addActionListener(e -> {
             cardLayout.show(mainPanel, "FILE");
             updateButtonSelection(btnFile);
         });
+        
         btnLogout.addActionListener(e -> logout());
 
-        // Thêm các nút vào panel điều hướng
+        // Add buttons with minimal spacing
         navPanel.add(btnDashboard);
-        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(Box.createVerticalStrut(1));
         navPanel.add(btnPatient);
-        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(Box.createVerticalStrut(1));
         navPanel.add(btnSearch);
-        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(Box.createVerticalStrut(1));
         navPanel.add(btnFile);
-        navPanel.add(Box.createVerticalStrut(10));
+        navPanel.add(Box.createVerticalStrut(1));
         navPanel.add(btnLogout);
+        
+        // Add bottom spacing
+        navPanel.add(Box.createVerticalGlue());
 
         return navPanel;
     }
 
     private void logout() {
-        currentUser = null;
-        showLoginScreen();
+        int choice = JOptionPane.showConfirmDialog(
+            this,
+            "Bạn có chắc chắn muốn đăng xuất?",
+            "Xác nhận đăng xuất",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+        
+        if (choice == JOptionPane.YES_OPTION) {
+            currentUser = null;
+            showLoginScreen();
+        }
     }
     
     public static void main(String[] args) {
