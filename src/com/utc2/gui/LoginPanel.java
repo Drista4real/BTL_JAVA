@@ -22,18 +22,44 @@ public class LoginPanel extends JPanel {
     private JButton loginButton;
     private JButton registerButton;
     private JButton forgotPasswordButton;
-    private JCheckBox rememberPasswordCheckBox;
+    private JCheckBox showPasswordCheckBox;
     private Map<String, User> users;
     private MainFrame mainFrame;
-    private static final String REMEMBER_FILE = "data/remember_password.txt";
+    private Image backgroundImage;
 
     public LoginPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         this.users = new HashMap<>();
+        loadBackgroundImage();
         initComponents();
         // Thêm tài khoản admin mặc định
         users.put("admin", new User("admin", "admin", "Administrator", "admin@example.com", "0123456789", "admin"));
-        loadRememberedPassword();
+    }
+
+    private void loadBackgroundImage() {
+        try {
+            backgroundImage = new ImageIcon("src/com/utc2/images/ảnh_nền_login.jpg").getImage();
+        } catch (Exception e) {
+            System.out.println("Không thể tải hình nền: " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (backgroundImage != null) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            
+            // Vẽ hình nền với độ mờ
+            g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+            
+            // Thêm lớp overlay để làm mờ hình nền
+            g2d.setColor(new Color(255, 255, 255, 0));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            
+            g2d.dispose();
+        }
     }
 
     private void initComponents() {
@@ -41,42 +67,78 @@ public class LoginPanel extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
+        // Tạo panel chứa form đăng nhập với background trong suốt
+        JPanel loginFormPanel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setColor(new Color(255, 255, 255, 180));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.dispose();
+            }
+        };
+        loginFormPanel.setOpaque(false);
+        loginFormPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200, 150)),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
         // Title
-        JLabel titleLabel = new JLabel("Đăng nhập hệ thống");
+        JLabel titleLabel = new JLabel("Hệ thống quản lý bệnh nhân");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(0, 87, 146));
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        add(titleLabel, gbc);
+        gbc.anchor = GridBagConstraints.CENTER;
+        loginFormPanel.add(titleLabel, gbc);
 
         // Username
         gbc.gridwidth = 1;
         gbc.gridy = 1;
         gbc.gridx = 0;
-        add(new JLabel("Tên đăng nhập:"), gbc);
+        gbc.anchor = GridBagConstraints.EAST;
+        JLabel usernameLabel = new JLabel("Tên đăng nhập:");
+        usernameLabel.setForeground(new Color(60, 60, 60));
+        loginFormPanel.add(usernameLabel, gbc);
 
         usernameField = new JTextField(20);
         usernameField.addActionListener(e -> passwordField.requestFocus());
         gbc.gridx = 1;
-        add(usernameField, gbc);
+        gbc.anchor = GridBagConstraints.WEST;
+        loginFormPanel.add(usernameField, gbc);
 
         // Password
         gbc.gridy = 2;
         gbc.gridx = 0;
-        add(new JLabel("Mật khẩu:"), gbc);
+        gbc.anchor = GridBagConstraints.EAST;
+        JLabel passwordLabel = new JLabel("Mật khẩu:");
+        passwordLabel.setForeground(new Color(60, 60, 60));
+        loginFormPanel.add(passwordLabel, gbc);
 
         passwordField = new JPasswordField(20);
         passwordField.addActionListener(e -> login());
         gbc.gridx = 1;
-        add(passwordField, gbc);
+        gbc.anchor = GridBagConstraints.WEST;
+        loginFormPanel.add(passwordField, gbc);
 
-        // Remember password checkbox
+        // Show password checkbox
         gbc.gridy = 3;
         gbc.gridx = 1;
-        gbc.insets = new Insets(0, 10, 10, 10);  // Giảm khoảng cách phía trên
-        gbc.anchor = GridBagConstraints.WEST;  // Căn lề trái
-        rememberPasswordCheckBox = new JCheckBox("Ghi nhớ mật khẩu");
-        add(rememberPasswordCheckBox, gbc);
+        gbc.insets = new Insets(0, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        showPasswordCheckBox = new JCheckBox("Hiển thị mật khẩu");
+        showPasswordCheckBox.setOpaque(false);
+        showPasswordCheckBox.setForeground(new Color(60, 60, 60));
+        showPasswordCheckBox.addActionListener(e -> {
+            if (showPasswordCheckBox.isSelected()) {
+                passwordField.setEchoChar((char) 0);
+            } else {
+                passwordField.setEchoChar('•');
+            }
+        });
+        loginFormPanel.add(showPasswordCheckBox, gbc);
 
         // Reset insets và anchor
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -84,13 +146,25 @@ public class LoginPanel extends JPanel {
 
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setOpaque(false);
         loginButton = new JButton("Đăng nhập");
         registerButton = new JButton("Đăng ký");
         forgotPasswordButton = new JButton("Quên mật khẩu?");
         forgotPasswordButton.setBorderPainted(false);
         forgotPasswordButton.setContentAreaFilled(false);
-        forgotPasswordButton.setForeground(Color.BLUE);
+        forgotPasswordButton.setForeground(new Color(0, 87, 146));
         forgotPasswordButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Style cho nút đăng nhập và đăng ký
+        loginButton.setBackground(new Color(0, 87, 146));
+        loginButton.setForeground(Color.WHITE);
+        loginButton.setFocusPainted(false);
+        loginButton.setBorderPainted(false);
+        
+        registerButton.setBackground(new Color(0, 87, 146));
+        registerButton.setForeground(Color.WHITE);
+        registerButton.setFocusPainted(false);
+        registerButton.setBorderPainted(false);
 
         loginButton.addActionListener(e -> login());
         registerButton.addActionListener(e -> showRegisterDialog());
@@ -102,11 +176,14 @@ public class LoginPanel extends JPanel {
         gbc.gridy = 4;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
-        add(buttonPanel, gbc);
+        loginFormPanel.add(buttonPanel, gbc);
 
         // Forgot password link
         gbc.gridy = 5;
-        add(forgotPasswordButton, gbc);
+        loginFormPanel.add(forgotPasswordButton, gbc);
+
+        // Thêm loginFormPanel vào panel chính
+        add(loginFormPanel);
 
         // Set focus ban đầu vào ô username
         SwingUtilities.invokeLater(() -> usernameField.requestFocus());
@@ -123,17 +200,13 @@ public class LoginPanel extends JPanel {
 
         User user = users.get(username);
         if (user != null && user.getPassword().equals(password)) {
-            if (rememberPasswordCheckBox.isSelected()) {
-                saveRememberedPassword(username, password);
-            } else {
-                clearRememberedPassword();
-            }
             mainFrame.setCurrentUser(user);
             mainFrame.showMainContent();
             // Xóa thông tin đăng nhập
             usernameField.setText("");
             passwordField.setText("");
-            rememberPasswordCheckBox.setSelected(false);
+            showPasswordCheckBox.setSelected(false);
+            passwordField.setEchoChar('•');
         } else {
             JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc mật khẩu không đúng!");
         }
@@ -193,45 +266,6 @@ public class LoginPanel extends JPanel {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();
-    }
-
-    private void saveRememberedPassword(String username, String password) {
-        try {
-            File dataDir = new File("data");
-            if (!dataDir.exists()) {
-                dataDir.mkdir();
-            }
-            try (PrintWriter writer = new PrintWriter(new FileWriter(REMEMBER_FILE))) {
-                writer.println(username);
-                writer.println(password);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void loadRememberedPassword() {
-        File file = new File(REMEMBER_FILE);
-        if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(REMEMBER_FILE))) {
-                String username = reader.readLine();
-                String password = reader.readLine();
-                if (username != null && password != null) {
-                    usernameField.setText(username);
-                    passwordField.setText(password);
-                    rememberPasswordCheckBox.setSelected(true);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void clearRememberedPassword() {
-        File file = new File(REMEMBER_FILE);
-        if (file.exists()) {
-            file.delete();
-        }
     }
 
     private void showRegisterDialog() {
