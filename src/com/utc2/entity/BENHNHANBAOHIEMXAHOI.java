@@ -1,15 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package com.utc2.entity;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Scanner;
 
 public class BENHNHANBAOHIEMXAHOI extends BENHNHAN {
     private String MBHXH;
-
     public String getMBHXH() {
         return MBHXH;
     }
@@ -21,11 +18,11 @@ public class BENHNHANBAOHIEMXAHOI extends BENHNHAN {
     public BENHNHANBAOHIEMXAHOI() {
         super();
     }
-
-    public BENHNHANBAOHIEMXAHOI(char LoaiBH, String MABN, String Hoten, Date Ngaynhapvien, String MBHXH,  Boolean PhongTYC) {
-        super(LoaiBH, MABN, Hoten, Ngaynhapvien, PhongTYC);
-        this.MBHXH = MBHXH;
+    public BENHNHANBAOHIEMXAHOI(char LoaiBH, String MABN, String GhiChu, Date LichHen, String Hoten, Date Ngaynhapvien, String MSBH, Boolean PhongTYC) {
+        super(LoaiBH, MABN, GhiChu, LichHen, Hoten, Ngaynhapvien, PhongTYC); 
+        this.MBHXH = MSBH;
     }
+
     
     @Override
     public void Xuat() {
@@ -64,3 +61,4 @@ public class BENHNHANBAOHIEMXAHOI extends BENHNHAN {
                 + "Mabaohiem: " + this.MBHXH + "\r\n";      
     }
 }
+

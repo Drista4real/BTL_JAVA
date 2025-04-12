@@ -13,6 +13,12 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Scanner;
 import javax.swing.JPanel;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Scanner;
 
 public class Demo1 {
     private Hashtable<String, BENHNHAN> Danhsach;
@@ -66,8 +72,8 @@ public class Demo1 {
             
             System.out.println("Đang đọc file: " + file.getAbsolutePath());
             Scanner scr = new Scanner(new FileReader(file));
-            String mabn = null, hoten = null, mabh = null;
-            Date nnv = null;
+            String mabn = null, hoten = null, mabh = null , ghichu = null;
+            Date nnv = null, lichhen = null;
             boolean phongtyc = false;
             char lbn = ' ';
             boolean flag = false;
@@ -75,21 +81,30 @@ public class Demo1 {
             while (scr.hasNextLine()) {
                 String thongtin = scr.nextLine();
                 System.out.println("Đọc dòng: " + thongtin);
-                
-                if(thongtin.equals("@") && flag==true) {
+                if (thongtin.equals("@") && flag == true) {
                     BENHNHAN benhnhan = null;
-                    if(lbn == 'y')
-                        benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn, hoten, nnv, mabh, phongtyc);
-                    else
-                        benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn, hoten, nnv, mabh, phongtyc);
-                    Danhsach.put(benhnhan.getMABN(), benhnhan);
-                    System.out.println("Đã thêm bệnh nhân: " + benhnhan.getMABN());
-                    flag=false;
+
+                    // Kiểm tra các giá trị bắt buộc có đầy đủ không
+                    if (mabn != null && hoten != null && nnv != null && mabh != null) {
+                        try {
+                            if (lbn == 'y') {
+                                benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                            } else {
+                            	 benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                            }
+
+                            Danhsach.put(benhnhan.getMABN(), benhnhan);
+                            System.out.println("Đã thêm bệnh nhân: " + benhnhan.getMABN());
+                        } catch (Exception e) {
+                            System.out.println("Lỗi khi tạo đối tượng bệnh nhân: " + e.getMessage());
+                        }
+                    } else {
+                        System.out.println("Thiếu thông tin, bỏ qua bệnh nhân.");
+                    }
+
+                    flag = false;
                 }
-                
-                if (thongtin.equals("@") && flag == false) {
-                    flag = true;
-                }
+
                 else {
                     int vitri = thongtin.indexOf(":");
                     if (vitri == -1) continue;
@@ -105,9 +120,15 @@ public class Demo1 {
                             hoten = value;
                             break;
                         case "Ngaynhapvien":
-                            SimpleDateFormat d = new SimpleDateFormat("dd/MM/yyyy");
-                            nnv = d.parse(value);  
+                            try {
+                                SimpleDateFormat d = new SimpleDateFormat("dd/MM/yyyy");
+                                nnv = d.parse(value);
+                            } catch (ParseException e) {
+                                System.out.println("Lỗi định dạng ngày (dd/MM/yyyy): " + value);
+                                nnv = null;
+                            }
                             break;
+
                         case "Phongtheoyeucau":
                             phongtyc = Boolean.parseBoolean(value);
                             break;
@@ -124,9 +145,9 @@ public class Demo1 {
             if (flag) {
                 BENHNHAN benhnhan = null;
                 if(lbn == 'y')
-                    benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn, hoten, nnv, mabh, phongtyc);
+                	benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
                 else
-                    benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn, hoten, nnv, mabh, phongtyc);
+                	 benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
                 Danhsach.put(benhnhan.getMABN(), benhnhan);
             }
             
@@ -174,4 +195,39 @@ public class Demo1 {
         
         Tong = TongYT + TongXH;
     }
+    public void DatLichHen(String mabn , String NgayLichHen) throws Exception{
+        BENHNHAN benhnhan = Tim(mabn);
+        if(benhnhan != null){
+            SimpleDateFormat formatter = new SimpleDateFormat ("dd/MM/YYYY HH:mm");
+            Date LichHen = formatter. parse( NgayLichHen);
+            benhnhan.DatLichHen(LichHen);
+            System.out.println (" Lịch hẹn đã được đặt cho bệnh nhân " + benhnhan.getHoten()+ " vào"+ NgayLichHen);
+       }else {
+            System.out.println (" Bệnh nhân không tồn tại");
+        }
+    }
+    public void GhiChuBS(String mabn , String GhiChumoi) throws Exception{
+        BENHNHAN benhnhan = Tim(mabn);
+        if (benhnhan != null){
+            benhnhan.GhiChuBS(GhiChumoi);
+            // kiểm trea nếu có ghi chú  thì in ra thông báo
+            if (benhnhan.getGhiChu()!= null && !benhnhan. getGhiChu().isEmpty()){
+            System.out.println(" Ghi chú cuả Bác Sĩ " + benhnhan.getGhiChu());
+            }else{
+                 System.out.println(" Không có Ghi chú cuả Bác Sĩ ");
+            }
+        }else{
+            throw new Exception (" Bệnh nhân không tồn tại");
+        }
+    }
+        public void TongLichHen(){
+            int Tong = 0 ;
+            // kiểm tra danh sách bệnh nhân để xem có bệnh nhân nào đã có lịch hẹn chưa
+            for(BENHNHAN benhnhan : Danhsach.values()){
+                if(benhnhan.getLichHen()!=null){
+                    Tong++;
+                }
+            }
+            System.out.println(" Tổng lịch hẹn đã được đặt"+ Tong);
+        }
 }

@@ -1,5 +1,7 @@
 
 package com.utc2.entity;
+import java.util.Date;
+import java.util.Scanner;
 
 import com.utc2.backend.Demo1;
 import com.utc2.entity.BENHNHANBAOHIEMXAHOI;
@@ -8,15 +10,19 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.Scanner;
+
+
 
 public abstract class BENHNHAN implements IVIENPHI{
-    protected String MABN;
+	protected char LoaiBH;
+	 protected String MABN;
+    protected String GhiChu;
+    protected Date LichHen;
     protected String Hoten;
     protected Date Ngaynhapvien;
-    public Boolean PhongTYC = false;
+    protected Boolean PhongTYC ;
     protected Scanner sc;
-    protected char LoaiBH;
+
 //    protected final double DGP = 150000;
 
     public char getLoaiBH() {
@@ -30,11 +36,20 @@ public abstract class BENHNHAN implements IVIENPHI{
     public String getMABN() {
         return MABN;
     }
+    public String getGhiChu(){
+        return GhiChu;
+        
+    }
 
     public void setMABN(String MABN) {
         this.MABN = MABN;
     }
-
+    public void setGhiChu(String GhiChu){
+        this.GhiChu = GhiChu;
+    }
+    public void GhiChuBS (String GhiChumoi){
+        this.GhiChu = GhiChumoi;
+    }
     public String getHoten() {
         return Hoten;
     }
@@ -54,22 +69,36 @@ public abstract class BENHNHAN implements IVIENPHI{
     public Boolean getPhongTYC() {
         return PhongTYC;
     }
-
-    public void setPhongTYC(Boolean PhongTYC) {
+    public Date getLichHen(){
+        return LichHen;
+    }
+    public void setLichHen(Date LichHen){
+        this.LichHen = LichHen;
+    }
+        
+   public void DatLichHen(Date LichHen){   
+       this.LichHen = LichHen;
+   }
+   public void setPhongTYC(Boolean PhongTYC) {
         this.PhongTYC = PhongTYC;
+        
     }
 
     public BENHNHAN() {
         this.sc = new Scanner(System.in);
     }
 
-    public BENHNHAN(char LoaiBH, String MABN, String Hoten, Date Ngaynhapvien, Boolean PhongTYC) {
+    public BENHNHAN(char LoaiBH,String MABN,String GhiChu, Date LichHen , String Hoten, Date Ngaynhapvien, Boolean PhongTYC) {
         this.sc = new Scanner(System.in);
         this.LoaiBH = LoaiBH;
         this.MABN = MABN;
+        this.GhiChu = GhiChu;
+        this.LichHen = LichHen;
         this.Hoten = Hoten;
         this.Ngaynhapvien = Ngaynhapvien;
         this.PhongTYC = PhongTYC;
+      
+        
     }
     
     public void Xuat() {
@@ -78,6 +107,8 @@ public abstract class BENHNHAN implements IVIENPHI{
         System.out.println("Mã bệnh nhân: " + this.MABN);
         System.out.println("Họ tên: " + this.Hoten);
         System.out.println("Ngày nhập viện: " + fmd.format(this.Ngaynhapvien));
+        System.out.println("Lịch hẹn của Bác Sĩ"+ fmd.format(this.LichHen));
+        System.out.println(" Ghi chú của Bác Sĩ"+ this.GhiChu);
         System.out.print("Phòng theo yêu cầu: ");
         if (this.PhongTYC)
             System.out.println("Có");
@@ -93,6 +124,8 @@ public abstract class BENHNHAN implements IVIENPHI{
             System.out.print("Nhập mã bệnh nhân: "); this.MABN = this.sc.nextLine();
             System.out.print("Nhập họ tên: "); this.Hoten = this.sc.nextLine();
             System.out.print("Nhập ngày nhập viện: "); this.Ngaynhapvien = fmd.parse(this.sc.nextLine());
+            System.out.print ("Nhập lịch hẹn của bác sĩ"); this.LichHen = fmd.parse( this.sc.nextLine());
+            System.out.print ("Nhập ghi chú của bác sĩ"); this.GhiChu = this.sc.nextLine();
             System.out.print("Nhập 'y/Y' cho phòng theo yêu cầu: ");
             char tmp = sc.nextLine().charAt(0);
             if ((tmp == 'y') || (tmp == 'Y'))
@@ -112,7 +145,18 @@ public abstract class BENHNHAN implements IVIENPHI{
         
         long snnv = (NRV.getTimeInMillis() - NNV.getTimeInMillis()) / (24 * 3600 * 1000);
         return snnv;
+    }   
+    public long ngaylichhen() {
+        Calendar NRV = new GregorianCalendar();
+        NRV.setTime(Calendar.getInstance().getTime());
+        
+        Calendar NNV = new GregorianCalendar();
+        NNV.setTime(this.LichHen);
+        
+        long snnv = (NRV.getTimeInMillis() - NNV.getTimeInMillis()) / (24 * 3600 * 1000);
+        return snnv;
     }
+    
     
 //    @Override
 //    public abstract double TinhhoadonVP();
@@ -121,6 +165,8 @@ public abstract class BENHNHAN implements IVIENPHI{
     public abstract String toString();
     public Object[] toArray()
     {
-        return new Object[]{MABN,Hoten,Ngaynhapvien,PhongTYC,LoaiBH,TinhhoadonVP()};
+        return new Object[]{MABN,Hoten,Ngaynhapvien, LichHen, GhiChu,PhongTYC,LoaiBH,TinhhoadonVP()};
+
     }
 }
+
