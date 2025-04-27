@@ -172,14 +172,14 @@ public class PatientManagementPanel extends JPanel {
                     ExceptionUtils.handleValidationException(this, "Vui lòng nhập mã BHYT");
                     return;
                 }
-                benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(), txtHoten.getText(), 
+                benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(),"", null, txtHoten.getText(), 
                     NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
             } else {
                 if (txtMaBHXH.getText().trim().isEmpty()) {
                     ExceptionUtils.handleValidationException(this, "Vui lòng nhập mã BHXH");
                     return;
                 }
-                benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(), txtHoten.getText(), 
+                benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(),"", null, txtHoten.getText(), 
                     NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
             }
 

@@ -255,9 +255,9 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             Date NgayNV = fmd.parse(txtNgaynhapvien.getText());
 
             if (cobLoaiBH.getSelectedItem().equals("y")) {
-                benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(), txtHoten.getText(), NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
+                benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(),"", null, txtHoten.getText(), NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
             } else {
-                benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(), txtHoten.getText(), NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
+                benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(),"", null, txtHoten.getText(), NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
             }
         } catch (ParseException e) {
             JOptionPane.showMessageDialog(this, "Ngày nhập viện không đúng định dạng (dd/MM/yyyy)");
@@ -317,7 +317,7 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             }
             txtNgaynhapvien.setText(NgayNV);
             cobLoaiBH.select(String.valueOf(bn.getLoaiBH()));
-            ckbPhongTYC.setSelected(bn.PhongTYC);
+            ckbPhongTYC.setSelected(bn.getPhongTYC());
         } else {
             JOptionPane.showMessageDialog(this, "Không tìm thấy bệnh nhân");
         }
