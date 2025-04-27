@@ -61,7 +61,6 @@ public class Demo1 {
             throw e;
         }
     }
-    
     public void DocFile() {
         try {
             Danhsach.clear();
@@ -70,7 +69,7 @@ public class Demo1 {
                 System.out.println("File không tồn tại: " + file.getAbsolutePath());
                 return;
             }
-            
+
             System.out.println("Đang đọc file: " + file.getAbsolutePath());
             Scanner scr = new Scanner(new FileReader(file));
             String mabn = null, hoten = null, mabh = null , ghichu = null;
@@ -78,7 +77,7 @@ public class Demo1 {
             boolean phongtyc = false;
             char lbn = ' ';
             boolean flag = false;
-            
+
             while (scr.hasNextLine()) {
                 String thongtin = scr.nextLine();
                 System.out.println("Đọc dòng: " + thongtin);
@@ -89,9 +88,11 @@ public class Demo1 {
                     if (mabn != null && hoten != null && nnv != null && mabh != null) {
                         try {
                             if (lbn == 'y') {
-                                benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                                // Sử dụng constructor BENHNHANBAOHIEMXAHOI
+                                benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn, hoten, nnv, mabh, phongtyc);
                             } else {
-                            	 benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                                // Sử dụng constructor BENHNHANBAOHIEMYTE
+                                benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn, hoten, nnv, mabh, phongtyc);
                             }
 
                             Danhsach.put(benhnhan.getMABN(), benhnhan);
@@ -109,7 +110,7 @@ public class Demo1 {
                 else {
                     int vitri = thongtin.indexOf(":");
                     if (vitri == -1) continue;
-                    
+
                     String thuoctinh = thongtin.substring(0, vitri);
                     String value = thongtin.substring(vitri + 2, thongtin.length());      
 
@@ -142,22 +143,25 @@ public class Demo1 {
                     }  
                 }
             }
-            
+
             if (flag) {
                 BENHNHAN benhnhan = null;
-                if(lbn == 'y')
-                	benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
-                else
-                	 benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                if (lbn == 'y') {
+                    // Sử dụng constructor BENHNHANBAOHIEMXAHOI
+                    benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn, hoten, nnv, mabh, phongtyc);
+                } else {
+                    // Sử dụng constructor BENHNHANBAOHIEMYTE
+                    benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn, hoten, nnv, mabh, phongtyc);
+                }
                 Danhsach.put(benhnhan.getMABN(), benhnhan);
             }
-            
-            scr.close();                           
+
+            scr.close();
         } catch (Exception e) {
             ExceptionUtils.handleGeneralException(parentPanel, e);
-        }       
+        }
     }
-    
+
     public void NhapGUI(BENHNHAN benhnhan) {
         Danhsach.put(benhnhan.getMABN(), benhnhan);
     }
