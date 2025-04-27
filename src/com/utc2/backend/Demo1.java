@@ -230,4 +230,46 @@ public class Demo1 {
             }
             System.out.println(" Tổng lịch hẹn đã được đặt"+ Tong);
         }
+        // In danh sách bệnh nhân đã đặt lịch hẹn
+        public void InDanhSachBenhNhanCoLichHen() {
+            boolean found = false;
+            System.out.println("Danh sách bệnh nhân đã đặt lịch hẹn:");
+            for (BENHNHAN benhnhan : Danhsach.values()) {
+                if (benhnhan.getLichHen() != null) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                    System.out.println("Mã BN: " + benhnhan.getMABN() + " | Họ tên: " + benhnhan.getHoten() + " | Lịch hẹn: " + sdf.format(benhnhan.getLichHen()));
+                    found = true;
+                }
+            }
+            if (!found) {
+                System.out.println("Không có bệnh nhân nào đã đặt lịch hẹn.");
+            }
+        }
+
+        // Tìm kiếm bệnh nhân có ghi chú chứa từ khóa
+        public void TimBenhNhanTheoGhiChu(String tuKhoa) {
+            boolean found = false;
+            System.out.println("Kết quả tìm kiếm bệnh nhân theo ghi chú chứa từ khóa: \"" + tuKhoa + "\"");
+            for (BENHNHAN benhnhan : Danhsach.values()) {
+                if (benhnhan.getGhiChu() != null && benhnhan.getGhiChu().toLowerCase().contains(tuKhoa.toLowerCase())) {
+                    System.out.println("Mã BN: " + benhnhan.getMABN() + " | Họ tên: " + benhnhan.getHoten() + " | Ghi chú: " + benhnhan.getGhiChu());
+                    found = true;
+                }
+            }
+            if (!found) {
+                System.out.println("Không tìm thấy bệnh nhân nào có ghi chú chứa từ khóa \"" + tuKhoa + "\".");
+            }
+        }
+
+        // Đếm số lượng bệnh nhân có ghi chú
+        public void DemSoBenhNhanCoGhiChu() {
+            int count = 0;
+            for (BENHNHAN benhnhan : Danhsach.values()) {
+                if (benhnhan.getGhiChu() != null && !benhnhan.getGhiChu().isEmpty()) {
+                    count++;
+                }
+            }
+            System.out.println("Số lượng bệnh nhân có ghi chú: " + count);
+        }
+
 }
