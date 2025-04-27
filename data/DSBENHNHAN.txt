@@ -1,0 +1,7 @@
+@
+Mabenhnhan: 1
+Hoten: pha
+Ngaynhapvien: 02/02/2022
+Phongtheoyeucau: true
+Loaibaohiem: y
+Mabaohiem: 1
