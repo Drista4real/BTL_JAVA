@@ -271,5 +271,41 @@ public class Demo1 {
             }
             System.out.println("Số lượng bệnh nhân có ghi chú: " + count);
         }
+        // Thêm bệnh nhân mới vào danh sách
+        public void ThemNhanVien(BENHNHAN benhnhan) {
+            if (benhnhan != null) {
+                // Kiểm tra nếu bệnh nhân đã tồn tại
+                if (Danhsach.containsKey(benhnhan.getMABN())) {
+                    System.out.println("Bệnh nhân đã tồn tại trong hệ thống!");
+                } else {
+                    Danhsach.put(benhnhan.getMABN(), benhnhan);
+                    System.out.println("Bệnh nhân " + benhnhan.getHoten() + " đã được thêm vào hệ thống.");
+                }
+            } else {
+                System.out.println("Thông tin bệnh nhân không hợp lệ.");
+            }
+        }
+
+        // Sửa thông tin bệnh nhân
+        public void SuaNhanVien(String mabn, BENHNHAN benhnhanMoi) {
+            BENHNHAN benhnhanCu = Tim(mabn);
+            if (benhnhanCu != null) {
+                Danhsach.put(mabn, benhnhanMoi);
+                System.out.println("Thông tin bệnh nhân " + mabn + " đã được cập nhật.");
+            } else {
+                System.out.println("Bệnh nhân không tồn tại!");
+            }
+        }
+
+        // Xóa bệnh nhân khỏi hệ thống
+        public void XoaNhanVien(String mabn) {
+            BENHNHAN benhnhan = Tim(mabn);
+            if (benhnhan != null) {
+                Danhsach.remove(mabn);
+                System.out.println("Bệnh nhân " + mabn + " đã bị xóa khỏi hệ thống.");
+            } else {
+                System.out.println("Bệnh nhân không tồn tại.");
+            }
+        }
 
 }
