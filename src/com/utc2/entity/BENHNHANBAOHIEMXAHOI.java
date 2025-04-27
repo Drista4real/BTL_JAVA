@@ -18,9 +18,9 @@ public class BENHNHANBAOHIEMXAHOI extends BENHNHAN {
     public BENHNHANBAOHIEMXAHOI() {
         super();
     }
-    public BENHNHANBAOHIEMXAHOI(char LoaiBH, String MABN, String GhiChu, Date LichHen, String Hoten, Date Ngaynhapvien, String MSBH, Boolean PhongTYC) {
-        super(LoaiBH, MABN, GhiChu, LichHen, Hoten, Ngaynhapvien, PhongTYC); 
-        this.MBHXH = MSBH;
+    public BENHNHANBAOHIEMXAHOI(char LoaiBH, String MABN, String Hoten, Date Ngaynhapvien, String MaBHXH, Boolean PhongTYC) {
+        super(LoaiBH, MABN, "", null, Hoten, Ngaynhapvien, PhongTYC);
+        this.MBHXH = MBHXH;
     }
 
     

@@ -167,20 +167,23 @@ public class PatientManagementPanel extends JPanel {
 
             // Tạo đối tượng bệnh nhân
             BENHNHAN benhnhan = null;
-            if (cobLoaiBH.getSelectedItem().equals("y")) {
+            // Kiểm tra lựa chọn loại bảo hiểm và tạo đối tượng bệnh nhân tương ứng
+            if (cobLoaiBH.getSelectedItem().equals("y")) { // Bảo hiểm y tế
                 if (txtMaBHYT.getText().trim().isEmpty()) {
                     ExceptionUtils.handleValidationException(this, "Vui lòng nhập mã BHYT");
                     return;
                 }
+                // Tạo đối tượng bệnh nhân bảo hiểm y tế
                 benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(), txtHoten.getText(), 
-                    NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
-            } else {
+                        NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
+            } else { // Bảo hiểm xã hội
                 if (txtMaBHXH.getText().trim().isEmpty()) {
                     ExceptionUtils.handleValidationException(this, "Vui lòng nhập mã BHXH");
                     return;
                 }
+                // Tạo đối tượng bệnh nhân bảo hiểm xã hội
                 benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(), txtHoten.getText(), 
-                    NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
+                        NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
             }
 
             // Thêm bệnh nhân vào danh sách
@@ -193,18 +196,20 @@ public class PatientManagementPanel extends JPanel {
                 ExceptionUtils.handleFileException(this, e);
                 return;
             }
-            
+
             // Cập nhật bảng
             loadDataToTable();
 
             // Xóa form
             clearForm();
-            
+
+            // Hiển thị thông báo thành công
             JOptionPane.showMessageDialog(this, "Thêm bệnh nhân thành công");
         } catch (Exception e) {
             ExceptionUtils.handleGeneralException(this, e);
         }
     }
+
     
     private void xoaBenhNhan() {
         int selectedRow = patientTable.getSelectedRow();

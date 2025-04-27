@@ -254,9 +254,12 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             SimpleDateFormat fmd = new SimpleDateFormat("dd/MM/yyyy");
             Date NgayNV = fmd.parse(txtNgaynhapvien.getText());
 
+            // Kiểm tra giá trị của combobox để xác định loại bảo hiểm
             if (cobLoaiBH.getSelectedItem().equals("y")) {
+                // Tạo đối tượng BENHNHANBAOHIEMYTE nếu là bảo hiểm y tế
                 benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(), txtHoten.getText(), NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
             } else {
+                // Tạo đối tượng BENHNHANBAOHIEMXAHOI nếu là bảo hiểm xã hội
                 benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(), txtHoten.getText(), NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
             }
         } catch (ParseException e) {
@@ -266,6 +269,7 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
         }
         return benhnhan;
     }
+
     private void btnThemActionPerformed(java.awt.event.ActionEvent evt) {                                        
         BENHNHAN benhnhan = ThemBenhnhan();
         if (benhnhan != null) {
@@ -317,7 +321,7 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             }
             txtNgaynhapvien.setText(NgayNV);
             cobLoaiBH.select(String.valueOf(bn.getLoaiBH()));
-            ckbPhongTYC.setSelected(bn.PhongTYC);
+            ckbPhongTYC.setSelected(bn.getPhongTYC());  
         } else {
             JOptionPane.showMessageDialog(this, "Không tìm thấy bệnh nhân");
         }

@@ -168,5 +168,6 @@ public abstract class BENHNHAN implements IVIENPHI{
         return new Object[]{MABN,Hoten,Ngaynhapvien, LichHen, GhiChu,PhongTYC,LoaiBH,TinhhoadonVP()};
 
     }
+
 }
 
