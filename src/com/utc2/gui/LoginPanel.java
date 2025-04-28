@@ -310,16 +310,23 @@ public class LoginPanel extends JPanel {
     private void showRegisterDialog() {
         JTextField usernameField = new JTextField();
         JPasswordField passwordField = new JPasswordField();
+        JPasswordField confirmPasswordField = new JPasswordField();
         JTextField fullNameField = new JTextField();
         JTextField emailField = new JTextField();
         JTextField phoneField = new JTextField();
         JComboBox<String> roleComboBox = new JComboBox<>(new String[]{"Bác sĩ", "Bệnh nhân"});
 
+<<<<<<< HEAD
         JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
+=======
+        JPanel panel = new JPanel(new GridLayout(7, 2, 5, 5));
+>>>>>>> development
         panel.add(new JLabel("Tên đăng nhập:"));
         panel.add(usernameField);
         panel.add(new JLabel("Mật khẩu:"));
         panel.add(passwordField);
+        panel.add(new JLabel("Nhập lại mật khẩu:"));
+        panel.add(confirmPasswordField); 
         panel.add(new JLabel("Họ tên:"));
         panel.add(fullNameField);
         panel.add(new JLabel("Email:"));
@@ -335,6 +342,7 @@ public class LoginPanel extends JPanel {
         if (result == JOptionPane.OK_OPTION) {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
             String fullName = fullNameField.getText();
             String email = emailField.getText();
             String phone = phoneField.getText();
@@ -342,6 +350,11 @@ public class LoginPanel extends JPanel {
 
             if (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || email.isEmpty() || phone.isEmpty()) {
                 ExceptionUtils.handleValidationException(this, "Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+                ExceptionUtils.handleValidationException(this, "Mật khẩu nhập lại không khớp!");
                 return;
             }
 
