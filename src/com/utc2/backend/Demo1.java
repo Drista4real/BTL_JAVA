@@ -250,19 +250,32 @@ public class Demo1 {
                 System.out.println("Không có bệnh nhân nào đã đặt lịch hẹn.");
             }
         }
-
-        // Tìm kiếm bệnh nhân có ghi chú chứa từ khóa
-        public void TimBenhNhanTheoGhiChu(String tuKhoa) {
-            boolean found = false;
-            System.out.println("Kết quả tìm kiếm bệnh nhân theo ghi chú chứa từ khóa: \"" + tuKhoa + "\"");
-            for (BENHNHAN benhnhan : Danhsach.values()) {
-                if (benhnhan.getGhiChu() != null && benhnhan.getGhiChu().toLowerCase().contains(tuKhoa.toLowerCase())) {
-                    System.out.println("Mã BN: " + benhnhan.getMABN() + " | Họ tên: " + benhnhan.getHoten() + " | Ghi chú: " + benhnhan.getGhiChu());
-                    found = true;
+     // Tìm kiếm bệnh nhân theo từ khóa (mã BN hoặc họ tên chứa từ khóa)
+        public List<BENHNHAN> TimKiem(String tuKhoa) {
+            List<BENHNHAN> ketQua = new ArrayList<>();
+            if (tuKhoa == null || tuKhoa.trim().isEmpty()) {
+                return ketQua; // trả về danh sách rỗng nếu từ khóa trống
+            }
+            
+            tuKhoa = tuKhoa.trim().toLowerCase();
+            for (BENHNHAN bn : this.Danhsach.values()) {
+                if (bn.getMABN().toLowerCase().contains(tuKhoa) || bn.getHoten().toLowerCase().contains(tuKhoa)) {
+                    ketQua.add(bn);
                 }
             }
-            if (!found) {
-                System.out.println("Không tìm thấy bệnh nhân nào có ghi chú chứa từ khóa \"" + tuKhoa + "\".");
+            return ketQua;
+        }
+
+        // Hàm tiện lợi để in danh sách bệnh nhân theo từ khóa
+        public void InKetQuaTimKiem(String tuKhoa) {
+            List<BENHNHAN> danhSachTimThay = TimKiem(tuKhoa);
+            if (danhSachTimThay.isEmpty()) {
+                System.out.println("Không tìm thấy bệnh nhân nào với từ khóa: " + tuKhoa);
+            } else {
+                System.out.println("Danh sách bệnh nhân tìm được:");
+                for (BENHNHAN bn : danhSachTimThay) {
+                    System.out.println("Mã BN: " + bn.getMABN() + " | Họ tên: " + bn.getHoten());
+                }
             }
         }
 
