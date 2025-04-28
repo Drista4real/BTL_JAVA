@@ -333,38 +333,6 @@ public class Demo1 {
                 System.out.println("Bệnh nhân không tồn tại.");
             }
         }
-        public void XoaForm() {
-            if (parentPanel != null) {
-                // Đóng cửa sổ JFrame chứa JPanel
-                if (parentPanel.getParent() instanceof JFrame) {
-                    JFrame frame = (JFrame) parentPanel.getParent();
-                    frame.dispose();  // Đóng JFrame
-                    System.out.println("Form đã được đóng.");
-                } else {
-                    // Nếu không phải là JFrame, ta ẩn JPanel
-                    parentPanel.setVisible(false); // Ẩn form hiện tại
-                    System.out.println("Form đã được ẩn.");
-                }
-            } else {
-                System.out.println("Không có form để xóa.");
-            }
-        }
-        public void XoaForm1() {
-            if (parentPanel != null) {
-                // Đóng cửa sổ JFrame chứa JPanel
-                if (parentPanel.getParent() instanceof JFrame) {
-                    JFrame frame = (JFrame) parentPanel.getParent();
-                    frame.dispose();  // Đóng JFrame
-                    System.out.println("Form đã được đóng.");
-                } else {
-                    // Nếu không phải là JFrame, ta ẩn JPanel
-                    parentPanel.setVisible(false); // Ẩn form hiện tại
-                    System.out.println("Form đã được ẩn.");
-                }
-            } else {
-                System.out.println("Không có form để xóa.");
-            }
-        }
 
 
 }
