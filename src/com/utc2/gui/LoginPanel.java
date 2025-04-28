@@ -33,7 +33,7 @@ public class LoginPanel extends JPanel {
         loadBackgroundImage();
         initComponents();
         // Thêm tài khoản admin mặc định
-        users.put("admin", new User("admin", "admin", "Administrator", "admin@example.com", "0123456789", "admin"));
+        users.put("admin", new User("admin", "admin", "Administrator", "admin@example.com", "0123456789", com.utc2.entity.Role.DOCTOR));
     }
 
     private void loadBackgroundImage() {
@@ -200,8 +200,47 @@ public class LoginPanel extends JPanel {
 
         User user = users.get(username);
         if (user != null && user.getPassword().equals(password)) {
+            if (user.getRole() == com.utc2.entity.Role.DOCTOR) {
+                SwingUtilities.invokeLater(() -> {
+                    JFrame doctorFrame = new DoctorMainFrame(user);
+                    doctorFrame.setVisible(true);
+                    Window w = SwingUtilities.getWindowAncestor(this);
+                    if (w != null) w.dispose();
+                });
+                return;
+            }
+            if (mainFrame == null) {
+                // Nếu LoginPanel không có mainFrame (từ logout), tạo lại MainFrame và thay thế contentPane
+                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                MainFrame newMainFrame = new MainFrame();
+                topFrame.setContentPane(newMainFrame.getContentPane());
+                topFrame.revalidate();
+                topFrame.repaint();
+                newMainFrame.setCurrentUser(user);
+                if (user.getRole() == com.utc2.entity.Role.PATIENT) {
+                    SwingUtilities.invokeLater(() -> {
+                        JFrame patientFrame = new PatientMainFrame(user);
+                        patientFrame.setVisible(true);
+                        topFrame.dispose();
+                    });
+                    return;
+                }
+                // Xóa thông tin đăng nhập
+                usernameField.setText("");
+                passwordField.setText("");
+                showPasswordCheckBox.setSelected(false);
+                passwordField.setEchoChar('•');
+                return;
+            }
             mainFrame.setCurrentUser(user);
-            mainFrame.showMainContent();
+            if (user.getRole() == com.utc2.entity.Role.PATIENT) {
+                SwingUtilities.invokeLater(() -> {
+                    JFrame patientFrame = new PatientMainFrame(user);
+                    patientFrame.setVisible(true);
+                    SwingUtilities.getWindowAncestor(this).dispose();
+                });
+                return;
+            }
             // Xóa thông tin đăng nhập
             usernameField.setText("");
             passwordField.setText("");
@@ -275,6 +314,7 @@ public class LoginPanel extends JPanel {
         JTextField fullNameField = new JTextField();
         JTextField emailField = new JTextField();
         JTextField phoneField = new JTextField();
+        JComboBox<String> roleComboBox = new JComboBox<>(new String[]{"Bác sĩ", "Bệnh nhân"});
 
         JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
         panel.add(new JLabel("Tên đăng nhập:"));
@@ -289,6 +329,8 @@ public class LoginPanel extends JPanel {
         panel.add(emailField);
         panel.add(new JLabel("Số điện thoại:"));
         panel.add(phoneField);
+        panel.add(new JLabel("Vai trò:"));
+        panel.add(roleComboBox);
 
         int result = JOptionPane.showConfirmDialog(this, panel, "Đăng ký tài khoản",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -300,6 +342,7 @@ public class LoginPanel extends JPanel {
             String fullName = fullNameField.getText();
             String email = emailField.getText();
             String phone = phoneField.getText();
+            String roleStr = (String) roleComboBox.getSelectedItem();
 
             if (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || email.isEmpty() || phone.isEmpty()) {
                 ExceptionUtils.handleValidationException(this, "Vui lòng nhập đầy đủ thông tin!");
@@ -324,7 +367,8 @@ public class LoginPanel extends JPanel {
                 return;
             }
 
-            users.put(username, new User(username, password, fullName, email, phone, "user"));
+            com.utc2.entity.Role role = roleStr.equals("Bác sĩ") ? com.utc2.entity.Role.DOCTOR : com.utc2.entity.Role.PATIENT;
+            users.put(username, new User(username, password, fullName, email, phone, role));
             JOptionPane.showMessageDialog(this, "Đăng ký thành công!");
         }
     }
