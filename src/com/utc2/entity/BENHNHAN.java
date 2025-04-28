@@ -22,8 +22,35 @@ public abstract class BENHNHAN implements IVIENPHI{
     protected Date Ngaynhapvien;
     protected Boolean PhongTYC ;
     protected Scanner sc;
+    private String mabaohiem;
+    private boolean phongtheoyeucau;
+    private String loaibaohiem;
 
-//    protected final double DGP = 150000;
+
+    public String getMabaohiem() {
+        return mabaohiem;
+    }
+
+    public void setMabaohiem(String mabaohiem) {
+        this.mabaohiem = mabaohiem;
+    }
+
+    public boolean isPhongtheoyeucau() {
+        return phongtheoyeucau;
+    }
+
+    public void setPhongtheoyeucau(boolean phongtheoyeucau) {
+        this.phongtheoyeucau = phongtheoyeucau;
+    }
+
+    public String getLoaibaohiem() {
+        return loaibaohiem;
+    }
+
+    public void setLoaibaohiem(String loaibaohiem) {
+        this.loaibaohiem = loaibaohiem;
+    }
+
 
     public char getLoaiBH() {
         return LoaiBH;

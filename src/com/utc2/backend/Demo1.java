@@ -250,35 +250,31 @@ public class Demo1 {
                 System.out.println("Không có bệnh nhân nào đã đặt lịch hẹn.");
             }
         }
-     // Tìm kiếm bệnh nhân theo từ khóa (mã BN hoặc họ tên chứa từ khóa)
-        public List<BENHNHAN> TimKiem(String tuKhoa) {
-            List<BENHNHAN> ketQua = new ArrayList<>();
-            if (tuKhoa == null || tuKhoa.trim().isEmpty()) {
-                return ketQua; // trả về danh sách rỗng nếu từ khóa trống
+        public BENHNHAN Tim1(String mabn) {
+            if (mabn == null || mabn.trim().isEmpty()) {
+                return null;
             }
-            
-            tuKhoa = tuKhoa.trim().toLowerCase();
+
+            mabn = mabn.trim();
             for (BENHNHAN bn : this.Danhsach.values()) {
-                if (bn.getMABN().toLowerCase().contains(tuKhoa) || bn.getHoten().toLowerCase().contains(tuKhoa)) {
-                    ketQua.add(bn);
+                if (bn.getMABN().equals(mabn)) {
+                    return bn;
                 }
             }
-            return ketQua;
+            return null;
         }
-
-        // Hàm tiện lợi để in danh sách bệnh nhân theo từ khóa
-        public void InKetQuaTimKiem(String tuKhoa) {
-            List<BENHNHAN> danhSachTimThay = TimKiem(tuKhoa);
-            if (danhSachTimThay.isEmpty()) {
-                System.out.println("Không tìm thấy bệnh nhân nào với từ khóa: " + tuKhoa);
+     // Hàm in kết quả tìm kiếm theo mã bệnh nhân
+        public void InKetQuaTimTheoMa(String mabn) {
+            BENHNHAN bn = Tim1(mabn);
+            if (bn != null) {
+                System.out.println("Đã tìm thấy bệnh nhân:");
+                System.out.println("Mã BN: " + bn.getMABN() + " | Họ tên: " + bn.getHoten());
             } else {
-                System.out.println("Danh sách bệnh nhân tìm được:");
-                for (BENHNHAN bn : danhSachTimThay) {
-                    System.out.println("Mã BN: " + bn.getMABN() + " | Họ tên: " + bn.getHoten());
-                }
+                System.out.println("Không tìm thấy bệnh nhân với mã: " + mabn);
             }
         }
 
+ 
         // Đếm số lượng bệnh nhân có ghi chú
         public void DemSoBenhNhanCoGhiChu() {
             int count = 0;
@@ -304,16 +300,28 @@ public class Demo1 {
             }
         }
 
-        // Sửa thông tin bệnh nhân
+     // Sửa thông tin bệnh nhân 
         public void SuaNhanVien(String mabn, BENHNHAN benhnhanMoi) {
             BENHNHAN benhnhanCu = Tim(mabn);
             if (benhnhanCu != null) {
-                Danhsach.put(mabn, benhnhanMoi);
-                System.out.println("Thông tin bệnh nhân " + mabn + " đã được cập nhật.");
+                try {
+                    benhnhanCu.setHoten(benhnhanMoi.getHoten()); 
+                    benhnhanCu.setNgaynhapvien(benhnhanMoi.getNgaynhapvien());
+                    benhnhanCu.setMabaohiem(benhnhanMoi.getMabaohiem());
+                    benhnhanCu.setPhongtheoyeucau(benhnhanMoi.isPhongtheoyeucau());
+                    benhnhanCu.setLoaibaohiem(benhnhanMoi.getLoaibaohiem());
+                    benhnhanCu.setLichHen(benhnhanMoi.getLichHen());
+                    benhnhanCu.setGhiChu(benhnhanMoi.getGhiChu());
+
+                    System.out.println("Thông tin bệnh nhân " + mabn + " đã được cập nhật thành công.");
+                } catch (Exception e) {
+                    System.out.println("Lỗi khi cập nhật bệnh nhân: " + e.getMessage());
+                }
             } else {
                 System.out.println("Bệnh nhân không tồn tại!");
             }
         }
+
 
         // Xóa bệnh nhân khỏi hệ thống
         public void XoaNhanVien(String mabn) {
