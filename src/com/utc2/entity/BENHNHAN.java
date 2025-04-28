@@ -25,6 +25,15 @@ public abstract class BENHNHAN implements IVIENPHI{
     private String mabaohiem;
     private boolean phongtheoyeucau;
     private String loaibaohiem;
+    private String mabenhnhan;
+
+    public String getMabenhnhan() {
+        return mabenhnhan;
+    }
+
+    public void setMabenhnhan(String mabenhnhan) {
+        this.mabenhnhan = mabenhnhan;
+    }
 
 
     public String getMabaohiem() {

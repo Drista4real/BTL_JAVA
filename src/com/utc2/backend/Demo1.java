@@ -321,6 +321,15 @@ public class Demo1 {
                 System.out.println("Bệnh nhân không tồn tại!");
             }
         }
+        // Tìm kiếm bệnh nhân bẳng mã bệnh nhân 
+        public static BENHNHAN timBenhNhanTheoMaBenhNhan(ArrayList<BENHNHAN> danhSachBenhNhan, String maBenhNhan) {
+            for (BENHNHAN benhNhan : danhSachBenhNhan) {
+                if (benhNhan.getMabenhnhan().equalsIgnoreCase(maBenhNhan)) {
+                    return benhNhan; // Tìm thấy thì trả về ngay
+                }
+            }
+            return null; // Không tìm thấy
+        }
 
 
         // Xóa bệnh nhân khỏi hệ thống
