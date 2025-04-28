@@ -271,15 +271,18 @@ public class LoginPanel extends JPanel {
     private void showRegisterDialog() {
         JTextField usernameField = new JTextField();
         JPasswordField passwordField = new JPasswordField();
+        JPasswordField confirmPasswordField = new JPasswordField();
         JTextField fullNameField = new JTextField();
         JTextField emailField = new JTextField();
         JTextField phoneField = new JTextField();
 
-        JPanel panel = new JPanel(new GridLayout(5, 2, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
         panel.add(new JLabel("Tên đăng nhập:"));
         panel.add(usernameField);
         panel.add(new JLabel("Mật khẩu:"));
         panel.add(passwordField);
+        panel.add(new JLabel("Nhập lại mật khẩu:"));
+        panel.add(confirmPasswordField); 
         panel.add(new JLabel("Họ tên:"));
         panel.add(fullNameField);
         panel.add(new JLabel("Email:"));
@@ -293,12 +296,18 @@ public class LoginPanel extends JPanel {
         if (result == JOptionPane.OK_OPTION) {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
             String fullName = fullNameField.getText();
             String email = emailField.getText();
             String phone = phoneField.getText();
 
             if (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || email.isEmpty() || phone.isEmpty()) {
                 ExceptionUtils.handleValidationException(this, "Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+                ExceptionUtils.handleValidationException(this, "Mật khẩu nhập lại không khớp!");
                 return;
             }
 
