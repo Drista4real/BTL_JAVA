@@ -9,149 +9,124 @@ import com.utc2.entity.DataManager;
 import com.utc2.entity.Appointment;
 
 public class PatientMainFrame extends JFrame {
-    private JPanel mainPanel;
-    private CardLayout cardLayout;
-    private JButton currentButton;
     private User currentUser;
-    private JLabel userNameLabel;
-    private JLabel avatarLabel;
-    private JPanel navPanel;
+    private JPanel contentPanel;
+    private CardLayout cardLayout;
 
     public PatientMainFrame(User user) {
+        this.currentUser = user;
         setTitle("Hệ thống quản lý bệnh nhân - Bệnh nhân");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 700);
+        setSize(1100, 700);
         setLocationRelativeTo(null);
-        this.currentUser = user;
 
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-        mainPanel.add(new PatientDashboardPanel(currentUser.getUsername()), "DASHBOARD");
-        mainPanel.add(new PatientAppointmentPanel(currentUser.getUsername()), "APPOINTMENT");
+        // Sidebar màu xanh nhạt hơn
+        Color sidebarColor = new Color(93, 173, 226); // Xanh nhạt
+        Color sidebarButtonColor = new Color(93, 173, 226); // Xanh nhạt hơn nữa
+        Color sidebarButtonHover = new Color(100, 200, 230);
 
-        navPanel = createNavPanel();
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.add(mainPanel, BorderLayout.CENTER);
+        JPanel sidebar = new JPanel();
+        sidebar.setBackground(sidebarColor);
+        sidebar.setPreferredSize(new Dimension(250, getHeight()));
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
 
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(navPanel, BorderLayout.WEST);
-        getContentPane().add(contentPanel, BorderLayout.CENTER);
-
-        showDashboard();
-    }
-
-    private JPanel createNavPanel() {
-        JPanel navPanel = new JPanel();
-        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setBackground(new Color(180, 205, 230)); // Màu xanh nhạt
-        navPanel.setPreferredSize(new Dimension(250, getHeight()));
-
-        // Avatar panel
-        JPanel avatarPanel = new JPanel();
-        avatarPanel.setLayout(new BoxLayout(avatarPanel, BoxLayout.Y_AXIS));
-        avatarPanel.setBackground(new Color(180, 205, 230));
-        avatarPanel.setMaximumSize(new Dimension(250, 200));
-        avatarPanel.setPreferredSize(new Dimension(250, 200));
-        avatarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        avatarLabel = new JLabel();
+        // Avatar
+        JLabel avatarLabel = new JLabel();
         avatarLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         avatarLabel.setPreferredSize(new Dimension(120, 120));
         avatarLabel.setMaximumSize(new Dimension(120, 120));
-        // Tạo avatar mặc định với chữ cái đầu
-        BufferedImage image = new BufferedImage(120, 120, BufferedImage.TYPE_INT_ARGB);
+        avatarLabel.setIcon(createAvatarIcon(user.getFullName()));
+        sidebar.add(Box.createVerticalStrut(30));
+        sidebar.add(avatarLabel);
+
+        // Tên
+        JLabel nameLabel = new JLabel(user.getFullName());
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        nameLabel.setForeground(Color.WHITE);
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        sidebar.add(Box.createVerticalStrut(10));
+        sidebar.add(nameLabel);
+        sidebar.add(Box.createVerticalStrut(30));
+
+        // Menu buttons
+        String[] menu = {"Thông tin cá nhân", "Bệnh án", "Đơn thuốc", "Thanh toán", "Đặt lịch khám", "Đăng xuất"};
+        JPanel menuPanel = new JPanel();
+        menuPanel.setBackground(sidebarColor);
+        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
+        JButton[] menuButtons = new JButton[menu.length];
+        for (int i = 0; i < menu.length; i++) {
+            menuButtons[i] = new JButton(menu[i]);
+            menuButtons[i].setAlignmentX(Component.CENTER_ALIGNMENT);
+            menuButtons[i].setMaximumSize(new Dimension(250, 48));
+            menuButtons[i].setMinimumSize(new Dimension(250, 48));
+            menuButtons[i].setPreferredSize(new Dimension(250, 48));
+            menuButtons[i].setFont(new Font("Segoe UI", Font.BOLD, 16));
+            menuButtons[i].setBackground(sidebarButtonColor);
+            menuButtons[i].setForeground(Color.WHITE);
+            menuButtons[i].setFocusPainted(false);
+            menuButtons[i].setBorderPainted(false);
+            menuButtons[i].setCursor(new Cursor(Cursor.HAND_CURSOR));
+            int idx = i;
+            menuButtons[i].addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    menuButtons[idx].setBackground(sidebarButtonHover);
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    menuButtons[idx].setBackground(sidebarButtonColor);
+                }
+            });
+            menuPanel.add(menuButtons[i]);
+            menuPanel.add(Box.createVerticalStrut(10));
+        }
+        sidebar.add(menuPanel);
+        sidebar.add(Box.createVerticalGlue());
+
+        // Nội dung chính (CardLayout)
+        cardLayout = new CardLayout();
+        contentPanel = new JPanel(cardLayout);
+        contentPanel.add(new PersonalInfoPanel(user), "Thông tin cá nhân");
+        contentPanel.add(new MedicalRecordPanel(user), "Bệnh án");
+        contentPanel.add(new PrescriptionPanel(user), "Đơn thuốc");
+        contentPanel.add(new PaymentPanel(user), "Thanh toán");
+        contentPanel.add(new AppointmentPanel(user), "Đặt lịch khám");
+
+        // Sự kiện chuyển tab
+        for (int i = 0; i < menu.length - 1; i++) {
+            int idx = i;
+            menuButtons[i].addActionListener(e -> cardLayout.show(contentPanel, menu[idx]));
+        }
+        // Đăng xuất
+        menuButtons[menu.length - 1].addActionListener(e -> {
+            int choice = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+            if (choice == JOptionPane.YES_OPTION) {
+                this.dispose();
+                // Hiện màn hình đăng nhập nếu cần
+            }
+        });
+
+        // Layout tổng
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(sidebar, BorderLayout.WEST);
+        getContentPane().add(contentPanel, BorderLayout.CENTER);
+
+        cardLayout.show(contentPanel, "Thông tin cá nhân");
+    }
+
+    // Tạo avatar hình tròn với chữ cái đầu
+    private Icon createAvatarIcon(String name) {
+        int size = 120;
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = image.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setColor(Color.LIGHT_GRAY);
-        g2d.fillOval(0, 0, 120, 120);
+        g2d.fillOval(0, 0, size, size);
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
         FontMetrics fm = g2d.getFontMetrics();
-        String letter = currentUser.getFullName().substring(0, 1).toUpperCase();
-        g2d.drawString(letter, (120 - fm.stringWidth(letter)) / 2, ((120 - fm.getHeight()) / 2) + fm.getAscent());
+        String letter = name.substring(0, 1).toUpperCase();
+        g2d.drawString(letter, (size - fm.stringWidth(letter)) / 2, ((size - fm.getHeight()) / 2) + fm.getAscent());
         g2d.dispose();
-        avatarLabel.setIcon(new ImageIcon(image));
-        avatarPanel.add(Box.createVerticalStrut(30));
-        avatarPanel.add(avatarLabel);
-        avatarPanel.add(Box.createVerticalStrut(15));
-        userNameLabel = new JLabel(currentUser.getFullName());
-        userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        userNameLabel.setForeground(new Color(41, 128, 185));
-        userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        avatarPanel.add(userNameLabel);
-        navPanel.add(avatarPanel);
-        navPanel.add(Box.createVerticalStrut(20));
-
-        JButton btnDashboard = createNavButton("Trang chủ");
-        JButton btnAppointment = createNavButton("Đặt lịch hẹn");
-        JButton btnLogout = createNavButton("Đăng xuất");
-
-        btnDashboard.addActionListener(e -> showDashboard());
-        btnAppointment.addActionListener(e -> showAppointment());
-        btnLogout.addActionListener(e -> logout());
-
-        navPanel.add(btnDashboard);
-        navPanel.add(Box.createVerticalStrut(1));
-        navPanel.add(btnAppointment);
-        navPanel.add(Box.createVerticalStrut(1));
-        navPanel.add(btnLogout);
-        navPanel.add(Box.createVerticalGlue());
-        return navPanel;
-    }
-
-    private JButton createNavButton(String text) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(250, 45));
-        button.setMaximumSize(new Dimension(250, 45));
-        button.setMinimumSize(new Dimension(250, 45));
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setForeground(new Color(41, 128, 185));
-        button.setBackground(new Color(180, 205, 230));
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setMargin(new Insets(0, 25, 0, 0));
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (button != currentButton) {
-                    button.setBackground(new Color(200, 220, 240));
-                }
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                if (button != currentButton) {
-                    button.setBackground(new Color(180, 205, 230));
-                }
-            }
-        });
-        return button;
-    }
-
-    private void updateButtonSelection(JButton selectedButton) {
-        if (currentButton != null) {
-            currentButton.setBackground(new Color(180, 205, 230));
-        }
-        selectedButton.setBackground(new Color(200, 220, 240));
-        currentButton = selectedButton;
-    }
-
-    private void showDashboard() {
-        cardLayout.show(mainPanel, "DASHBOARD");
-    }
-    private void showAppointment() {
-        cardLayout.show(mainPanel, "APPOINTMENT");
-    }
-    private void logout() {
-        int choice = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (choice == JOptionPane.YES_OPTION) {
-            this.dispose();
-            JFrame loginFrame = new JFrame();
-            loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            loginFrame.setSize(1200, 700);
-            loginFrame.setLocationRelativeTo(null);
-            loginFrame.setContentPane(new LoginPanel(null));
-            loginFrame.setVisible(true);
-        }
+        return new ImageIcon(image);
     }
 }
 

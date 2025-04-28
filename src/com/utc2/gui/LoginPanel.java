@@ -316,7 +316,7 @@ public class LoginPanel extends JPanel {
         JTextField phoneField = new JTextField();
         JComboBox<String> roleComboBox = new JComboBox<>(new String[]{"Bác sĩ", "Bệnh nhân"});
 
-        JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(7, 2, 5, 5));
         panel.add(new JLabel("Tên đăng nhập:"));
         panel.add(usernameField);
         panel.add(new JLabel("Mật khẩu:"));
