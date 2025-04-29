@@ -1,8 +1,8 @@
-package com.utc2.gui;
+package classes;
 
 import javax.swing.*;
 import java.awt.*;
-import com.utc2.entity.User;
+import model.entity.User;
 
 public class PrescriptionPanel extends JPanel {
     public PrescriptionPanel(User user) {

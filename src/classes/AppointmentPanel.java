@@ -1,11 +1,11 @@
-package com.utc2.gui;
+package classes;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.table.DefaultTableModel;
-import com.utc2.entity.User;
+import model.entity.User;
 
 public class AppointmentPanel extends JPanel {
     private DefaultTableModel tableModel;
