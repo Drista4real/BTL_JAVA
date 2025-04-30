@@ -361,23 +361,10 @@ public class MedicalRecord {
                 }
                 sb.append("\n");
             }
-
+        }
 
         return sb.toString();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MedicalRecord record = (MedicalRecord) o;
-        return Objects.equals(recordId, record.recordId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(recordId);
-    }
 }
-
 
