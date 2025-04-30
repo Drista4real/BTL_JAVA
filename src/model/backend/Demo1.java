@@ -17,7 +17,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
-// anh Vinh đẹp 
+// anh Vinh đẹp
 
 public class Demo1 {
     private Hashtable<String, BENHNHAN> Danhsach;
