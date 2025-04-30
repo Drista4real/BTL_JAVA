@@ -182,15 +182,41 @@ public class PatientMainFrame extends JFrame {
 
 class PersonalInfoPanel extends JPanel {
     public PersonalInfoPanel(User user) {
-        setLayout(new GridLayout(3, 2, 10, 10));
+        setLayout(new GridBagLayout());
         setBackground(Color.WHITE);
-        setBorder(BorderFactory.createTitledBorder("Thông tin cá nhân"));
-        add(new JLabel("Họ tên:"));
-        add(new JLabel(user.getFullName()));
-        add(new JLabel("Số điện thoại:"));
-        add(new JLabel(user.getPhone()));
-        add(new JLabel("Tên đăng nhập:"));
-        add(new JLabel(user.getUsername()));
+        setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createEmptyBorder(20, 30, 20, 30),
+            javax.swing.BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true)
+        ));
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 15);
+        Font valueFont = new Font("Segoe UI", Font.PLAIN, 15);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0; gbc.gridy = 0;
+        JLabel l1 = new JLabel("Họ tên:"); l1.setFont(labelFont); add(l1, gbc); gbc.gridx = 1;
+        JLabel v1 = new JLabel(user.getFullName()); v1.setFont(valueFont); add(v1, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        JLabel l2 = new JLabel("Số điện thoại:"); l2.setFont(labelFont); add(l2, gbc); gbc.gridx = 1;
+        JLabel v2 = new JLabel(user.getPhone()); v2.setFont(valueFont); add(v2, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        JLabel l4 = new JLabel("Ngày sinh:"); l4.setFont(labelFont); add(l4, gbc); gbc.gridx = 1;
+        JLabel v4 = new JLabel(user.getDateOfBirth()); v4.setFont(valueFont); add(v4, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        JLabel l5 = new JLabel("Giới tính:"); l5.setFont(labelFont); add(l5, gbc); gbc.gridx = 1;
+        JLabel v5 = new JLabel(user.getGender()); v5.setFont(valueFont); add(v5, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        JLabel l6 = new JLabel("Nơi cư trú:"); l6.setFont(labelFont); add(l6, gbc); gbc.gridx = 1;
+        JLabel v6 = new JLabel(user.getAddress()); v6.setFont(valueFont); add(v6, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        JLabel l7 = new JLabel("Số CCCD:"); l7.setFont(labelFont); add(l7, gbc); gbc.gridx = 1;
+        JLabel v7 = new JLabel(user.getCccd()); v7.setFont(valueFont); add(v7, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        JLabel l8 = new JLabel("Có giấy BHYT không:"); l8.setFont(labelFont); add(l8, gbc); gbc.gridx = 1;
+        JLabel v8 = new JLabel(user.isHasInsurance() ? "Có" : "Không"); v8.setFont(valueFont); add(v8, gbc);
+        gbc.gridx = 0; gbc.gridy++;
+        gbc.gridwidth = 2;
+        add(Box.createVerticalGlue(), gbc);
     }
 }
 
