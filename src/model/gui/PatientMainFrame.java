@@ -26,7 +26,10 @@ public class PatientMainFrame extends JFrame {
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
-        mainPanel.add(new PatientDashboardPanel(currentUser.getUsername()), "DASHBOARD");
+        mainPanel.add(new PersonalInfoPanel(currentUser), "PERSONAL_INFO");
+        mainPanel.add(new MedicalRecordPanel(currentUser), "MEDICAL_RECORD");
+        mainPanel.add(new PrescriptionPanel(currentUser), "PRESCRIPTION");
+        mainPanel.add(new PaymentPanel(currentUser), "PAYMENT");
         mainPanel.add(new PatientAppointmentPanel(currentUser.getUsername()), "APPOINTMENT");
 
         navPanel = createNavPanel();
@@ -37,7 +40,7 @@ public class PatientMainFrame extends JFrame {
         getContentPane().add(navPanel, BorderLayout.WEST);
         getContentPane().add(contentPanel, BorderLayout.CENTER);
 
-        showDashboard();
+        showPersonalInfo();
     }
 
     private JPanel createNavPanel() {
@@ -82,15 +85,28 @@ public class PatientMainFrame extends JFrame {
         navPanel.add(avatarPanel);
         navPanel.add(Box.createVerticalStrut(20));
 
-        JButton btnDashboard = createNavButton("Trang chủ");
-        JButton btnAppointment = createNavButton("Đặt lịch hẹn");
+        // Các nút chức năng
+        JButton btnPersonalInfo = createNavButton("Xem thông tin cá nhân");
+        JButton btnMedicalRecord = createNavButton("Xem bệnh án");
+        JButton btnPrescription = createNavButton("Xem đơn thuốc");
+        JButton btnPayment = createNavButton("Thanh toán");
+        JButton btnAppointment = createNavButton("Đặt lịch khám");
         JButton btnLogout = createNavButton("Đăng xuất");
 
-        btnDashboard.addActionListener(e -> showDashboard());
+        btnPersonalInfo.addActionListener(e -> showPersonalInfo());
+        btnMedicalRecord.addActionListener(e -> showMedicalRecord());
+        btnPrescription.addActionListener(e -> showPrescription());
+        btnPayment.addActionListener(e -> showPayment());
         btnAppointment.addActionListener(e -> showAppointment());
         btnLogout.addActionListener(e -> logout());
 
-        navPanel.add(btnDashboard);
+        navPanel.add(btnPersonalInfo);
+        navPanel.add(Box.createVerticalStrut(1));
+        navPanel.add(btnMedicalRecord);
+        navPanel.add(Box.createVerticalStrut(1));
+        navPanel.add(btnPrescription);
+        navPanel.add(Box.createVerticalStrut(1));
+        navPanel.add(btnPayment);
         navPanel.add(Box.createVerticalStrut(1));
         navPanel.add(btnAppointment);
         navPanel.add(Box.createVerticalStrut(1));
@@ -135,8 +151,17 @@ public class PatientMainFrame extends JFrame {
         currentButton = selectedButton;
     }
 
-    private void showDashboard() {
-        cardLayout.show(mainPanel, "DASHBOARD");
+    private void showPersonalInfo() {
+        cardLayout.show(mainPanel, "PERSONAL_INFO");
+    }
+    private void showMedicalRecord() {
+        cardLayout.show(mainPanel, "MEDICAL_RECORD");
+    }
+    private void showPrescription() {
+        cardLayout.show(mainPanel, "PRESCRIPTION");
+    }
+    private void showPayment() {
+        cardLayout.show(mainPanel, "PAYMENT");
     }
     private void showAppointment() {
         cardLayout.show(mainPanel, "APPOINTMENT");
@@ -155,76 +180,53 @@ public class PatientMainFrame extends JFrame {
     }
 }
 
-class PatientDashboardPanel extends JPanel {
-    public PatientDashboardPanel(String username) {
-        setLayout(new BorderLayout(20, 20));
+class PersonalInfoPanel extends JPanel {
+    public PersonalInfoPanel(User user) {
+        setLayout(new GridLayout(3, 2, 10, 10));
         setBackground(Color.WHITE);
-        User user = DataManager.getInstance().getUsers().stream()
-            .filter(u -> u.getUsername().equals(username)).findFirst().orElse(null);
-        String fullName = user != null ? user.getFullName() : "";
-        String dob = ""; // Nếu có ngày sinh thì lấy ở đây
-        String phone = user != null ? user.getPhone() : "";
-        String note = user != null ? user.getNote() : "";
-        String illness = user != null ? user.getIllnessInfo() : "";
+        setBorder(BorderFactory.createTitledBorder("Thông tin cá nhân"));
+        add(new JLabel("Họ tên:"));
+        add(new JLabel(user.getFullName()));
+        add(new JLabel("Số điện thoại:"));
+        add(new JLabel(user.getPhone()));
+        add(new JLabel("Tên đăng nhập:"));
+        add(new JLabel(user.getUsername()));
+    }
+}
 
-        // Thông tin cá nhân
-        JPanel infoPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-        infoPanel.setBackground(Color.WHITE);
-        infoPanel.setBorder(BorderFactory.createTitledBorder("Thông tin cá nhân"));
-        infoPanel.add(new JLabel("Họ tên:"));
-        infoPanel.add(new JLabel(fullName));
-        infoPanel.add(new JLabel("Ngày sinh:"));
-        infoPanel.add(new JLabel(dob));
-        infoPanel.add(new JLabel("Số điện thoại:"));
-        infoPanel.add(new JLabel(phone));
+class MedicalRecordPanel extends JPanel {
+    public MedicalRecordPanel(User user) {
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
+        setBorder(BorderFactory.createTitledBorder("Bệnh án"));
+        JTextArea area = new JTextArea("Chức năng xem bệnh án đang phát triển.");
+        area.setEditable(false);
+        area.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        add(new JScrollPane(area), BorderLayout.CENTER);
+    }
+}
 
-        // Ghi chú của bác sĩ
-        JPanel notePanel = new JPanel(new BorderLayout());
-        notePanel.setBackground(Color.WHITE);
-        notePanel.setBorder(BorderFactory.createTitledBorder("Ghi chú của bác sĩ"));
-        JTextArea noteArea = new JTextArea(note);
-        noteArea.setEditable(false);
-        noteArea.setBackground(new Color(245, 245, 245));
-        noteArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        notePanel.add(new JScrollPane(noteArea), BorderLayout.CENTER);
-        notePanel.setPreferredSize(new Dimension(0, 80));
+class PrescriptionPanel extends JPanel {
+    public PrescriptionPanel(User user) {
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
+        setBorder(BorderFactory.createTitledBorder("Đơn thuốc"));
+        JTextArea area = new JTextArea("Chức năng xem đơn thuốc đang phát triển.");
+        area.setEditable(false);
+        area.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        add(new JScrollPane(area), BorderLayout.CENTER);
+    }
+}
 
-        // Thông tin bệnh tình
-        JPanel illnessPanel = new JPanel(new BorderLayout());
-        illnessPanel.setBackground(Color.WHITE);
-        illnessPanel.setBorder(BorderFactory.createTitledBorder("Thông tin bệnh tình"));
-        JTextArea illnessArea = new JTextArea(illness);
-        illnessArea.setEditable(false);
-        illnessArea.setBackground(new Color(245, 245, 245));
-        illnessArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        illnessPanel.add(new JScrollPane(illnessArea), BorderLayout.CENTER);
-        illnessPanel.setPreferredSize(new Dimension(0, 80));
-
-        // Nút đặt lịch hẹn và thanh toán
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 10));
-        actionPanel.setBackground(Color.WHITE);
-        JButton bookBtn = new JButton("Đặt lịch hẹn");
-        JButton payBtn = new JButton("Thanh toán");
-        actionPanel.add(bookBtn);
-        actionPanel.add(payBtn);
-
-        // Sự kiện mẫu cho nút
-        bookBtn.addActionListener(e -> JOptionPane.showMessageDialog(this, "Chức năng đặt lịch hẹn!"));
-        payBtn.addActionListener(e -> JOptionPane.showMessageDialog(this, "Chức năng thanh toán!"));
-
-        // Sắp xếp layout
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBackground(Color.WHITE);
-        centerPanel.add(infoPanel);
-        centerPanel.add(Box.createVerticalStrut(10));
-        centerPanel.add(notePanel);
-        centerPanel.add(Box.createVerticalStrut(10));
-        centerPanel.add(illnessPanel);
-        centerPanel.add(Box.createVerticalStrut(10));
-        centerPanel.add(actionPanel);
-
-        add(centerPanel, BorderLayout.CENTER);
+class PaymentPanel extends JPanel {
+    public PaymentPanel(User user) {
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
+        setBorder(BorderFactory.createTitledBorder("Thanh toán"));
+        JTextArea area = new JTextArea("Chức năng thanh toán đang phát triển.");
+        area.setEditable(false);
+        area.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        add(new JScrollPane(area), BorderLayout.CENTER);
     }
 }
 
