@@ -1,619 +1,664 @@
 package classes;
 
-
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import model.entity.VitalSigns;
+
 import model.entity.User;
-import model.entity.Role;
+import model.entity.VitalSigns;
 
 /**
- * Panel hiển thị và quản lý thông tin dấu hiệu sinh tồn của bệnh nhân
+ * Panel hiển thị và quản lý các dấu hiệu sinh tồn của bệnh nhân
  */
 public class VitalSignsPanel extends JPanel {
-    private User currentUser;
-    private String currentPatientId;
+    private User user;
+    private JTable vitalSignsTable;
+    private DefaultTableModel vitalSignsTableModel;
+    private JPanel detailPanel;
+    private JLabel patientInfoLabel;
     private List<VitalSigns> vitalSignsList;
 
-    // Các thành phần giao diện
-    private JTextField patientIdField;
+    // Các thành phần hiển thị chi tiết
     private JTextField temperatureField;
     private JTextField systolicBPField;
     private JTextField diastolicBPField;
     private JTextField heartRateField;
     private JTextField spO2Field;
+    private JTextField recordTimeField;
 
-    // Bảng hiển thị danh sách dấu hiệu sinh tồn
-    private JTable vitalSignsTable;
-    private DefaultTableModel vitalSignsTableModel;
-
-    // Biểu đồ hiển thị (giả lập, có thể mở rộng sau)
-    private JPanel chartPanel;
-
-    // Chế độ người dùng (true = bác sĩ/y tá, false = bệnh nhân)
-    private boolean medicalStaffMode;
-
-    /**
-     * Constructor với thông tin người dùng và mã bệnh nhân
-     * @param user Người dùng đang đăng nhập
-     * @param patientId Mã bệnh nhân cần theo dõi
-     */
-    public VitalSignsPanel(User user, String patientId) {
-        this.currentUser = user;
-        this.currentPatientId = patientId;
-        this.medicalStaffMode = isMedicalStaff(user);
+    public VitalSignsPanel(User user) {
+        this.user = user;
         this.vitalSignsList = new ArrayList<>();
 
-        initializeUI();
-    }
-
-    /**
-     * Constructor với thông tin người dùng, mã bệnh nhân và danh sách dấu hiệu sinh tồn
-     * @param user Người dùng đang đăng nhập
-     * @param patientId Mã bệnh nhân cần theo dõi
-     * @param vitalSignsList Danh sách dấu hiệu sinh tồn
-     */
-    public VitalSignsPanel(User user, String patientId, List<VitalSigns> vitalSignsList) {
-        this.currentUser = user;
-        this.currentPatientId = patientId;
-        this.medicalStaffMode = isMedicalStaff(user);
-        this.vitalSignsList = new ArrayList<>(vitalSignsList);
-
-        initializeUI();
-    }
-
-    /**
-     * Kiểm tra xem người dùng có phải là nhân viên y tế không
-     * @param user Người dùng cần kiểm tra
-     * @return true nếu là bác sĩ hoặc vai trò phù hợp, false nếu không phải
-     */
-    private boolean isMedicalStaff(User user) {
-        if (user == null || user.getRole() == null) return false;
-
-        // Kiểm tra vai trò - chỉ xét DOCTOR vì có thể không có vai trò NURSE
-        return Role.DOCTOR.equals(user.getRole());
-
-        // Nếu sau này hệ thống có thêm vai trò y tá, có thể mở rộng như sau:
-        // return Role.DOCTOR.equals(user.getRole()) || "NURSE".equals(user.getRole().toString());
-    }
-    /**
-     * Thiết lập danh sách dấu hiệu sinh tồn mới
-     * @param vitalSignsList Danh sách mới
-     */
-    public void setVitalSignsList(List<VitalSigns> vitalSignsList) {
-        this.vitalSignsList = new ArrayList<>(vitalSignsList);
-        updateVitalSignsTable();
-        updateChartPanel();
-    }
-
-    /**
-     * Thêm dấu hiệu sinh tồn vào danh sách
-     * @param vitalSigns Dấu hiệu sinh tồn cần thêm
-     */
-    public void addVitalSigns(VitalSigns vitalSigns) {
-        if (vitalSigns != null) {
-            vitalSignsList.add(vitalSigns);
-            updateVitalSignsTable();
-            updateChartPanel();
-        }
-    }
-
-    /**
-     * Thiết lập mã bệnh nhân mới
-     * @param patientId Mã bệnh nhân mới
-     */
-    public void setPatientId(String patientId) {
-        this.currentPatientId = patientId;
-        patientIdField.setText(patientId);
-    }
-
-    /**
-     * Khởi tạo giao diện người dùng
-     */
-    private void initializeUI() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBorder(BorderFactory.createTitledBorder("Dấu hiệu sinh tồn"));
+        setBackground(Color.WHITE);
 
-        // Panel chính sử dụng JTabbedPane để chia thông tin theo tab
-        JTabbedPane tabbedPane = new JTabbedPane();
+        // Tạo panel chính với layout dạng split pane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setDividerLocation(200);
+        splitPane.setResizeWeight(0.3);
 
-        // Tab nhập dữ liệu mới
-        JPanel inputPanel = createInputPanel();
-        tabbedPane.addTab("Nhập dữ liệu", inputPanel);
+        // Panel hiển thị danh sách dấu hiệu sinh tồn
+        JPanel vitalSignsListPanel = createVitalSignsListPanel();
+        splitPane.setTopComponent(vitalSignsListPanel);
 
-        // Tab lịch sử
-        JPanel historyPanel = createHistoryPanel();
-        tabbedPane.addTab("Lịch sử", historyPanel);
+        // Panel hiển thị chi tiết dấu hiệu sinh tồn
+        detailPanel = createVitalSignsDetailPanel();
+        splitPane.setBottomComponent(detailPanel);
 
-        // Tab biểu đồ
-        chartPanel = createChartPanel();
-        tabbedPane.addTab("Biểu đồ", new JScrollPane(chartPanel));
+        add(splitPane, BorderLayout.CENTER);
 
-        // Thêm vào panel chính
-        add(tabbedPane, BorderLayout.CENTER);
+        // Panel các nút chức năng
+        JPanel buttonPanel = createButtonPanel();
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        // Tải dữ liệu mẫu
+        loadSampleVitalSigns();
     }
 
     /**
-     * Tạo panel nhập dữ liệu mới
-     * @return Panel nhập dữ liệu
+     * Tạo panel hiển thị danh sách dấu hiệu sinh tồn
      */
-    private JPanel createInputPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+    private JPanel createVitalSignsListPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Lịch sử dấu hiệu sinh tồn"));
 
-        // Panel chứa trường thông tin
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Dấu hiệu sinh tồn"));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        // Tạo các trường thông tin
-        patientIdField = new JTextField(15);
-        patientIdField.setText(currentPatientId);
-        patientIdField.setEditable(false); // ID bệnh nhân không được thay đổi trực tiếp
-
-        temperatureField = new JTextField(10);
-        systolicBPField = new JTextField(10);
-        diastolicBPField = new JTextField(10);
-        heartRateField = new JTextField(10);
-        spO2Field = new JTextField(10);
-
-        // Thiết lập quyền chỉnh sửa dựa vào vai trò
-        boolean canEdit = medicalStaffMode;
-        temperatureField.setEditable(canEdit);
-        systolicBPField.setEditable(canEdit);
-        diastolicBPField.setEditable(canEdit);
-        heartRateField.setEditable(canEdit);
-        spO2Field.setEditable(canEdit);
-
-        // Thêm các trường vào panel
-        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("Mã bệnh nhân:"), gbc);
-        gbc.gridx = 1; formPanel.add(patientIdField, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(new JLabel("Nhiệt độ (°C):"), gbc);
-        gbc.gridx = 1; formPanel.add(temperatureField, gbc);
-        gbc.gridx = 2; formPanel.add(new JLabel("Binh thường: 36.1-37.2°C"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(new JLabel("Huyết áp tâm thu (mmHg):"), gbc);
-        gbc.gridx = 1; formPanel.add(systolicBPField, gbc);
-        gbc.gridx = 2; formPanel.add(new JLabel("Bình thường: 90-120 mmHg"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3; formPanel.add(new JLabel("Huyết áp tâm trương (mmHg):"), gbc);
-        gbc.gridx = 1; formPanel.add(diastolicBPField, gbc);
-        gbc.gridx = 2; formPanel.add(new JLabel("Bình thường: 60-80 mmHg"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 4; formPanel.add(new JLabel("Nhịp tim (bpm):"), gbc);
-        gbc.gridx = 1; formPanel.add(heartRateField, gbc);
-        gbc.gridx = 2; formPanel.add(new JLabel("Bình thường: 60-100 bpm"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 5; formPanel.add(new JLabel("SpO2 (%):"), gbc);
-        gbc.gridx = 1; formPanel.add(spO2Field, gbc);
-        gbc.gridx = 2; formPanel.add(new JLabel("Bình thường: ≥ 95%"), gbc);
-
-        // Panel nút chức năng
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        if (canEdit) {
-            JButton saveButton = new JButton("Lưu");
-            saveButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    saveVitalSigns();
-                }
-            });
-
-            JButton clearButton = new JButton("Xóa trắng");
-            clearButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    clearInputFields();
-                }
-            });
-
-            buttonPanel.add(saveButton);
-            buttonPanel.add(clearButton);
-        }
-
-        // Panel quan sát
-        JPanel recentPanel = new JPanel(new BorderLayout(5, 5));
-        recentPanel.setBorder(BorderFactory.createTitledBorder("Dấu hiệu sinh tồn gần đây"));
-
-        JTextArea recentDataArea = new JTextArea(5, 30);
-        recentDataArea.setEditable(false);
-
-        // Hiển thị bản ghi mới nhất nếu có
-        if (!vitalSignsList.isEmpty()) {
-            VitalSigns latest = vitalSignsList.get(vitalSignsList.size() - 1);
-            recentDataArea.setText(createDetailedVitalSignsText(latest));
-        } else {
-            recentDataArea.setText("Chưa có dữ liệu");
-        }
-
-        recentPanel.add(new JScrollPane(recentDataArea), BorderLayout.CENTER);
-
-        // Thêm các panel con vào panel chính
-        panel.add(formPanel, BorderLayout.NORTH);
-        panel.add(recentPanel, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    /**
-     * Tạo panel hiển thị lịch sử
-     * @return Panel lịch sử
-     */
-    private JPanel createHistoryPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-
-        // Tạo bảng hiển thị lịch sử dấu hiệu sinh tồn
-        String[] columnNames = {"Thời gian", "Nhiệt độ (°C)", "Huyết áp (mmHg)", "Nhịp tim (bpm)", "SpO2 (%)"};
-        vitalSignsTableModel = new DefaultTableModel(columnNames, 0) {
+        // Tạo bảng hiển thị danh sách dấu hiệu sinh tồn
+        String[] columns = {"ID", "Bệnh nhân", "Nhiệt độ (°C)", "Huyết áp (mmHg)", "Nhịp tim (bpm)", "SpO2 (%)", "Thời gian"};
+        vitalSignsTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Không cho phép chỉnh sửa trực tiếp trên bảng
+                return false;
             }
         };
 
         vitalSignsTable = new JTable(vitalSignsTableModel);
-        vitalSignsTable.getColumnModel().getColumn(0).setPreferredWidth(150);
-        vitalSignsTable.getColumnModel().getColumn(1).setPreferredWidth(100);
-        vitalSignsTable.getColumnModel().getColumn(2).setPreferredWidth(120);
-        vitalSignsTable.getColumnModel().getColumn(3).setPreferredWidth(100);
-        vitalSignsTable.getColumnModel().getColumn(4).setPreferredWidth(100);
+        vitalSignsTable.setRowHeight(28);
+        vitalSignsTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        vitalSignsTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        vitalSignsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        updateVitalSignsTable();
-
-        // Panel hiển thị chi tiết bản ghi được chọn
-        JPanel detailPanel = new JPanel(new BorderLayout(5, 5));
-        detailPanel.setBorder(BorderFactory.createTitledBorder("Chi tiết"));
-
-        JTextArea detailArea = new JTextArea(5, 30);
-        detailArea.setEditable(false);
-
-        // Hiển thị chi tiết khi chọn một bản ghi
-        vitalSignsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    int selectedRow = vitalSignsTable.getSelectedRow();
-                    if (selectedRow >= 0 && selectedRow < vitalSignsList.size()) {
-                        VitalSigns selected = vitalSignsList.get(selectedRow);
-                        detailArea.setText(createDetailedVitalSignsText(selected));
-                    }
-                }
+        // Khi người dùng chọn một bản ghi, hiển thị chi tiết
+        vitalSignsTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && vitalSignsTable.getSelectedRow() >= 0) {
+                displayVitalSignsDetails(vitalSignsList.get(vitalSignsTable.getSelectedRow()));
             }
         });
 
-        detailPanel.add(new JScrollPane(detailArea), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(vitalSignsTable);
+        panel.add(scrollPane, BorderLayout.CENTER);
 
-        // Panel chức năng
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Thêm panel tìm kiếm ở phía trên
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel searchLabel = new JLabel("Tìm theo ID bệnh nhân:");
+        JTextField searchField = new JTextField(15);
+        JButton searchButton = new JButton("Tìm kiếm");
 
-        if (medicalStaffMode) {
-            JButton deleteButton = new JButton("Xóa bản ghi");
-            deleteButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    deleteSelectedRecord();
-                }
-            });
+        searchButton.addActionListener(e -> {
+            String patientId = searchField.getText().trim();
+            if (!patientId.isEmpty()) {
+                filterByPatientId(patientId);
+            } else {
+                updateVitalSignsTable(vitalSignsList);
+            }
+        });
 
-            actionPanel.add(deleteButton);
+        searchPanel.add(searchLabel);
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+        panel.add(searchPanel, BorderLayout.NORTH);
+
+        return panel;
+    }
+
+    /**
+     * Tạo panel hiển thị chi tiết dấu hiệu sinh tồn
+     */
+    private JPanel createVitalSignsDetailPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Chi tiết dấu hiệu sinh tồn"));
+
+        // Label hiển thị thông tin bệnh nhân
+        patientInfoLabel = new JLabel("Chọn bản ghi để xem chi tiết");
+        patientInfoLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        patientInfoLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        panel.add(patientInfoLabel, BorderLayout.NORTH);
+
+        // Panel nhập liệu chi tiết
+        JPanel detailInputPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Tạo các trường nhập liệu
+        JLabel temperatureLabel = new JLabel("Nhiệt độ (°C):");
+        temperatureField = new JTextField(10);
+        temperatureField.setEditable(false);
+
+        JLabel bpLabel = new JLabel("Huyết áp (mmHg):");
+        JPanel bpPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        systolicBPField = new JTextField(5);
+        systolicBPField.setEditable(false);
+        diastolicBPField = new JTextField(5);
+        diastolicBPField.setEditable(false);
+        bpPanel.add(systolicBPField);
+        bpPanel.add(new JLabel("/"));
+        bpPanel.add(diastolicBPField);
+
+        JLabel heartRateLabel = new JLabel("Nhịp tim (bpm):");
+        heartRateField = new JTextField(10);
+        heartRateField.setEditable(false);
+
+        JLabel spO2Label = new JLabel("SpO2 (%):");
+        spO2Field = new JTextField(10);
+        spO2Field.setEditable(false);
+
+        JLabel recordTimeLabel = new JLabel("Thời gian ghi nhận:");
+        recordTimeField = new JTextField(20);
+        recordTimeField.setEditable(false);
+
+        // Thêm các thành phần vào panel
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        detailInputPanel.add(temperatureLabel, gbc);
+
+        gbc.gridx = 1;
+        detailInputPanel.add(temperatureField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        detailInputPanel.add(bpLabel, gbc);
+
+        gbc.gridx = 1;
+        detailInputPanel.add(bpPanel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        detailInputPanel.add(heartRateLabel, gbc);
+
+        gbc.gridx = 1;
+        detailInputPanel.add(heartRateField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        detailInputPanel.add(spO2Label, gbc);
+
+        gbc.gridx = 1;
+        detailInputPanel.add(spO2Field, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        detailInputPanel.add(recordTimeLabel, gbc);
+
+        gbc.gridx = 1;
+        detailInputPanel.add(recordTimeField, gbc);
+
+        // Thêm đánh giá tình trạng
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        JPanel statusPanel = new JPanel(new BorderLayout());
+        statusPanel.setBorder(BorderFactory.createTitledBorder("Đánh giá"));
+        JTextArea statusArea = new JTextArea(3, 30);
+        statusArea.setEditable(false);
+        statusArea.setLineWrap(true);
+        statusArea.setWrapStyleWord(true);
+        JScrollPane statusScrollPane = new JScrollPane(statusArea);
+        statusPanel.add(statusScrollPane);
+        detailInputPanel.add(statusPanel, gbc);
+
+        panel.add(new JScrollPane(detailInputPanel), BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    /**
+     * Tạo panel chứa các nút chức năng
+     */
+    private JPanel createButtonPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panel.setBackground(Color.WHITE);
+
+        JButton refreshButton = new JButton("Làm mới");
+        refreshButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        refreshButton.addActionListener(e -> loadSampleVitalSigns());
+
+        JButton printButton = new JButton("In báo cáo");
+        printButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        printButton.addActionListener(e -> {
+            if (vitalSignsTable.getSelectedRow() >= 0) {
+                printVitalSignsReport(vitalSignsList.get(vitalSignsTable.getSelectedRow()));
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Vui lòng chọn một bản ghi để in",
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        JButton addButton = new JButton("Thêm bản ghi");
+        addButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        addButton.addActionListener(e -> showAddVitalSignsDialog());
+
+        panel.add(refreshButton);
+        panel.add(addButton);
+        panel.add(printButton);
+
+        return panel;
+    }
+
+    /**
+     * Hiển thị dialog thêm dấu hiệu sinh tồn
+     */
+    private void showAddVitalSignsDialog() {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thêm dấu hiệu sinh tồn", true);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        JLabel patientIdLabel = new JLabel("ID Bệnh nhân:");
+        JTextField patientIdField = new JTextField(15);
+
+        JLabel temperatureLabel = new JLabel("Nhiệt độ (°C):");
+        JTextField temperatureField = new JTextField(10);
+
+        JLabel systolicLabel = new JLabel("Huyết áp tâm thu (mmHg):");
+        JTextField systolicField = new JTextField(10);
+
+        JLabel diastolicLabel = new JLabel("Huyết áp tâm trương (mmHg):");
+        JTextField diastolicField = new JTextField(10);
+
+        JLabel heartRateLabel = new JLabel("Nhịp tim (bpm):");
+        JTextField heartRateField = new JTextField(10);
+
+        JLabel spO2Label = new JLabel("SpO2 (%):");
+        JTextField spO2Field = new JTextField(10);
+
+        // Thêm các thành phần vào panel
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        inputPanel.add(patientIdLabel, gbc);
+
+        gbc.gridx = 1;
+        inputPanel.add(patientIdField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        inputPanel.add(temperatureLabel, gbc);
+
+        gbc.gridx = 1;
+        inputPanel.add(temperatureField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        inputPanel.add(systolicLabel, gbc);
+
+        gbc.gridx = 1;
+        inputPanel.add(systolicField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        inputPanel.add(diastolicLabel, gbc);
+
+        gbc.gridx = 1;
+        inputPanel.add(diastolicField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        inputPanel.add(heartRateLabel, gbc);
+
+        gbc.gridx = 1;
+        inputPanel.add(heartRateField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        inputPanel.add(spO2Label, gbc);
+
+        gbc.gridx = 1;
+        inputPanel.add(spO2Field, gbc);
+
+        // Panel nút
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton saveButton = new JButton("Lưu");
+        JButton cancelButton = new JButton("Hủy");
+
+        saveButton.addActionListener(e -> {
+            try {
+                // Tạo ID mới theo định dạng VS-XXX
+                String id = "VS-" + String.format("%03d", vitalSignsList.size() + 1);
+
+                // Thu thập dữ liệu từ form
+                String patientId = patientIdField.getText().trim();
+                double temperature = Double.parseDouble(temperatureField.getText().trim());
+                int systolicBP = Integer.parseInt(systolicField.getText().trim());
+                int diastolicBP = Integer.parseInt(diastolicField.getText().trim());
+                int heartRate = Integer.parseInt(heartRateField.getText().trim());
+                int spO2 = Integer.parseInt(spO2Field.getText().trim());
+
+                // Tạo đối tượng VitalSigns mới
+                VitalSigns vitalSigns = new VitalSigns(
+                        id, patientId, temperature, systolicBP,
+                        diastolicBP, heartRate, spO2, LocalDateTime.now()
+                );
+
+                // Thêm vào danh sách và cập nhật bảng
+                addVitalSigns(vitalSigns);
+                dialog.dispose();
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                        "Lỗi: Vui lòng nhập đúng định dạng số",
+                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                        "Lỗi: " + ex.getMessage(),
+                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+
+        dialog.add(inputPanel, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    /**
+     * Hiển thị chi tiết của dấu hiệu sinh tồn được chọn
+     */
+    private void displayVitalSignsDetails(VitalSigns vitalSigns) {
+        if (vitalSigns == null) return;
+
+        // Cập nhật thông tin bệnh nhân
+        patientInfoLabel.setText("<html>ID: <b>" + vitalSigns.getId() +
+                "</b> | Bệnh nhân: <b>" + vitalSigns.getPatientId() +
+                "</b> | Thời gian: <b>" + vitalSigns.getFormattedRecordTime() + "</b></html>");
+
+        // Hiển thị chi tiết
+        temperatureField.setText(String.format("%.1f", vitalSigns.getTemperature()));
+        systolicBPField.setText(String.valueOf(vitalSigns.getSystolicBP()));
+        diastolicBPField.setText(String.valueOf(vitalSigns.getDiastolicBP()));
+        heartRateField.setText(String.valueOf(vitalSigns.getHeartRate()));
+        spO2Field.setText(String.valueOf(vitalSigns.getSpO2()));
+        recordTimeField.setText(vitalSigns.getFormattedRecordTime());
+
+        // Đánh giá tình trạng - tương ứng với JTextArea trong panel
+        JTextArea statusArea = (JTextArea)((JScrollPane)((JPanel)detailPanel.getComponent(1))
+                .getComponent(5)).getViewport().getView();
+
+        StringBuilder status = new StringBuilder();
+
+        // Đánh giá nhiệt độ
+        if (vitalSigns.getTemperature() > 37.5) {
+            status.append("- Sốt\n");
+        } else if (vitalSigns.getTemperature() < 36.0) {
+            status.append("- Thân nhiệt thấp\n");
         }
 
-        // Panel bộ lọc
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filterPanel.setBorder(BorderFactory.createTitledBorder("Bộ lọc"));
+        // Đánh giá huyết áp
+        if (vitalSigns.getSystolicBP() >= 140 || vitalSigns.getDiastolicBP() >= 90) {
+            status.append("- Tăng huyết áp\n");
+        } else if (vitalSigns.getSystolicBP() <= 90 || vitalSigns.getDiastolicBP() <= 60) {
+            status.append("- Huyết áp thấp\n");
+        }
 
-        JLabel fromLabel = new JLabel("Từ ngày:");
-        JTextField fromDateField = new JTextField(10);
-        JLabel toLabel = new JLabel("Đến ngày:");
-        JTextField toDateField = new JTextField(10);
+        // Đánh giá nhịp tim
+        if (vitalSigns.getHeartRate() > 100) {
+            status.append("- Nhịp tim nhanh\n");
+        } else if (vitalSigns.getHeartRate() < 60) {
+            status.append("- Nhịp tim chậm\n");
+        }
 
-        JButton filterButton = new JButton("Lọc");
-        filterButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Xử lý lọc dữ liệu theo ngày
-                // (Phần này có thể triển khai sau)
+        // Đánh giá SpO2
+        if (vitalSigns.getSpO2() < 95) {
+            status.append("- Thiếu oxy máu\n");
+        }
+
+        if (status.length() == 0) {
+            status.append("Các dấu hiệu sinh tồn trong ngưỡng bình thường.");
+        }
+
+        statusArea.setText(status.toString());
+    }
+
+    /**
+     * In báo cáo dấu hiệu sinh tồn
+     */
+    private void printVitalSignsReport(VitalSigns vitalSigns) {
+        if (vitalSigns == null) return;
+
+        // Tạo nội dung báo cáo để in
+        StringBuilder content = new StringBuilder();
+
+        content.append("                      BÁO CÁO DẤU HIỆU SINH TỒN\n\n");
+        content.append("Mã bản ghi: ").append(vitalSigns.getId()).append("\n");
+        content.append("Bệnh nhân: ").append(vitalSigns.getPatientId()).append("\n");
+        content.append("Thời gian ghi nhận: ").append(vitalSigns.getFormattedRecordTime()).append("\n\n");
+
+        content.append("CHỈ SỐ ĐO LƯỜNG:\n");
+        content.append("--------------------------------\n");
+        content.append("Nhiệt độ: ").append(String.format("%.1f°C", vitalSigns.getTemperature())).append("\n");
+        content.append("Huyết áp: ").append(vitalSigns.getSystolicBP()).append("/")
+                .append(vitalSigns.getDiastolicBP()).append(" mmHg\n");
+        content.append("Nhịp tim: ").append(vitalSigns.getHeartRate()).append(" bpm\n");
+        content.append("SpO2: ").append(vitalSigns.getSpO2()).append("%\n");
+        content.append("--------------------------------\n\n");
+
+        // Đánh giá tình trạng
+        content.append("ĐÁNH GIÁ:\n");
+
+        boolean hasIssue = false;
+
+        // Đánh giá nhiệt độ
+        if (vitalSigns.getTemperature() > 37.5) {
+            content.append("- Sốt\n");
+            hasIssue = true;
+        } else if (vitalSigns.getTemperature() < 36.0) {
+            content.append("- Thân nhiệt thấp\n");
+            hasIssue = true;
+        }
+
+        // Đánh giá huyết áp
+        if (vitalSigns.getSystolicBP() >= 140 || vitalSigns.getDiastolicBP() >= 90) {
+            content.append("- Tăng huyết áp\n");
+            hasIssue = true;
+        } else if (vitalSigns.getSystolicBP() <= 90 || vitalSigns.getDiastolicBP() <= 60) {
+            content.append("- Huyết áp thấp\n");
+            hasIssue = true;
+        }
+
+        // Đánh giá nhịp tim
+        if (vitalSigns.getHeartRate() > 100) {
+            content.append("- Nhịp tim nhanh\n");
+            hasIssue = true;
+        } else if (vitalSigns.getHeartRate() < 60) {
+            content.append("- Nhịp tim chậm\n");
+            hasIssue = true;
+        }
+
+        // Đánh giá SpO2
+        if (vitalSigns.getSpO2() < 95) {
+            content.append("- Thiếu oxy máu\n");
+            hasIssue = true;
+        }
+
+        if (!hasIssue) {
+            content.append("Các dấu hiệu sinh tồn trong ngưỡng bình thường.\n");
+        }
+
+        content.append("\nGhi chú: _________________________________________________\n\n");
+        content.append("Bác sĩ ký tên: _____________________ Ngày: ______________\n");
+
+        // Hiển thị xem trước báo cáo
+        JTextArea textArea = new JTextArea(content.toString());
+        textArea.setEditable(false);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(600, 400));
+
+        // Dialog xem trước báo cáo
+        JDialog printDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "In báo cáo", true);
+        printDialog.setLayout(new BorderLayout());
+        printDialog.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton printButton = new JButton("In");
+        printButton.addActionListener(e -> {
+            try {
+                textArea.print();
+                printDialog.dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(printDialog,
+                        "Lỗi khi in: " + ex.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        filterPanel.add(fromLabel);
-        filterPanel.add(fromDateField);
-        filterPanel.add(toLabel);
-        filterPanel.add(toDateField);
-        filterPanel.add(filterButton);
+        JButton cancelButton = new JButton("Hủy");
+        cancelButton.addActionListener(e -> printDialog.dispose());
 
-        // Thêm vào panel chính
-        JPanel northPanel = new JPanel(new BorderLayout());
-        northPanel.add(filterPanel, BorderLayout.CENTER);
+        buttonPanel.add(printButton);
+        buttonPanel.add(cancelButton);
+        printDialog.add(buttonPanel, BorderLayout.SOUTH);
 
-        panel.add(northPanel, BorderLayout.NORTH);
-        panel.add(new JScrollPane(vitalSignsTable), BorderLayout.CENTER);
-        panel.add(detailPanel, BorderLayout.SOUTH);
-
-        return panel;
+        printDialog.pack();
+        printDialog.setLocationRelativeTo(this);
+        printDialog.setVisible(true);
     }
 
     /**
-     * Tạo panel biểu đồ
-     * @return Panel biểu đồ
+     * Lọc danh sách theo ID bệnh nhân
      */
-    private JPanel createChartPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    private void filterByPatientId(String patientId) {
+        List<VitalSigns> filteredList = new ArrayList<>();
 
-        // Trong thực tế, đây sẽ là nơi hiển thị biểu đồ thực sự
-        // Ví dụ sử dụng JFreeChart hoặc các thư viện biểu đồ khác
+        for (VitalSigns vs : vitalSignsList) {
+            if (vs.getPatientId().contains(patientId)) {
+                filteredList.add(vs);
+            }
+        }
 
-        JLabel chartLabel = new JLabel("Biểu đồ dấu hiệu sinh tồn");
-        chartLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        chartLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JPanel temperatureChartPlaceholder = new JPanel();
-        temperatureChartPlaceholder.setBorder(BorderFactory.createTitledBorder("Biểu đồ nhiệt độ"));
-        temperatureChartPlaceholder.setPreferredSize(new Dimension(800, 200));
-        temperatureChartPlaceholder.setMinimumSize(new Dimension(600, 200));
-
-        JPanel bpChartPlaceholder = new JPanel();
-        bpChartPlaceholder.setBorder(BorderFactory.createTitledBorder("Biểu đồ huyết áp"));
-        bpChartPlaceholder.setPreferredSize(new Dimension(800, 200));
-        bpChartPlaceholder.setMinimumSize(new Dimension(600, 200));
-
-        JPanel heartRateChartPlaceholder = new JPanel();
-        heartRateChartPlaceholder.setBorder(BorderFactory.createTitledBorder("Biểu đồ nhịp tim"));
-        heartRateChartPlaceholder.setPreferredSize(new Dimension(800, 200));
-        heartRateChartPlaceholder.setMinimumSize(new Dimension(600, 200));
-
-        JPanel spO2ChartPlaceholder = new JPanel();
-        spO2ChartPlaceholder.setBorder(BorderFactory.createTitledBorder("Biểu đồ SpO2"));
-        spO2ChartPlaceholder.setPreferredSize(new Dimension(800, 200));
-        spO2ChartPlaceholder.setMinimumSize(new Dimension(600, 200));
-
-        panel.add(chartLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-        panel.add(temperatureChartPlaceholder);
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-        panel.add(bpChartPlaceholder);
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-        panel.add(heartRateChartPlaceholder);
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-        panel.add(spO2ChartPlaceholder);
-
-        return panel;
+        updateVitalSignsTable(filteredList);
     }
 
     /**
-     * Cập nhật dữ liệu bảng dấu hiệu sinh tồn
+     * Cập nhật bảng hiển thị với danh sách được cung cấp
      */
-    private void updateVitalSignsTable() {
-        // Xóa dữ liệu cũ
+    private void updateVitalSignsTable(List<VitalSigns> list) {
         vitalSignsTableModel.setRowCount(0);
 
-        if (vitalSignsList.isEmpty()) return;
-
-        // Thêm dữ liệu mới
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        for (VitalSigns vs : vitalSignsList) {
-            Object[] rowData = new Object[5];
-            rowData[0] = vs.getRecordTime().format(formatter);
-            rowData[1] = String.format("%.1f", vs.getTemperature());
-            rowData[2] = vs.getSystolicBP() + "/" + vs.getDiastolicBP();
-            rowData[3] = vs.getHeartRate();
-            rowData[4] = vs.getSpO2();
-
+        for (VitalSigns vs : list) {
+            Object[] rowData = {
+                    vs.getId(),
+                    vs.getPatientId(),
+                    String.format("%.1f", vs.getTemperature()),
+                    vs.getSystolicBP() + "/" + vs.getDiastolicBP(),
+                    vs.getHeartRate(),
+                    vs.getSpO2(),
+                    vs.getFormattedRecordTime()
+            };
             vitalSignsTableModel.addRow(rowData);
         }
     }
 
     /**
-     * Cập nhật panel biểu đồ
+     * Tải dữ liệu mẫu dấu hiệu sinh tồn
      */
-    private void updateChartPanel() {
-        // Trong thực tế, đây sẽ là nơi cập nhật dữ liệu cho các biểu đồ
-        // Trong ví dụ này, chúng ta chỉ giả lập việc này
-    }
-
-    /**
-     * Lưu dấu hiệu sinh tồn mới
-     */
-    private void saveVitalSigns() {
-        if (currentPatientId == null || currentPatientId.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Không có thông tin mã bệnh nhân",
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+    private void loadSampleVitalSigns() {
+        // Xóa dữ liệu cũ
+        vitalSignsList.clear();
+        vitalSignsTableModel.setRowCount(0);
+        patientInfoLabel.setText("Chọn bản ghi để xem chi tiết");
 
         try {
-            // Lấy dữ liệu từ các trường
-            double temperature = Double.parseDouble(temperatureField.getText().trim());
-            int systolicBP = Integer.parseInt(systolicBPField.getText().trim());
-            int diastolicBP = Integer.parseInt(diastolicBPField.getText().trim());
-            int heartRate = Integer.parseInt(heartRateField.getText().trim());
-            int spO2 = Integer.parseInt(spO2Field.getText().trim());
+            // Tạo dữ liệu mẫu
+            LocalDateTime now = LocalDateTime.now();
 
-            // Tạo đối tượng VitalSigns mới
-            VitalSigns newVitalSigns = new VitalSigns(
-                    UUID.randomUUID().toString(),
-                    currentPatientId,
-                    temperature,
-                    systolicBP,
-                    diastolicBP,
-                    heartRate,
-                    spO2,
-                    LocalDateTime.now()
+            // Bản ghi 1 - Bình thường
+            VitalSigns vs1 = new VitalSigns(
+                    "VS-001", "PT-001", 36.8, 120, 80, 75, 98, now
+            );
+
+            // Bản ghi 2 - Sốt, tăng nhịp tim
+            VitalSigns vs2 = new VitalSigns(
+                    "VS-002", "PT-002", 38.5, 125, 85, 110, 96, now.minusHours(2)
+            );
+
+            // Bản ghi 3 - Huyết áp cao
+            VitalSigns vs3 = new VitalSigns(
+                    "VS-003", "PT-001", 36.9, 150, 95, 85, 97, now.minusDays(1)
+            );
+
+            // Bản ghi 4 - SpO2 thấp
+            VitalSigns vs4 = new VitalSigns(
+                    "VS-004", "PT-003", 37.2, 115, 75, 90, 92, now.minusDays(2)
             );
 
             // Thêm vào danh sách
-            vitalSignsList.add(newVitalSigns);
+            vitalSignsList.add(vs1);
+            vitalSignsList.add(vs2);
+            vitalSignsList.add(vs3);
+            vitalSignsList.add(vs4);
 
-            // Cập nhật giao diện
-            updateVitalSignsTable();
-            updateChartPanel();
+            // Cập nhật bảng
+            updateVitalSignsTable(vitalSignsList);
 
-            // Xóa trắng các trường nhập
-            clearInputFields();
-
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                    "Đã lưu dấu hiệu sinh tồn mới",
-                    "Thành công",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Dữ liệu nhập không hợp lệ. Vui lòng kiểm tra lại các giá trị số.",
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Lỗi dữ liệu: " + e.getMessage(),
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
+                    "Lỗi khi tải dữ liệu mẫu: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 
     /**
-     * Xóa trắng các trường nhập liệu
+     * Thêm bản ghi dấu hiệu sinh tồn mới
      */
-    private void clearInputFields() {
-        temperatureField.setText("");
-        systolicBPField.setText("");
-        diastolicBPField.setText("");
-        heartRateField.setText("");
-        spO2Field.setText("");
+    public void addVitalSigns(VitalSigns vitalSigns) {
+        if (vitalSigns == null) return;
+
+        vitalSignsList.add(vitalSigns);
+
+        // Cập nhật bảng
+        Object[] rowData = {
+                vitalSigns.getId(),
+                vitalSigns.getPatientId(),
+                String.format("%.1f", vitalSigns.getTemperature()),
+                vitalSigns.getSystolicBP() + "/" + vitalSigns.getDiastolicBP(),
+                vitalSigns.getHeartRate(),
+                vitalSigns.getSpO2(),
+                vitalSigns.getFormattedRecordTime()
+        };
+        vitalSignsTableModel.addRow(rowData);
     }
 
     /**
-     * Xóa bản ghi được chọn
+     * Cập nhật danh sách dấu hiệu sinh tồn
      */
-    private void deleteSelectedRecord() {
-        int selectedRow = vitalSignsTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this,
-                    "Vui lòng chọn một bản ghi để xóa",
-                    "Chưa chọn bản ghi",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+    public void updateVitalSigns(List<VitalSigns> vitalSigns) {
+        // Xóa dữ liệu cũ
+        vitalSignsList.clear();
+        vitalSignsTableModel.setRowCount(0);
 
-        // Xác nhận xóa
-        int option = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc chắn muốn xóa bản ghi này không?",
-                "Xác nhận xóa",
-                JOptionPane.YES_NO_OPTION);
+        if (vitalSigns == null) return;
 
-        if (option == JOptionPane.YES_OPTION) {
-            // Xóa bản ghi
-            vitalSignsList.remove(selectedRow);
+        // Thêm dữ liệu mới
+        vitalSignsList.addAll(vitalSigns);
 
-            // Cập nhật giao diện
-            updateVitalSignsTable();
-            updateChartPanel();
-        }
-    }
-
-    /**
-     * Tạo văn bản mô tả chi tiết dấu hiệu sinh tồn
-     * @param vs Đối tượng dấu hiệu sinh tồn
-     * @return Chuỗi văn bản mô tả chi tiết
-     */
-    private String createDetailedVitalSignsText(VitalSigns vs) {
-        if (vs == null) return "Không có dữ liệu";
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("Thời gian ghi nhận: ").append(vs.getFormattedRecordTime()).append("\n");
-        sb.append("Mã bệnh nhân: ").append(vs.getPatientId()).append("\n\n");
-
-        sb.append("Nhiệt độ: ").append(String.format("%.1f°C", vs.getTemperature()));
-        if (vs.getTemperature() < 36.1) {
-            sb.append(" (Thấp)");
-        } else if (vs.getTemperature() > 37.2) {
-            sb.append(" (Cao)");
-        } else {
-            sb.append(" (Bình thường)");
-        }
-        sb.append("\n");
-
-        sb.append("Huyết áp: ").append(vs.getSystolicBP()).append("/").append(vs.getDiastolicBP()).append(" mmHg");
-        if (vs.getSystolicBP() < 90 || vs.getDiastolicBP() < 60) {
-            sb.append(" (Thấp)");
-        } else if (vs.getSystolicBP() > 120 || vs.getDiastolicBP() > 80) {
-            sb.append(" (Cao)");
-        } else {
-            sb.append(" (Bình thường)");
-        }
-        sb.append("\n");
-
-        sb.append("Nhịp tim: ").append(vs.getHeartRate()).append(" bpm");
-        if (vs.getHeartRate() < 60) {
-            sb.append(" (Chậm)");
-        } else if (vs.getHeartRate() > 100) {
-            sb.append(" (Nhanh)");
-        } else {
-            sb.append(" (Bình thường)");
-        }
-        sb.append("\n");
-
-        sb.append("SpO2: ").append(vs.getSpO2()).append("%");
-        if (vs.getSpO2() < 95) {
-            sb.append(" (Thấp)");
-        } else {
-            sb.append(" (Bình thường)");
-        }
-        sb.append("\n");
-
-        return sb.toString();
-    }
-
-    /**
-     * Phương thức main để kiểm thử panel
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                JFrame frame = new JFrame("Theo dõi dấu hiệu sinh tồn");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-                // Tạo người dùng bác sĩ giả lập
-                User doctorUser = new User("doctor1", "password", "Bác sĩ Nguyễn Văn A", "doctor@hospital.com", "0123456789", Role.DOCTOR);
-
-                // Tạo một số dữ liệu mẫu
-                List<VitalSigns> sampleData = new ArrayList<>();
-                try {
-                    sampleData.add(new VitalSigns("VS001", "BN001", 36.5, 120, 80, 72, 98, LocalDateTime.now().minusHours(5)));
-                    sampleData.add(new VitalSigns("VS002", "BN001", 37.1, 125, 85, 78, 97, LocalDateTime.now().minusHours(4)));
-                    sampleData.add(new VitalSigns("VS003", "BN001", 37.8, 130, 90, 85, 96, LocalDateTime.now().minusHours(3)));
-                    sampleData.add(new VitalSigns("VS004", "BN001", 37.5, 128, 88, 80, 95, LocalDateTime.now().minusHours(2)));
-                    sampleData.add(new VitalSigns("VS005", "BN001", 37.2, 122, 82, 75, 97, LocalDateTime.now().minusHours(1)));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                // Tạo panel theo dõi dấu hiệu sinh tồn
-                VitalSignsPanel panel = new VitalSignsPanel(doctorUser, "BN001", sampleData);
-
-                frame.getContentPane().add(panel);
-                frame.setSize(900, 700);
-                frame.setLocationRelativeTo(null);
-                frame.setVisible(true);
-            }
-        });
+        // Cập nhật bảng
+        updateVitalSignsTable(vitalSignsList);
     }
 }
