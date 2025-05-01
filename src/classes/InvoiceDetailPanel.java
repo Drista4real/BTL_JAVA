@@ -6,8 +6,6 @@ import model.entity.User;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -60,9 +58,7 @@ public class InvoiceDetailPanel extends JPanel {
     public InvoiceDetailPanel(User user) {
         this.currentUser = user;
         this.invoiceDetailList = new ArrayList<>();
-
-        // Tạo dữ liệu mẫu
-        createSampleData();
+        this.currentDetail = null;
 
         initializeUI();
     }
@@ -78,96 +74,11 @@ public class InvoiceDetailPanel extends JPanel {
 
         if (!detailList.isEmpty()) {
             this.currentDetail = detailList.get(0);
+        } else {
+            this.currentDetail = null;
         }
 
         initializeUI();
-    }
-
-    /**
-     * Tạo dữ liệu mẫu
-     */
-    private void createSampleData() {
-        String invoiceId = "INV20240001";
-
-        // Tạo chi tiết thuốc
-        InvoiceDetail detail1 = new InvoiceDetail(
-                invoiceId,
-                "MED001",
-                "Paracetamol 500mg",
-                "P500",
-                "Thuốc hạ sốt giảm đau",
-                10,
-                5000,
-                "Thuốc",
-                "viên",
-                0,
-                "BS. Nguyễn Văn A",
-                LocalDateTime.now().minusDays(2),
-                "Staff001"
-        );
-
-        // Tạo chi tiết xét nghiệm
-        InvoiceDetail detail2 = new InvoiceDetail(
-                invoiceId,
-                "LAB001",
-                "Xét nghiệm máu cơ bản",
-                "XN-MAU",
-                "Kiểm tra các chỉ số máu cơ bản",
-                1,
-                250000,
-                "Xét nghiệm",
-                "lần",
-                10, // giảm 10%
-                "BS. Trần Thị B",
-                LocalDateTime.now().minusDays(1),
-                "Staff001"
-        );
-        detail2.setPerformer("KTV. Lê Văn C", LocalDateTime.now());
-
-        // Tạo chi tiết chụp X-quang
-        InvoiceDetail detail3 = new InvoiceDetail(
-                invoiceId,
-                "RAD001",
-                "Chụp X-quang phổi",
-                "X-QUANG",
-                "Chụp X-quang phổi thẳng nghiêng",
-                1,
-                300000,
-                "Chẩn đoán hình ảnh",
-                "lần",
-                0,
-                "BS. Trần Thị B",
-                LocalDateTime.now().minusDays(1),
-                "Staff001"
-        );
-
-        // Tạo chi tiết đã hủy
-        InvoiceDetail detail4 = new InvoiceDetail(
-                invoiceId,
-                "MED002",
-                "Vitamin C 1000mg",
-                "VC1000",
-                "Bổ sung vitamin C",
-                5,
-                8000,
-                "Thuốc",
-                "viên",
-                0,
-                "BS. Nguyễn Văn A",
-                LocalDateTime.now().minusDays(2),
-                "Staff001"
-        );
-        detail4.cancel("Bệnh nhân không cần dùng");
-
-        // Thêm vào danh sách
-        invoiceDetailList.add(detail1);
-        invoiceDetailList.add(detail2);
-        invoiceDetailList.add(detail3);
-        invoiceDetailList.add(detail4);
-
-        if (!invoiceDetailList.isEmpty()) {
-            currentDetail = invoiceDetailList.get(0);
-        }
     }
 
     /**
