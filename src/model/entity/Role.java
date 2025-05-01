@@ -2,5 +2,6 @@ package model.entity;
 
 public enum Role {
     DOCTOR,
-    PATIENT
-} 
+    PATIENT,
+    ADMIN
+}
