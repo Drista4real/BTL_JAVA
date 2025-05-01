@@ -2,32 +2,70 @@ package model.gui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import model.entity.User;
-
-import java.util.Random;
-import model.utils.ExceptionUtils;
 import model.entity.Role;
+import model.utils.ExceptionUtils;
+import java.util.Random;
+import java.util.Properties;
+import java.io.InputStream;
+import java.io.IOException;
 
 public class LoginPanel extends JPanel {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton;
-    private JButton registerButton;
     private JButton forgotPasswordButton;
     private JCheckBox showPasswordCheckBox;
-    private Map<String, User> users;
     private MainFrame mainFrame;
     private Image backgroundImage;
 
+    // Thông tin kết nối cơ sở dữ liệu từ database.properties
+    private static String DB_DRIVER;
+    private static String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement?allowPublicKeyRetrieval=true&useSSL=false";
+    private static String DB_USER;
+    private static String DB_PASSWORD;
+
+    static {
+        // Tải cấu hình từ database.properties
+        Properties props = new Properties();
+        try (InputStream input = LoginPanel.class.getClassLoader().getResourceAsStream("database.properties")) {
+            if (input == null) {
+                throw new IOException("Không tìm thấy tệp database.properties");
+            }
+            props.load(input);
+            DB_DRIVER = props.getProperty("driver");
+
+            // Thêm tham số characterEncoding=UTF-8 vào URL kết nối
+            DB_URL = props.getProperty("url");
+            if (!DB_URL.contains("characterEncoding")) {
+                if (DB_URL.contains("?")) {
+                    DB_URL += "&characterEncoding=UTF-8";
+                } else {
+                    DB_URL += "?characterEncoding=UTF-8";
+                }
+            }
+
+            DB_USER = props.getProperty("username");
+            DB_PASSWORD = props.getProperty("password");
+
+            // Tải driver JDBC
+            Class.forName(DB_DRIVER);
+
+            System.out.println("URL kết nối sau khi sửa: " + DB_URL);
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException("Lỗi khi tải cấu hình cơ sở dữ liệu: " + e.getMessage());
+        }
+    }
+
     public LoginPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
-        this.users = new HashMap<>();
         loadBackgroundImage();
         initComponents();
-        // Thêm tài khoản admin mặc định
-        users.put("admin", new User("admin", "admin", "Administrator", "admin@example.com", "0123456789", Role.DOCTOR));
     }
 
     private void loadBackgroundImage() {
@@ -44,14 +82,9 @@ public class LoginPanel extends JPanel {
         if (backgroundImage != null) {
             Graphics2D g2d = (Graphics2D) g.create();
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            
-            // Vẽ hình nền với độ mờ
             g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-            
-            // Thêm lớp overlay để làm mờ hình nền
             g2d.setColor(new Color(255, 255, 255, 0));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-            
             g2d.dispose();
         }
     }
@@ -61,7 +94,6 @@ public class LoginPanel extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        // Tạo panel chứa form đăng nhập với background trong suốt
         JPanel loginFormPanel = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -74,11 +106,10 @@ public class LoginPanel extends JPanel {
         };
         loginFormPanel.setOpaque(false);
         loginFormPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200, 150)),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+                BorderFactory.createLineBorder(new Color(200, 200, 200, 150)),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
 
-        // Title
         JLabel titleLabel = new JLabel("Hệ thống quản lý bệnh nhân");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setForeground(new Color(0, 87, 146));
@@ -88,7 +119,6 @@ public class LoginPanel extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         loginFormPanel.add(titleLabel, gbc);
 
-        // Username
         gbc.gridwidth = 1;
         gbc.gridy = 1;
         gbc.gridx = 0;
@@ -103,7 +133,6 @@ public class LoginPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         loginFormPanel.add(usernameField, gbc);
 
-        // Password
         gbc.gridy = 2;
         gbc.gridx = 0;
         gbc.anchor = GridBagConstraints.EAST;
@@ -117,7 +146,6 @@ public class LoginPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         loginFormPanel.add(passwordField, gbc);
 
-        // Show password checkbox
         gbc.gridy = 3;
         gbc.gridx = 1;
         gbc.insets = new Insets(0, 10, 10, 10);
@@ -134,52 +162,38 @@ public class LoginPanel extends JPanel {
         });
         loginFormPanel.add(showPasswordCheckBox, gbc);
 
-        // Reset insets và anchor
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.CENTER;
 
-        // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         buttonPanel.setOpaque(false);
         loginButton = new JButton("Đăng nhập");
-        registerButton = new JButton("Đăng ký");
         forgotPasswordButton = new JButton("Quên mật khẩu?");
         forgotPasswordButton.setBorderPainted(false);
         forgotPasswordButton.setContentAreaFilled(false);
         forgotPasswordButton.setForeground(new Color(0, 87, 146));
         forgotPasswordButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Style cho nút đăng nhập và đăng ký
         loginButton.setBackground(new Color(0, 87, 146));
         loginButton.setForeground(Color.WHITE);
         loginButton.setFocusPainted(false);
         loginButton.setBorderPainted(false);
-        
-        registerButton.setBackground(new Color(0, 87, 146));
-        registerButton.setForeground(Color.WHITE);
-        registerButton.setFocusPainted(false);
-        registerButton.setBorderPainted(false);
 
         loginButton.addActionListener(e -> login());
-        registerButton.addActionListener(e -> showRegisterDialog());
         forgotPasswordButton.addActionListener(e -> showForgotPasswordDialog());
 
         buttonPanel.add(loginButton);
-        buttonPanel.add(registerButton);
 
         gbc.gridy = 4;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
         loginFormPanel.add(buttonPanel, gbc);
 
-        // Forgot password link
         gbc.gridy = 5;
         loginFormPanel.add(forgotPasswordButton, gbc);
 
-        // Thêm loginFormPanel vào panel chính
         add(loginFormPanel);
 
-        // Set focus ban đầu vào ô username
         SwingUtilities.invokeLater(() -> usernameField.requestFocus());
     }
 
@@ -192,56 +206,59 @@ public class LoginPanel extends JPanel {
             return;
         }
 
-        User user = users.get(username);
-        if (user != null && user.getPassword().equals(password)) {
-            if (user.getRole() == Role.DOCTOR) {
-                SwingUtilities.invokeLater(() -> {
-                    JFrame doctorFrame = new DoctorMainFrame(user);
-                    doctorFrame.setVisible(true);
-                    Window w = SwingUtilities.getWindowAncestor(this);
-                    if (w != null) w.dispose();
-                });
-                return;
-            }
-            if (mainFrame == null) {
-                // Nếu LoginPanel không có mainFrame (từ logout), tạo lại MainFrame và thay thế contentPane
-                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-                MainFrame newMainFrame = new MainFrame();
-                topFrame.setContentPane(newMainFrame.getContentPane());
-                topFrame.revalidate();
-                topFrame.repaint();
-                newMainFrame.setCurrentUser(user);
-                if (user.getRole() == Role.PATIENT) {
-                    SwingUtilities.invokeLater(() -> {
-                        JFrame patientFrame = new PatientMainFrame(user);
-                        patientFrame.setVisible(true);
-                        topFrame.dispose();
-                    });
-                    return;
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            // Thêm code kiểm tra kết nối
+            System.out.println("Kết nối cơ sở dữ liệu thành công!");
+
+            String sql = "SELECT UserID, UserName, FullName, Email, PhoneNumber, Role, Password FROM UserAccounts WHERE UserName = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            System.out.println("Đang tìm kiếm người dùng: " + username);
+            ResultSet rs = stmt.executeQuery();
+
+
+            if (rs.next()) {
+                String storedPassword = rs.getString("Password");
+                if (password.equals(storedPassword)) {
+                    Role role = Role.valueOf(mapRoleToEnum(rs.getString("Role")));
+                    User user = new User(
+                            rs.getString("UserName"),
+                            storedPassword,
+                            rs.getString("FullName"),
+                            rs.getString("Email"),
+                            rs.getString("PhoneNumber"),
+                            role
+                    );
+
+                    if (role == Role.DOCTOR) {
+                        SwingUtilities.invokeLater(() -> {
+                            JFrame doctorFrame = new DoctorMainFrame(user);
+                            doctorFrame.setVisible(true);
+                            Window w = SwingUtilities.getWindowAncestor(this);
+                            if (w != null) w.dispose();
+                        });
+                    } else if (role == Role.PATIENT) {
+                        SwingUtilities.invokeLater(() -> {
+                            JFrame patientFrame = new PatientMainFrame(user);
+                            patientFrame.setVisible(true);
+                            Window w = SwingUtilities.getWindowAncestor(this);
+                            if (w != null) w.dispose();
+                        });
+                    }
+
+                    // Xóa thông tin đăng nhập
+                    usernameField.setText("");
+                    passwordField.setText("");
+                    showPasswordCheckBox.setSelected(false);
+                    passwordField.setEchoChar('•');
+                } else {
+                    JOptionPane.showMessageDialog(this, "Mật khẩu không đúng!");
                 }
-                // Xóa thông tin đăng nhập
-                usernameField.setText("");
-                passwordField.setText("");
-                showPasswordCheckBox.setSelected(false);
-                passwordField.setEchoChar('•');
-                return;
+            } else {
+                JOptionPane.showMessageDialog(this, "Tên đăng nhập không tồn tại!");
             }
-            mainFrame.setCurrentUser(user);
-            if (user.getRole() == Role.PATIENT) {
-                SwingUtilities.invokeLater(() -> {
-                    JFrame patientFrame = new PatientMainFrame(user);
-                    patientFrame.setVisible(true);
-                    SwingUtilities.getWindowAncestor(this).dispose();
-                });
-                return;
-            }
-            // Xóa thông tin đăng nhập
-            usernameField.setText("");
-            passwordField.setText("");
-            showPasswordCheckBox.setSelected(false);
-            passwordField.setEchoChar('•');
-        } else {
-            JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc mật khẩu không đúng!");
+        } catch (SQLException e) {
+            ExceptionUtils.handleValidationException(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
         }
     }
 
@@ -279,19 +296,32 @@ public class LoginPanel extends JPanel {
                 return;
             }
 
-            User user = users.get(username);
-            if (user != null && user.getEmail().equals(email) && user.getPhone().equals(phone)) {
-                String newPassword = generateTemporaryPassword();
-                user.setPassword(newPassword);
-                JOptionPane.showMessageDialog(this, "Mật khẩu mới của bạn là: " + newPassword);
-            } else {
-                ExceptionUtils.handleValidationException(this, "Thông tin không chính xác!");
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                String sql = "SELECT UserID, Email, PhoneNumber FROM UserAccounts WHERE UserName = ? AND Email = ? AND PhoneNumber = ?";
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                stmt.setString(1, username);
+                stmt.setString(2, email);
+                stmt.setString(3, phone);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    String newPassword = generateTemporaryPassword();
+                    sql = "UPDATE UserAccounts SET Password = ? WHERE UserName = ?";
+                    stmt = conn.prepareStatement(sql);
+                    stmt.setString(1, newPassword);
+                    stmt.setString(2, username);
+                    stmt.executeUpdate();
+                    JOptionPane.showMessageDialog(this, "Mật khẩu mới của bạn là: " + newPassword);
+                } else {
+                    ExceptionUtils.handleValidationException(this, "Thông tin không chính xác!");
+                }
+            } catch (SQLException e) {
+                ExceptionUtils.handleValidationException(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
             }
         }
     }
 
     private String generateTemporaryPassword() {
-        // Tạo mật khẩu ngẫu nhiên 8 ký tự
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();
         Random random = new Random();
@@ -301,69 +331,36 @@ public class LoginPanel extends JPanel {
         return sb.toString();
     }
 
-    private void showRegisterDialog() {
-        JTextField usernameField = new JTextField();
-        JPasswordField passwordField = new JPasswordField();
-        JPasswordField confirmPasswordField = new JPasswordField();
-        JTextField fullNameField = new JTextField();
-        JTextField emailField = new JTextField();
-        JTextField phoneField = new JTextField();
-        JComboBox<String> roleComboBox = new JComboBox<>(new String[]{"Bác sĩ", "Bệnh nhân"});
+    private String mapRoleToEnum(String dbRole) {
+        System.out.println("Vai trò từ DB: " + dbRole);
 
-        JPanel panel = new JPanel(new GridLayout(7, 2, 5, 5));
-        panel.add(new JLabel("Tên đăng nhập:"));
-        panel.add(usernameField);
-        panel.add(new JLabel("Mật khẩu:"));
-        panel.add(passwordField);
-        panel.add(new JLabel("Nhập lại mật khẩu:"));
-        panel.add(confirmPasswordField); 
-        panel.add(new JLabel("Họ tên:"));
-        panel.add(fullNameField);
-        panel.add(new JLabel("Email:"));
-        panel.add(emailField);
-        panel.add(new JLabel("Số điện thoại:"));
-        panel.add(phoneField);
-        panel.add(new JLabel("Vai trò:"));
-        panel.add(roleComboBox);
-
-        int result = JOptionPane.showConfirmDialog(this, panel, "Đăng ký tài khoản",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-        if (result == JOptionPane.OK_OPTION) {
-            String username = usernameField.getText();
-            String password = new String(passwordField.getPassword());
-            String confirmPassword = new String(confirmPasswordField.getPassword());
-            String fullName = fullNameField.getText();
-            String email = emailField.getText();
-            String phone = phoneField.getText();
-            String roleStr = (String) roleComboBox.getSelectedItem();
-
-            if (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || email.isEmpty() || phone.isEmpty()) {
-                ExceptionUtils.handleValidationException(this, "Vui lòng nhập đầy đủ thông tin!");
-                return;
+        // Kiểm tra nếu chuỗi chứa 'Bác' hoặc 'bác' ở bất kỳ định dạng nào
+        if (dbRole != null && (dbRole.contains("ác") || dbRole.toLowerCase().contains("bac") ||
+                dbRole.contains("B") || dbRole.contains("s"))) {
+            System.out.println("Xác định là bác sĩ");
+            return "DOCTOR";
+        }
+        // Kiểm tra nếu chuỗi chứa 'Bệnh' hoặc 'bệnh' ở bất kỳ định dạng nào
+        else if (dbRole != null && (dbRole.contains("ệnh") || dbRole.toLowerCase().contains("benh") ||
+                dbRole.contains("nhân") || dbRole.toLowerCase().contains("nhan"))) {
+            System.out.println("Xác định là bệnh nhân");
+            return "PATIENT";
+        } else {
+            // Trong trường hợp không thể xác định, kiểm tra mã byte
+            System.out.println("Không xác định được vai trò, hiển thị mã byte:");
+            for (byte b : dbRole.getBytes()) {
+                System.out.print(b + " ");
             }
+            System.out.println();
 
-            if (!password.equals(confirmPassword)) {
-                ExceptionUtils.handleValidationException(this, "Mật khẩu nhập lại không khớp!");
-                return;
+            // Thử dựa vào ký tự đầu tiên để phân biệt
+            char firstChar = dbRole.charAt(0);
+            if (firstChar == 'B' || firstChar == 'b') {
+                System.out.println("Giả định là bác sĩ dựa vào ký tự đầu");
+                return "DOCTOR";
+            } else {
+                throw new IllegalArgumentException("Vai trò không hợp lệ: " + dbRole);
             }
-
-            if (users.containsKey(username)) {
-                ExceptionUtils.handleValidationException(this, "Tên đăng nhập đã tồn tại!");
-                return;
-            }
-
-            if (!ExceptionUtils.validateEmail(this, email)) {
-                return;
-            }
-
-            if (!ExceptionUtils.validatePhone(this, phone)) {
-                return;
-            }
-
-            Role role = roleStr.equals("Bác sĩ") ? Role.DOCTOR : Role.PATIENT;
-            users.put(username, new User(username, password, fullName, email, phone, role));
-            JOptionPane.showMessageDialog(this, "Đăng ký thành công!");
         }
     }
-} 
+}
