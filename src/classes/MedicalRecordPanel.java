@@ -14,6 +14,7 @@ import java.util.UUID;
 import model.entity.MedicalRecord;
 import model.entity.MedicalRecord.MedicalEntry;
 import model.entity.User;
+import model.entity.Role;
 
 /**
  * Panel hiển thị và quản lý hồ sơ bệnh án
@@ -55,8 +56,8 @@ public class MedicalRecordPanel extends JPanel {
      */
     public MedicalRecordPanel(User user) {
         this.currentUser = user;
-        // Xác định chế độ người dùng (giả sử có hàm isDoctor() trong User)
-        this.doctorMode = user.isDoctor();
+        // Xác định chế độ người dùng dựa trên vai trò (Role)
+        this.doctorMode = isDoctor(user);
 
         // Tạo dữ liệu mẫu - trong ứng dụng thực tế sẽ tải từ cơ sở dữ liệu
         createSampleMedicalRecord(user.getUsername());
@@ -71,10 +72,22 @@ public class MedicalRecordPanel extends JPanel {
      */
     public MedicalRecordPanel(User user, MedicalRecord medicalRecord) {
         this.currentUser = user;
-        this.doctorMode = user.isDoctor();
+        this.doctorMode = isDoctor(user);
         this.medicalRecord = medicalRecord;
 
         initializeUI();
+    }
+
+    /**
+     * Kiểm tra xem người dùng có phải là bác sĩ không
+     * @param user Người dùng cần kiểm tra
+     * @return true nếu là bác sĩ, false nếu không phải
+     */
+    private boolean isDoctor(User user) {
+        if (user == null || user.getRole() == null) return false;
+
+        // Kiểm tra xem role có phải là DOCTOR không
+        return Role.DOCTOR.equals(user.getRole());
     }
 
     /**
