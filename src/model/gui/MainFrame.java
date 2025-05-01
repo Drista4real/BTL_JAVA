@@ -7,29 +7,51 @@ import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 import java.awt.FontMetrics;
 import java.awt.RenderingHints;
-import model.entity.User;
-import model.entity.Appointment; // Import lớp Appointment
-import model.entity.Admission; // Thêm import lớp Admission
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
+import model.entity.User;
+import model.entity.UserService;
+
+import classes.InvoiceDetailPanel;
+import classes.MedicationPanel;
+import classes.PrescriptionDetailPanel;
+import classes.PrescriptionPanel;
+import classes.UserSearchPanel;
+import classes.VitalSignsPanel;
+import classes.AdmissionPanel;
+import classes.AppointmentPanel;
+import classes.HospitalRoomPanel;
+import classes.MedicalRecordPanel;
+import classes.PersonalInfoPanel;
+
+/**
+ * MainFrame - cửa sổ chính của ứng dụng quản lý y tế tích hợp nhiều panel
+ */
 public class MainFrame extends JFrame {
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JButton currentButton;
     private static MainFrame instance;
-    private DashboardPanel dashboardPanel;
+
     private User currentUser;
+    private UserService userService;
+
     private JLabel userNameLabel;
     private JLabel avatarLabel;
-    private JButton logoutButton;
     private JPanel navPanel;
-    private PatientManagementPanel patientPanel;
-    private SearchPanel searchPanel;
-    private FileManagementPanel filePanel;
-    private AppointmentPanel appointmentPanel; // Panel quản lý cuộc hẹn
-    private AdmissionPanel admissionPanel; // Thêm panel quản lý nhập viện
+
+    // Các panel chức năng
+    private DashboardPanel dashboardPanel;
+    private InvoiceDetailPanel invoiceDetailPanel;
+    private MedicationPanel medicationPanel;
+    private PrescriptionDetailPanel prescriptionDetailPanel;
+    private PrescriptionPanel prescriptionPanel;
+    private UserSearchPanel userSearchPanel;
+    private VitalSignsPanel vitalSignsPanel;
+    private AdmissionPanel admissionPanel;
+    private AppointmentPanel appointmentPanel;
+    private HospitalRoomPanel hospitalRoomPanel;
+    private MedicalRecordPanel medicalRecordPanel;
+    private PersonalInfoPanel personalInfoPanel;
 
     public MainFrame() {
         setTitle("Hệ thống quản lý bệnh nhân");
@@ -37,67 +59,96 @@ public class MainFrame extends JFrame {
         setSize(1200, 700);
         setLocationRelativeTo(null);
 
-        // Tạo thanh menu
+        userService = new UserService();
+        initializeSampleUsers();
+
+        currentUser = userService.getUserByUsername("admin");
+        if (currentUser == null) {
+            currentUser = new User("admin", "Admin User", "admin@hospital.com", "0900000000", null, null);
+        }
+
         JMenuBar menuBar = new JMenuBar();
 
-        // Menu File
-        JMenu fileMenu = new JMenu("File");
+        JMenu systemMenu = new JMenu("Hệ thống");
+        JMenuItem loginItem = new JMenuItem("Đăng nhập");
+        loginItem.addActionListener(e -> showLoginDialog());
+        JMenuItem logoutItem = new JMenuItem("Đăng xuất");
+        logoutItem.addActionListener(e -> performLogout());
         JMenuItem exitItem = new JMenuItem("Thoát");
         exitItem.addActionListener(e -> System.exit(0));
-        fileMenu.add(exitItem);
+        systemMenu.add(loginItem);
+        systemMenu.add(logoutItem);
+        systemMenu.addSeparator();
+        systemMenu.add(exitItem);
 
-        // Menu Trợ giúp
         JMenu helpMenu = new JMenu("Trợ giúp");
         JMenuItem aboutItem = new JMenuItem("Giới thiệu");
-        aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Hệ thống quản lý bệnh nhân\nVersion 1.0",
-                "Giới thiệu",
-                JOptionPane.INFORMATION_MESSAGE));
+        aboutItem.addActionListener(e -> showAboutDialog());
         helpMenu.add(aboutItem);
 
-        menuBar.add(fileMenu);
+        menuBar.add(systemMenu);
         menuBar.add(helpMenu);
         setJMenuBar(menuBar);
 
-        // Tạo panel chính với CardLayout
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // Tạo các panel một lần và lưu lại
         dashboardPanel = new DashboardPanel();
-        patientPanel = new PatientManagementPanel();
-        searchPanel = new SearchPanel();
-        filePanel = new FileManagementPanel();
-        appointmentPanel = new AppointmentPanel(); // Panel cuộc hẹn
-        admissionPanel = new AdmissionPanel(); // Khởi tạo panel nhập viện
+        invoiceDetailPanel = new InvoiceDetailPanel(currentUser);
+        medicationPanel = new MedicationPanel(currentUser);
+        prescriptionDetailPanel = new PrescriptionDetailPanel(currentUser);
+        prescriptionPanel = new PrescriptionPanel(currentUser);
+        userSearchPanel = new UserSearchPanel(currentUser, userService);
+        vitalSignsPanel = new VitalSignsPanel(currentUser);
+        admissionPanel = new AdmissionPanel(currentUser);
+        appointmentPanel = new AppointmentPanel(currentUser);
+        hospitalRoomPanel = new HospitalRoomPanel(currentUser);
+        medicalRecordPanel = new MedicalRecordPanel(currentUser);
+        personalInfoPanel = new PersonalInfoPanel(currentUser);
 
-        // Thêm các panel vào panel chính
-        mainPanel.add(new LoginPanel(this), "LOGIN");
         mainPanel.add(dashboardPanel, "DASHBOARD");
-        mainPanel.add(patientPanel, "PATIENT");
-        mainPanel.add(searchPanel, "SEARCH");
-        mainPanel.add(filePanel, "FILE");
+        mainPanel.add(invoiceDetailPanel, "INVOICE_DETAIL");
+        mainPanel.add(medicationPanel, "MEDICATION");
+        mainPanel.add(prescriptionDetailPanel, "PRESCRIPTION_DETAIL");
+        mainPanel.add(prescriptionPanel, "PRESCRIPTION");
+        mainPanel.add(userSearchPanel, "USER_SEARCH");
+        mainPanel.add(vitalSignsPanel, "VITAL_SIGNS");
+        mainPanel.add(admissionPanel, "ADMISSION");
         mainPanel.add(appointmentPanel, "APPOINTMENT");
-        mainPanel.add(admissionPanel, "ADMISSION"); // Thêm panel nhập viện vào CardLayout
+        mainPanel.add(hospitalRoomPanel, "HOSPITAL_ROOM");
+        mainPanel.add(medicalRecordPanel, "MEDICAL_RECORD");
+        mainPanel.add(personalInfoPanel, "PERSONAL_INFO");
 
-        // Tạo navPanel một lần và lưu lại
         navPanel = createNavPanel();
 
-        // Tạo panel nội dung chính
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.add(mainPanel, BorderLayout.CENTER);
 
-        // Thêm các thành phần vào frame
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(navPanel, BorderLayout.WEST);
         getContentPane().add(contentPanel, BorderLayout.CENTER);
 
-        // Hiển thị màn hình đăng nhập ban đầu
-        showLoginScreen();
+        showPanel("DASHBOARD");
+
         instance = this;
     }
 
-    private JButton createNavButton(String text, String iconName) {
+    private void initializeSampleUsers() {
+        try {
+            userService.addUser("admin", "admin123", "Quản Trị Viên",
+                    "admin@hospital.com", "0901234567", model.entity.Role.ADMIN, "Quản trị hệ thống");
+            userService.addUser("bsnam", "doctor123", "Bác Sĩ Hoàng Nam",
+                    "nam@hospital.com", "0912345678", model.entity.Role.DOCTOR, "Khoa Nội");
+            userService.addUser("bslinh", "doctor123", "Bác Sĩ Thanh Linh",
+                    "linh@hospital.com", "0923456789", model.entity.Role.DOCTOR, "Khoa Ngoại");
+            userService.addUser("bnhoa", "patient123", "Nguyễn Thị Hoa",
+                    "hoa@gmail.com", "0945678901", model.entity.Role.PATIENT, "Đau đầu, sốt");
+        } catch (Exception e) {
+            System.err.println("Lỗi khi khởi tạo dữ liệu mẫu: " + e.getMessage());
+        }
+    }
+
+    private JButton createNavButton(String text, String iconName, String panelName) {
         JButton button = new JButton(text);
         button.setPreferredSize(new Dimension(250, 45));
         button.setMaximumSize(new Dimension(250, 45));
@@ -111,7 +162,6 @@ public class MainFrame extends JFrame {
         button.setMargin(new Insets(0, 25, 0, 0));
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Load icon if exists
         try {
             URL iconUrl = getClass().getResource("/model/gui/icons/" + iconName);
             if (iconUrl != null) {
@@ -124,7 +174,11 @@ public class MainFrame extends JFrame {
             System.out.println("Không thể tải icon: " + iconName);
         }
 
-        // Add hover effect using MouseListener class
+        button.addActionListener(e -> {
+            updateButtonSelection(button);
+            showPanel(panelName);
+        });
+
         button.addMouseListener(new ButtonMouseListener(button));
 
         return button;
@@ -161,87 +215,12 @@ public class MainFrame extends JFrame {
         currentButton = selectedButton;
     }
 
-    public static MainFrame getInstance() {
-        return instance;
-    }
-
-    public DashboardPanel getDashboardPanel() {
-        return dashboardPanel;
-    }
-
-    public void setCurrentUser(User user) {
-        this.currentUser = user;
-        if (user != null) {
-            userNameLabel.setText(user.getFullName());
-            // Cập nhật chữ cái đầu cho avatar mặc định
-            if (avatarLabel != null && avatarLabel.getIcon() == null) {
-                String firstLetter = String.valueOf(user.getFullName().charAt(0)).toUpperCase();
-                BufferedImage image = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g2d = image.createGraphics();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Vẽ nền tròn
-                g2d.setColor(new Color(200, 200, 200));
-                g2d.fillOval(0, 0, 150, 150);
-
-                // Vẽ chữ cái
-                g2d.setColor(Color.WHITE);
-                g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
-                FontMetrics fm = g2d.getFontMetrics();
-                int x = (150 - fm.stringWidth(firstLetter)) / 2;
-                int y = ((150 - fm.getHeight()) / 2) + fm.getAscent();
-                g2d.drawString(firstLetter, x, y);
-
-                g2d.dispose();
-                avatarLabel.setIcon(new ImageIcon(image));
-            }
-        }
-    }
-
-    public void showLoginScreen() {
-        navPanel.setVisible(false);
-        if (currentButton != null) {
-            currentButton.setBackground(new Color(41, 128, 185));
-            currentButton = null;
-        }
-        cardLayout.show(mainPanel, "LOGIN");
-    }
-
-    public void showMainContent() {
-        navPanel.setVisible(true);
-        // Select home button by default
-        Component[] components = navPanel.getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JButton) {
-                JButton button = (JButton) comp;
-                if (button.getText().equals("Trang chủ")) {
-                    updateButtonSelection(button);
-                    break;
-                }
-            }
-        }
-        cardLayout.show(mainPanel, "DASHBOARD");
-    }
-
-    // Phương thức để hiển thị màn hình quản lý cuộc hẹn
-    public void showAppointmentPanel() {
-        navPanel.setVisible(true);
-        cardLayout.show(mainPanel, "APPOINTMENT");
-    }
-
-    // Phương thức để hiển thị màn hình quản lý nhập viện
-    public void showAdmissionPanel() {
-        navPanel.setVisible(true);
-        cardLayout.show(mainPanel, "ADMISSION");
-    }
-
     private JPanel createNavPanel() {
         JPanel navPanel = new JPanel();
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
         navPanel.setBackground(new Color(41, 128, 185));
         navPanel.setPreferredSize(new Dimension(250, getHeight()));
 
-        // Avatar panel
         JPanel avatarPanel = new JPanel();
         avatarPanel.setLayout(new BoxLayout(avatarPanel, BoxLayout.Y_AXIS));
         avatarPanel.setBackground(new Color(41, 128, 185));
@@ -249,7 +228,6 @@ public class MainFrame extends JFrame {
         avatarPanel.setPreferredSize(new Dimension(250, 200));
         avatarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Create default avatar
         avatarLabel = new JLabel();
         avatarLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         avatarLabel.setPreferredSize(new Dimension(120, 120));
@@ -263,18 +241,17 @@ public class MainFrame extends JFrame {
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
         FontMetrics fm = g2d.getFontMetrics();
-        String letter = "P";
+        String letter = currentUser != null && currentUser.getFullName() != null && !currentUser.getFullName().isEmpty()
+                ? currentUser.getFullName().substring(0, 1).toUpperCase() : "P";
         g2d.drawString(letter, (120 - fm.stringWidth(letter)) / 2, ((120 - fm.getHeight()) / 2) + fm.getAscent());
         g2d.dispose();
         avatarLabel.setIcon(new ImageIcon(image));
 
-        // Add padding above avatar
         avatarPanel.add(Box.createVerticalStrut(30));
         avatarPanel.add(avatarLabel);
         avatarPanel.add(Box.createVerticalStrut(15));
 
-        // User name panel
-        userNameLabel = new JLabel("pha");
+        userNameLabel = new JLabel(currentUser != null ? currentUser.getFullName() : "User");
         userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         userNameLabel.setForeground(Color.WHITE);
         userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -283,527 +260,163 @@ public class MainFrame extends JFrame {
         navPanel.add(avatarPanel);
         navPanel.add(Box.createVerticalStrut(20));
 
-        // Navigation buttons
-        JButton btnDashboard = createNavButton("Trang chủ", "home.png");
-        JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
-        JButton btnAppointment = createNavButton("Quản lý cuộc hẹn", "calendar.png");
-        JButton btnAdmission = createNavButton("Quản lý nhập viện", "admission.png"); // Thêm nút nhập viện
-        JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
-        JButton btnFiles = createNavButton("Quản lý tài liệu", "files.png");
-
-        // Thêm sự kiện cho các nút
-        btnDashboard.addActionListener(e -> {
-            updateButtonSelection(btnDashboard);
-            cardLayout.show(mainPanel, "DASHBOARD");
-        });
-
-        btnPatient.addActionListener(e -> {
-            updateButtonSelection(btnPatient);
-            cardLayout.show(mainPanel, "PATIENT");
-        });
-
-        btnAppointment.addActionListener(e -> {
-            updateButtonSelection(btnAppointment);
-            cardLayout.show(mainPanel, "APPOINTMENT");
-        });
-
-        btnAdmission.addActionListener(e -> {
-            updateButtonSelection(btnAdmission);
-            cardLayout.show(mainPanel, "ADMISSION");
-        });
-
-        btnSearch.addActionListener(e -> {
-            updateButtonSelection(btnSearch);
-            cardLayout.show(mainPanel, "SEARCH");
-        });
-
-        btnFiles.addActionListener(e -> {
-            updateButtonSelection(btnFiles);
-            cardLayout.show(mainPanel, "FILE");
-        });
-
-        navPanel.add(btnDashboard);
-        navPanel.add(btnPatient);
-        navPanel.add(btnAppointment);
-        navPanel.add(btnAdmission); // Thêm nút vào panel
-        navPanel.add(btnSearch);
-        navPanel.add(btnFiles);
+        navPanel.add(createNavButton("Trang chủ", "home.png", "DASHBOARD"));
+        navPanel.add(createNavButton("Quản lý chi tiết hóa đơn", "invoice.png", "INVOICE_DETAIL"));
+        navPanel.add(createNavButton("Quản lý thuốc", "medication.png", "MEDICATION"));
+        navPanel.add(createNavButton("Quản lý chi tiết đơn thuốc", "prescription_detail.png", "PRESCRIPTION_DETAIL"));
+        navPanel.add(createNavButton("Quản lý đơn thuốc", "prescription.png", "PRESCRIPTION"));
+        navPanel.add(createNavButton("Tìm kiếm người dùng", "search.png", "USER_SEARCH"));
+        navPanel.add(createNavButton("Dấu hiệu sinh tồn", "vitals.png", "VITAL_SIGNS"));
+        navPanel.add(createNavButton("Quản lý nhập viện", "admission.png", "ADMISSION"));
+        navPanel.add(createNavButton("Quản lý cuộc hẹn", "appointment.png", "APPOINTMENT"));
+        navPanel.add(createNavButton("Quản lý phòng bệnh", "hospital_room.png", "HOSPITAL_ROOM"));
+        navPanel.add(createNavButton("Hồ sơ bệnh án", "medical_record.png", "MEDICAL_RECORD"));
+        navPanel.add(createNavButton("Thông tin cá nhân", "personal_info.png", "PERSONAL_INFO"));
 
         return navPanel;
+    }
+
+    private void showPanel(String panelName) {
+        cardLayout.show(mainPanel, panelName);
+    }
+
+    public static MainFrame getInstance() {
+        return instance;
+    }
+
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+        userNameLabel.setText(user.getFullName());
+        if (avatarLabel != null) {
+            BufferedImage image = new BufferedImage(120, 120, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = image.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.fillOval(0, 0, 120, 120);
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
+            FontMetrics fm = g2d.getFontMetrics();
+            String letter = user != null && user.getFullName() != null && !user.getFullName().isEmpty()
+                    ? user.getFullName().substring(0, 1).toUpperCase() : "P";
+            g2d.drawString(letter, (120 - fm.stringWidth(letter)) / 2, ((120 - fm.getHeight()) / 2) + fm.getAscent());
+            g2d.dispose();
+            avatarLabel.setIcon(new ImageIcon(image));
+        }
+    }
+
+    private void showLoginDialog() {
+        JDialog loginDialog = new JDialog(this, "Đăng nhập", true);
+        loginDialog.setLayout(new BorderLayout());
+
+        JPanel formPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        formPanel.add(new JLabel("Tên đăng nhập:"));
+        JTextField usernameField = new JTextField(15);
+        formPanel.add(usernameField);
+
+        formPanel.add(new JLabel("Mật khẩu:"));
+        JPasswordField passwordField = new JPasswordField(15);
+        formPanel.add(passwordField);
+
+        loginDialog.add(formPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JButton loginButton = new JButton("Đăng nhập");
+        loginButton.addActionListener(e -> {
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword());
+
+            User user = userService.authenticate(username, password);
+            if (user != null) {
+                currentUser = user;
+                setCurrentUser(user);
+                showPanel("DASHBOARD");
+                navPanel.setVisible(true);
+                loginDialog.dispose();
+            } else {
+                JOptionPane.showMessageDialog(loginDialog,
+                        "Tên đăng nhập hoặc mật khẩu không đúng",
+                        "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        JButton cancelButton = new JButton("Hủy");
+        cancelButton.addActionListener(e -> loginDialog.dispose());
+
+        buttonPanel.add(loginButton);
+        buttonPanel.add(cancelButton);
+
+        loginDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        loginDialog.pack();
+        loginDialog.setLocationRelativeTo(this);
+        loginDialog.setVisible(true);
+    }
+
+    private void performLogout() {
+        int option = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc chắn muốn đăng xuất?",
+                "Đăng xuất", JOptionPane.YES_NO_OPTION);
+
+        if (option == JOptionPane.YES_OPTION) {
+            currentUser = null;
+            navPanel.setVisible(false);
+            showLoginDialog();
+        }
+    }
+
+    private void showAboutDialog() {
+        JDialog aboutDialog = new JDialog(this, "Giới thiệu", true);
+        aboutDialog.setLayout(new BorderLayout());
+
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel titleLabel = new JLabel("HỆ THỐNG QUẢN LÝ Y TẾ");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel versionLabel = new JLabel("Phiên bản 1.0");
+        versionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel descLabel = new JLabel("Phần mềm quản lý người dùng trong hệ thống y tế");
+        descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel copyrightLabel = new JLabel("© 2024 - Bản quyền thuộc về...");
+        copyrightLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        contentPanel.add(titleLabel);
+        contentPanel.add(Box.createVerticalStrut(10));
+        contentPanel.add(versionLabel);
+        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(descLabel);
+        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(copyrightLabel);
+
+        aboutDialog.add(contentPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton closeButton = new JButton("Đóng");
+        closeButton.addActionListener(e -> aboutDialog.dispose());
+        buttonPanel.add(closeButton);
+
+        aboutDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        aboutDialog.pack();
+        aboutDialog.setLocationRelativeTo(this);
+        aboutDialog.setVisible(true);
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame();
             frame.setVisible(true);
+            frame.navPanel.setVisible(false); // Ẩn navPanel lúc đầu, yêu cầu đăng nhập
+            frame.showLoginDialog();
         });
     }
-
-    // Lớp panel để quản lý Appointment (cuộc hẹn)
-    private class AppointmentPanel extends JPanel {
-        private DefaultListModel<Appointment> appointmentListModel;
-        private JList<Appointment> appointmentList;
-        private JButton addButton, editButton, deleteButton;
-        private JTextField idField, doctorField, patientField;
-        private JTextArea reasonArea;
-        private JTextField dateField, timeField;
-        private JComboBox<String> statusComboBox, paymentStatusComboBox;
-
-        public AppointmentPanel() {
-            setLayout(new BorderLayout());
-
-            // Tiêu đề panel
-            JLabel titleLabel = new JLabel("Quản lý cuộc hẹn");
-            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-            titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-            add(titleLabel, BorderLayout.NORTH);
-
-            // Panel chính chia làm 2 phần
-            JPanel mainContent = new JPanel(new BorderLayout());
-
-            // Phần trái: danh sách cuộc hẹn
-            JPanel leftPanel = new JPanel(new BorderLayout());
-            leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 10));
-
-            // Tạo mô hình danh sách và hiển thị
-            appointmentListModel = new DefaultListModel<>();
-
-            // Thêm vài dữ liệu mẫu
-            appointmentListModel.addElement(new Appointment(
-                    "APT001",
-                    LocalDate.now(),
-                    LocalTime.of(9, 30),
-                    "BS. Nguyễn Văn A",
-                    "Trần Văn B",
-                    "Khám tổng quát",
-                    Appointment.AppointmentStatus.PENDING,
-                    Appointment.PaymentStatus.UNPAID));
-
-            appointmentListModel.addElement(new Appointment(
-                    "APT002",
-                    LocalDate.now().plusDays(2),
-                    LocalTime.of(14, 15),
-                    "BS. Lê Thị C",
-                    "Phạm Thị D",
-                    "Tái khám",
-                    Appointment.AppointmentStatus.PENDING,
-                    Appointment.PaymentStatus.PAID));
-
-            appointmentList = new JList<>(appointmentListModel);
-            appointmentList.setCellRenderer(new DefaultListCellRenderer() {
-                @Override
-                public Component getListCellRendererComponent(JList<?> list, Object value,
-                                                              int index, boolean isSelected,
-                                                              boolean cellHasFocus) {
-                    Appointment appointment = (Appointment) value;
-                    String text = String.format("%s - %s - Bác sĩ: %s - BN: %s - %s",
-                            appointment.getId(),
-                            appointment.getDateString(),
-                            appointment.getDoctor(),
-                            appointment.getPatient(),
-                            appointment.getStatusDisplay());
-                    return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
-                }
-            });
-
-            JScrollPane listScrollPane = new JScrollPane(appointmentList);
-            leftPanel.add(listScrollPane, BorderLayout.CENTER);
-
-            // Panel nút bấm
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            addButton = new JButton("Thêm mới");
-            editButton = new JButton("Chỉnh sửa");
-            deleteButton = new JButton("Xóa");
-
-            buttonPanel.add(addButton);
-            buttonPanel.add(editButton);
-            buttonPanel.add(deleteButton);
-            leftPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-            // Phần phải: chi tiết cuộc hẹn
-            JPanel rightPanel = new JPanel();
-            rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-            rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));
-
-            // Các field thông tin
-            JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
-            formPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-
-            formPanel.add(new JLabel("Mã cuộc hẹn:"));
-            idField = new JTextField();
-            formPanel.add(idField);
-
-            formPanel.add(new JLabel("Ngày hẹn:"));
-            dateField = new JTextField();
-            formPanel.add(dateField);
-
-            formPanel.add(new JLabel("Giờ hẹn:"));
-            timeField = new JTextField();
-            formPanel.add(timeField);
-
-            formPanel.add(new JLabel("Bác sĩ:"));
-            doctorField = new JTextField();
-            formPanel.add(doctorField);
-
-            formPanel.add(new JLabel("Bệnh nhân:"));
-            patientField = new JTextField();
-            formPanel.add(patientField);
-
-            formPanel.add(new JLabel("Trạng thái:"));
-            String[] statusOptions = {
-                    Appointment.AppointmentStatus.PENDING.getDisplayValue(),
-                    Appointment.AppointmentStatus.COMPLETED.getDisplayValue(),
-                    Appointment.AppointmentStatus.CANCELLED.getDisplayValue()
-            };
-            statusComboBox = new JComboBox<>(statusOptions);
-            formPanel.add(statusComboBox);
-
-            formPanel.add(new JLabel("Trạng thái thanh toán:"));
-            String[] paymentOptions = {
-                    Appointment.PaymentStatus.PAID.getDisplayValue(),
-                    Appointment.PaymentStatus.UNPAID.getDisplayValue()
-            };
-            paymentStatusComboBox = new JComboBox<>(paymentOptions);
-            formPanel.add(paymentStatusComboBox);
-
-            formPanel.add(new JLabel("Lý do khám:"));
-            reasonArea = new JTextArea(5, 20);
-            JScrollPane reasonScrollPane = new JScrollPane(reasonArea);
-            formPanel.add(reasonScrollPane);
-
-            rightPanel.add(formPanel);
-
-            // Nút lưu thông tin
-            JPanel savePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JButton saveButton = new JButton("Lưu thông tin");
-            savePanel.add(saveButton);
-            rightPanel.add(savePanel);
-
-            // Xử lý sự kiện khi chọn một cuộc hẹn trong danh sách
-            appointmentList.addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting() && appointmentList.getSelectedValue() != null) {
-                    Appointment selectedAppointment = appointmentList.getSelectedValue();
-                    displayAppointmentDetails(selectedAppointment);
-                }
-            });
-
-            // Xử lý sự kiện khi nhấn nút lưu
-            saveButton.addActionListener(e -> {
-                try {
-                    saveAppointmentDetails();
-                    JOptionPane.showMessageDialog(this,
-                            "Lưu thông tin thành công!",
-                            "Thành công",
-                            JOptionPane.INFORMATION_MESSAGE);
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this,
-                            "Lỗi: " + ex.getMessage(),
-                            "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            });
-
-            // Xử lý sự kiện khi nhấn nút thêm mới
-            addButton.addActionListener(e -> {
-                clearForm();
-                // Tạo ID mới tự động dựa trên số lượng hiện có
-                idField.setText("APT" + String.format("%03d", appointmentListModel.getSize() + 1));
-                // Đặt ngày hiện tại
-                dateField.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                // Đặt thời gian mặc định
-                timeField.setText("09:00");
-            });
-
-            // Xử lý sự kiện khi nhấn nút xóa
-            deleteButton.addActionListener(e -> {
-                if (appointmentList.getSelectedValue() != null) {
-                    int confirm = JOptionPane.showConfirmDialog(this,
-                            "Bạn có chắc chắn muốn xóa cuộc hẹn này?",
-                            "Xác nhận xóa",
-                            JOptionPane.YES_NO_OPTION);
-
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        appointmentListModel.removeElement(appointmentList.getSelectedValue());
-                        clearForm();
-                    }
-                }
-            });
-
-            // Phân chia không gian
-            JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
-            splitPane.setDividerLocation(400);
-            mainContent.add(splitPane, BorderLayout.CENTER);
-
-            add(mainContent, BorderLayout.CENTER);
-        }
-
-        private void displayAppointmentDetails(Appointment appointment) {
-            idField.setText(appointment.getId());
-            dateField.setText(appointment.getDateString());
-            timeField.setText(appointment.getTimeString());
-            doctorField.setText(appointment.getDoctor());
-            patientField.setText(appointment.getPatient());
-            reasonArea.setText(appointment.getReason());
-            statusComboBox.setSelectedItem(appointment.getStatusDisplay());
-            paymentStatusComboBox.setSelectedItem(appointment.getPaymentStatusDisplay());
-        }
-
-        private void saveAppointmentDetails() {
-            int selectedIndex = appointmentList.getSelectedIndex();
-
-            String statusStr = (String) statusComboBox.getSelectedItem();
-            String paymentStatusStr = (String) paymentStatusComboBox.getSelectedItem();
-
-            // Tạo đối tượng Appointment từ dữ liệu form
-            Appointment updatedAppointment = new Appointment(
-                    idField.getText(),
-                    dateField.getText(),
-                    timeField.getText(),
-                    doctorField.getText(),
-                    patientField.getText(),
-                    reasonArea.getText(),
-                    statusStr,
-                    paymentStatusStr
-            );
-
-            if (selectedIndex >= 0) {
-                // Cập nhật thông tin
-                appointmentListModel.set(selectedIndex, updatedAppointment);
-            } else {
-                // Thêm mới
-                appointmentListModel.addElement(updatedAppointment);
-            }
-        }
-
-        private void clearForm() {
-            idField.setText("");
-            dateField.setText("");
-            timeField.setText("");
-            doctorField.setText("");
-            patientField.setText("");
-            reasonArea.setText("");
-            statusComboBox.setSelectedIndex(0);
-            paymentStatusComboBox.setSelectedIndex(0);
-        }
-    }
-
-    // Lớp panel quản lý Admission (nhập viện)
-    private class AdmissionPanel extends JPanel {
-        private DefaultListModel<Admission> admissionListModel;
-        private JList<Admission> admissionList;
-        private JButton addButton, editButton, deleteButton;
-        private JTextField admissionIdField, patientIdField, doctorIdField, roomIdField;
-        private JTextArea notesArea;
-        private JTextField admissionDateField, dischargeDateField;
-
-        public AdmissionPanel() {
-            setLayout(new BorderLayout());
-
-            // Tiêu đề panel
-            JLabel titleLabel = new JLabel("Quản lý nhập viện bệnh nhân");
-            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-            titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-            add(titleLabel, BorderLayout.NORTH);
-
-            // Panel chính chia làm 2 phần
-            JPanel mainContent = new JPanel(new BorderLayout());
-
-            // Phần trái: danh sách nhập viện
-            JPanel leftPanel = new JPanel(new BorderLayout());
-            leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 10));
-
-            // Tạo mô hình danh sách và bảng
-            admissionListModel = new DefaultListModel<>();
-
-            // Thêm vài dữ liệu mẫu về Admission
-            admissionListModel.addElement(new Admission(
-                    "ADM001", "PT001", LocalDate.now(), "DOC001", "RM101",
-                    "Bệnh nhân nhập viện để kiểm tra sức khỏe"));
-
-            admissionListModel.addElement(new Admission(
-                    "ADM002", "PT002", LocalDate.now().minusDays(5), "DOC002", "RM102",
-                    LocalDate.now(), "Bệnh nhân đã xuất viện"));
-
-            admissionList = new JList<>(admissionListModel);
-            admissionList.setCellRenderer(new DefaultListCellRenderer() {
-                @Override
-                public Component getListCellRendererComponent(JList<?> list, Object value,
-                                                              int index, boolean isSelected,
-                                                              boolean cellHasFocus) {
-                    Admission admission = (Admission) value;
-                    String text = String.format("Mã: %s - Bệnh nhân: %s - Ngày nhập viện: %s",
-                            admission.getAdmissionId(),
-                            admission.getPatientId(),
-                            admission.getAdmissionDate());
-                    return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
-                }
-            });
-
-            JScrollPane listScrollPane = new JScrollPane(admissionList);
-            leftPanel.add(listScrollPane, BorderLayout.CENTER);
-
-            // Panel nút bấm
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            addButton = new JButton("Thêm");
-            editButton = new JButton("Sửa");
-            deleteButton = new JButton("Xóa");
-
-            buttonPanel.add(addButton);
-            buttonPanel.add(editButton);
-            buttonPanel.add(deleteButton);
-            leftPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-            // Phần phải: chi tiết nhập viện
-            JPanel rightPanel = new JPanel();
-            rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-            rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));
-
-            // Các field thông tin
-            JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
-            formPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-
-            formPanel.add(new JLabel("Mã nhập viện:"));
-            admissionIdField = new JTextField();
-            formPanel.add(admissionIdField);
-
-            formPanel.add(new JLabel("Mã bệnh nhân:"));
-            patientIdField = new JTextField();
-            formPanel.add(patientIdField);
-
-            formPanel.add(new JLabel("Ngày nhập viện:"));
-            admissionDateField = new JTextField();
-            formPanel.add(admissionDateField);
-
-            formPanel.add(new JLabel("Mã bác sĩ:"));
-            doctorIdField = new JTextField();
-            formPanel.add(doctorIdField);
-
-            formPanel.add(new JLabel("Mã phòng:"));
-            roomIdField = new JTextField();
-            formPanel.add(roomIdField);
-
-            formPanel.add(new JLabel("Ngày xuất viện:"));
-            dischargeDateField = new JTextField();
-            formPanel.add(dischargeDateField);
-
-            formPanel.add(new JLabel("Ghi chú:"));
-            notesArea = new JTextArea(5, 20);
-            JScrollPane notesScrollPane = new JScrollPane(notesArea);
-            formPanel.add(notesScrollPane);
-
-            rightPanel.add(formPanel);
-
-            // Nút lưu thông tin
-            JPanel savePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JButton saveButton = new JButton("Lưu thông tin");
-            savePanel.add(saveButton);
-            rightPanel.add(savePanel);
-
-            // Xử lý sự kiện khi chọn một bệnh nhân trong danh sách
-            admissionList.addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting() && admissionList.getSelectedValue() != null) {
-                    Admission selectedAdmission = admissionList.getSelectedValue();
-                    displayAdmissionDetails(selectedAdmission);
-                }
-            });
-
-            // Xử lý sự kiện khi nhấn nút lưu
-            saveButton.addActionListener(e -> {
-                try {
-                    saveAdmissionDetails();
-                    JOptionPane.showMessageDialog(this,
-                            "Lưu thông tin thành công!",
-                            "Thành công",
-                            JOptionPane.INFORMATION_MESSAGE);
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this,
-                            "Lỗi: " + ex.getMessage(),
-                            "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            });
-
-            // Xử lý sự kiện khi nhấn nút thêm mới
-            addButton.addActionListener(e -> {
-                clearForm();
-                admissionIdField.setText("ADM" + String.format("%03d", admissionListModel.getSize() + 1));
-                admissionDateField.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-            });
-
-            // Xử lý sự kiện khi nhấn nút xóa
-            deleteButton.addActionListener(e -> {
-                if (admissionList.getSelectedValue() != null) {
-                    int confirm = JOptionPane.showConfirmDialog(this,
-                            "Bạn có chắc chắn muốn xóa thông tin nhập viện này?",
-                            "Xác nhận xóa",
-                            JOptionPane.YES_NO_OPTION);
-
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        admissionListModel.removeElement(admissionList.getSelectedValue());
-                        clearForm();
-                    }
-                }
-            });
-
-            // Phân chia không gian
-            JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
-            splitPane.setDividerLocation(400);
-            mainContent.add(splitPane, BorderLayout.CENTER);
-
-            add(mainContent, BorderLayout.CENTER);
-        }
-
-        private void displayAdmissionDetails(Admission admission) {
-            admissionIdField.setText(admission.getAdmissionId());
-            patientIdField.setText(admission.getPatientId());
-            admissionDateField.setText(admission.getAdmissionDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-            doctorIdField.setText(admission.getDoctorId());
-            roomIdField.setText(admission.getRoomId());
-            dischargeDateField.setText(admission.getDischargeDate() != null ?
-                    admission.getDischargeDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "");
-            notesArea.setText(admission.getNotes());
-        }
-
-        private void saveAdmissionDetails() {
-            int selectedIndex = admissionList.getSelectedIndex();
-
-            LocalDate admissionDate = LocalDate.parse(admissionDateField.getText(),
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-
-            LocalDate dischargeDate = null;
-            if (dischargeDateField.getText() != null && !dischargeDateField.getText().isEmpty()) {
-                dischargeDate = LocalDate.parse(dischargeDateField.getText(),
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            }
-
-            // Tạo đối tượng Admission từ dữ liệu form
-            Admission updatedAdmission = new Admission(
-                    admissionIdField.getText(),
-                    patientIdField.getText(),
-                    admissionDate,
-                    doctorIdField.getText(),
-                    roomIdField.getText(),
-                    dischargeDate,
-                    notesArea.getText()
-            );
-
-            if (selectedIndex >= 0) {
-                // Cập nhật thông tin
-                admissionListModel.set(selectedIndex, updatedAdmission);
-            } else {
-                // Thêm mới
-                admissionListModel.addElement(updatedAdmission);
-            }
-        }
-
-        private void clearForm() {
-            admissionIdField.setText("");
-            patientIdField.setText("");
-            admissionDateField.setText("");
-            doctorIdField.setText("");
-            roomIdField.setText("");
-            dischargeDateField.setText("");
-            notesArea.setText("");
-        }
-    }
 }
+
