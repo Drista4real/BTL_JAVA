@@ -41,21 +41,6 @@ public class InvoicePanel extends JPanel {
     private JTable paymentsTable;
     private DefaultTableModel paymentsTableModel;
 
-    // Form fields
-    private JTextField invoiceNumberField;
-    private JTextField patientIdField;
-    private JTextField patientNameField;
-    private JTextField createdDateField;
-    private JTextField dueDateField;
-    private JTextField createdByField;
-    private JTextField approvedByField;
-    private JComboBox<String> invoiceTypeComboBox;
-    private JComboBox<String> statusComboBox;
-    private JTextField totalAmountField;
-    private JTextField paidAmountField;
-    private JTextField remainingAmountField;
-    private JTextArea notesArea;
-
     /**
      * Constructor
      * @param user Người dùng hiện tại
@@ -262,10 +247,6 @@ public class InvoicePanel extends JPanel {
         // Tạo tab pane cho chi tiết hóa đơn
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Tab thông tin cơ bản
-        JPanel basicInfoPanel = createBasicInfoPanel();
-        tabbedPane.addTab("Thông tin cơ bản", basicInfoPanel);
-
         // Tab danh sách mục
         JPanel itemsPanel = createItemsPanel();
         tabbedPane.addTab("Danh sách mục", itemsPanel);
@@ -288,155 +269,6 @@ public class InvoicePanel extends JPanel {
         buttonPanel.add(printButton);
 
         panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    /**
-     * Tạo panel thông tin cơ bản của hóa đơn
-     */
-    private JPanel createBasicInfoPanel() {
-        JPanel panel = new JPanel(new BorderLayout(5, 5));
-
-        // Panel thông tin
-        JPanel infoPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-
-        // Tạo các trường nhập liệu
-        invoiceNumberField = new JTextField(15);
-        patientIdField = new JTextField(15);
-        patientNameField = new JTextField(15);
-        createdDateField = new JTextField(15);
-        dueDateField = new JTextField(15);
-        createdByField = new JTextField(15);
-        approvedByField = new JTextField(15);
-
-        // Tạo combobox
-        String[] invoiceTypes = new String[Invoice.InvoiceType.values().length];
-        for (int i = 0; i < Invoice.InvoiceType.values().length; i++) {
-            invoiceTypes[i] = Invoice.InvoiceType.values()[i].getDisplayName();
-        }
-        invoiceTypeComboBox = new JComboBox<>(invoiceTypes);
-
-        String[] statusTypes = new String[Invoice.InvoiceStatus.values().length];
-        for (int i = 0; i < Invoice.InvoiceStatus.values().length; i++) {
-            statusTypes[i] = Invoice.InvoiceStatus.values()[i].getDisplayName();
-        }
-        statusComboBox = new JComboBox<>(statusTypes);
-
-        // Tạo các trường số tiền
-        totalAmountField = new JTextField(15);
-        paidAmountField = new JTextField(15);
-        remainingAmountField = new JTextField(15);
-
-        // Tạo trường ghi chú
-        notesArea = new JTextArea(5, 30);
-        notesArea.setLineWrap(true);
-        notesArea.setWrapStyleWord(true);
-        JScrollPane notesScrollPane = new JScrollPane(notesArea);
-
-        // Set editability
-        invoiceNumberField.setEditable(false);
-        createdDateField.setEditable(false);
-        createdByField.setEditable(false);
-        approvedByField.setEditable(false);
-        totalAmountField.setEditable(false);
-        paidAmountField.setEditable(false);
-        remainingAmountField.setEditable(false);
-        statusComboBox.setEnabled(false);
-
-        // Thêm các thành phần vào panel
-        // Cột 1
-        gbc.gridx = 0; gbc.gridy = 0;
-        infoPanel.add(new JLabel("Số hóa đơn:"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1;
-        infoPanel.add(new JLabel("Mã bệnh nhân:"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2;
-        infoPanel.add(new JLabel("Tên bệnh nhân:"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3;
-        infoPanel.add(new JLabel("Ngày tạo:"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 4;
-        infoPanel.add(new JLabel("Hạn thanh toán:"), gbc);
-
-        gbc.gridx = 0; gbc.gridy = 5;
-        infoPanel.add(new JLabel("Loại hóa đơn:"), gbc);
-
-        // Cột 2
-        gbc.gridx = 1; gbc.gridy = 0;
-        infoPanel.add(invoiceNumberField, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 1;
-        infoPanel.add(patientIdField, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 2;
-        infoPanel.add(patientNameField, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 3;
-        infoPanel.add(createdDateField, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 4;
-        infoPanel.add(dueDateField, gbc);
-
-        gbc.gridx = 1; gbc.gridy = 5;
-        infoPanel.add(invoiceTypeComboBox, gbc);
-
-        // Cột 3
-        gbc.gridx = 2; gbc.gridy = 0;
-        infoPanel.add(new JLabel("Trạng thái:"), gbc);
-
-        gbc.gridx = 2; gbc.gridy = 1;
-        infoPanel.add(new JLabel("Tổng tiền:"), gbc);
-
-        gbc.gridx = 2; gbc.gridy = 2;
-        infoPanel.add(new JLabel("Đã thanh toán:"), gbc);
-
-        gbc.gridx = 2; gbc.gridy = 3;
-        infoPanel.add(new JLabel("Còn lại:"), gbc);
-
-        gbc.gridx = 2; gbc.gridy = 4;
-        infoPanel.add(new JLabel("Người tạo:"), gbc);
-
-        gbc.gridx = 2; gbc.gridy = 5;
-        infoPanel.add(new JLabel("Người duyệt:"), gbc);
-
-        // Cột 4
-        gbc.gridx = 3; gbc.gridy = 0;
-        infoPanel.add(statusComboBox, gbc);
-
-        gbc.gridx = 3; gbc.gridy = 1;
-        infoPanel.add(totalAmountField, gbc);
-
-        gbc.gridx = 3; gbc.gridy = 2;
-        infoPanel.add(paidAmountField, gbc);
-
-        gbc.gridx = 3; gbc.gridy = 3;
-        infoPanel.add(remainingAmountField, gbc);
-
-        gbc.gridx = 3; gbc.gridy = 4;
-        infoPanel.add(createdByField, gbc);
-
-        gbc.gridx = 3; gbc.gridy = 5;
-        infoPanel.add(approvedByField, gbc);
-
-        // Ghi chú
-        gbc.gridx = 0; gbc.gridy = 6;
-        gbc.gridwidth = 1;
-        infoPanel.add(new JLabel("Ghi chú:"), gbc);
-
-        gbc.gridx = 1; gbc.gridy = 6;
-        gbc.gridwidth = 3;
-        infoPanel.add(notesScrollPane, gbc);
-
-        panel.add(infoPanel, BorderLayout.NORTH);
-
-        // Cập nhật thông tin hiển thị
-        updateInvoiceDetails();
 
         return panel;
     }
@@ -531,61 +363,11 @@ public class InvoicePanel extends JPanel {
      */
     private void updateInvoiceDetails() {
         if (currentInvoice == null) {
-            // Xóa trắng các trường
-            invoiceNumberField.setText("");
-            patientIdField.setText("");
-            patientNameField.setText("");
-            createdDateField.setText("");
-            dueDateField.setText("");
-            invoiceTypeComboBox.setSelectedIndex(0);
-            statusComboBox.setSelectedIndex(0);
-            totalAmountField.setText("");
-            paidAmountField.setText("");
-            remainingAmountField.setText("");
-            createdByField.setText("");
-            approvedByField.setText("");
-            notesArea.setText("");
-
             // Xóa bảng
             itemsTableModel.setRowCount(0);
             paymentsTableModel.setRowCount(0);
-
             return;
         }
-
-        // Cập nhật thông tin cơ bản
-        invoiceNumberField.setText(currentInvoice.getInvoiceNumber());
-        patientIdField.setText(currentInvoice.getPatientId());
-        patientNameField.setText(currentInvoice.getPatientName());
-        createdDateField.setText(currentInvoice.getCreatedDate().format(DATE_TIME_FORMATTER));
-        dueDateField.setText(currentInvoice.getDueDate().format(DATE_TIME_FORMATTER));
-
-        // Cập nhật combobox
-        for (int i = 0; i < Invoice.InvoiceType.values().length; i++) {
-            if (Invoice.InvoiceType.values()[i] == currentInvoice.getInvoiceType()) {
-                invoiceTypeComboBox.setSelectedIndex(i);
-                break;
-            }
-        }
-
-        for (int i = 0; i < Invoice.InvoiceStatus.values().length; i++) {
-            if (Invoice.InvoiceStatus.values()[i] == currentInvoice.getStatus()) {
-                statusComboBox.setSelectedIndex(i);
-                break;
-            }
-        }
-
-        // Cập nhật thông tin tài chính
-        totalAmountField.setText(String.format("%,.0f", currentInvoice.getTotalAmount()));
-        paidAmountField.setText(String.format("%,.0f", currentInvoice.getPaidAmount()));
-        remainingAmountField.setText(String.format("%,.0f", currentInvoice.getRemainingAmount()));
-
-        // Cập nhật thông tin người tạo/duyệt
-        createdByField.setText(currentInvoice.getCreatedBy());
-        approvedByField.setText(currentInvoice.getApprovedBy() != null ? currentInvoice.getApprovedBy() : "");
-
-        // Cập nhật ghi chú
-        notesArea.setText(currentInvoice.getNotes());
 
         // Cập nhật bảng
         updateItemsTable();
@@ -672,7 +454,9 @@ public class InvoicePanel extends JPanel {
             }
             return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
-    }    /**
+    }
+
+    /**
      * Cắt chuỗi nếu quá dài
      * @param str Chuỗi cần cắt
      * @param maxLength Độ dài tối đa
@@ -684,4 +468,3 @@ public class InvoicePanel extends JPanel {
         return str.substring(0, maxLength - 3) + "...";
     }
 }
-
