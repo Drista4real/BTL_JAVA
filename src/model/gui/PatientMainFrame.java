@@ -7,8 +7,16 @@ import java.awt.image.BufferedImage;
 import javax.swing.table.DefaultTableModel;
 import model.entity.DataManager;
 import model.entity.Appointment;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.DriverManager;
 
 public class PatientMainFrame extends JFrame {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Pha2k5@";
+
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JButton currentButton;
@@ -194,29 +202,27 @@ class PersonalInfoPanel extends JPanel {
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0; gbc.gridy = 0;
-        JLabel l1 = new JLabel("Họ tên:"); l1.setFont(labelFont); add(l1, gbc); gbc.gridx = 1;
-        JLabel v1 = new JLabel(user.getFullName()); v1.setFont(valueFont); add(v1, gbc);
+        add(new JLabel("Họ tên:"), gbc); gbc.gridx = 1;
+        add(new JLabel(user.getFullName()), gbc);
         gbc.gridx = 0; gbc.gridy++;
-        JLabel l2 = new JLabel("Số điện thoại:"); l2.setFont(labelFont); add(l2, gbc); gbc.gridx = 1;
-        JLabel v2 = new JLabel(user.getPhone()); v2.setFont(valueFont); add(v2, gbc);
+        add(new JLabel("Số điện thoại:"), gbc); gbc.gridx = 1;
+        add(new JLabel(user.getPhone()), gbc);
         gbc.gridx = 0; gbc.gridy++;
-        JLabel l4 = new JLabel("Ngày sinh:"); l4.setFont(labelFont); add(l4, gbc); gbc.gridx = 1;
-        JLabel v4 = new JLabel(user.getDateOfBirth()); v4.setFont(valueFont); add(v4, gbc);
+        add(new JLabel("Ngày sinh:"), gbc); gbc.gridx = 1;
+        add(new JLabel(user.getDateOfBirth()), gbc);
         gbc.gridx = 0; gbc.gridy++;
-        JLabel l5 = new JLabel("Giới tính:"); l5.setFont(labelFont); add(l5, gbc); gbc.gridx = 1;
-        JLabel v5 = new JLabel(user.getGender()); v5.setFont(valueFont); add(v5, gbc);
+        add(new JLabel("Giới tính:"), gbc); gbc.gridx = 1;
+        add(new JLabel(user.getGender()), gbc);
         gbc.gridx = 0; gbc.gridy++;
-        JLabel l6 = new JLabel("Nơi cư trú:"); l6.setFont(labelFont); add(l6, gbc); gbc.gridx = 1;
-        JLabel v6 = new JLabel(user.getAddress()); v6.setFont(valueFont); add(v6, gbc);
+        add(new JLabel("Nơi cư trú:"), gbc); gbc.gridx = 1;
+        add(new JLabel(user.getAddress()), gbc);
         gbc.gridx = 0; gbc.gridy++;
-        JLabel l7 = new JLabel("Số CCCD:"); l7.setFont(labelFont); add(l7, gbc); gbc.gridx = 1;
-        JLabel v7 = new JLabel(user.getCccd()); v7.setFont(valueFont); add(v7, gbc);
+        add(new JLabel("Số CCCD:"), gbc); gbc.gridx = 1;
+        add(new JLabel(user.getCccd()), gbc);
         gbc.gridx = 0; gbc.gridy++;
-        JLabel l8 = new JLabel("Có giấy BHYT không:"); l8.setFont(labelFont); add(l8, gbc); gbc.gridx = 1;
-        JLabel v8 = new JLabel(user.isHasInsurance() ? "Có" : "Không"); v8.setFont(valueFont); add(v8, gbc);
-        gbc.gridx = 0; gbc.gridy++;
-        gbc.gridwidth = 2;
-        add(Box.createVerticalGlue(), gbc);
+        add(new JLabel("Có giấy BHYT không:"), gbc); gbc.gridx = 1;
+        add(new JLabel(user.isHasInsurance() ? "Có" : "Không"), gbc);
+        // Nếu muốn cho phép cập nhật, thêm nút ở đây
     }
 }
 
@@ -225,10 +231,34 @@ class MedicalRecordPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createTitledBorder("Bệnh án"));
-        JTextArea area = new JTextArea("Chức năng xem bệnh án đang phát triển.");
+        JTextArea area = new JTextArea();
         area.setEditable(false);
         area.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        String recordText = getMedicalRecordFromDB(user.getUsername());
+        area.setText(recordText);
         add(new JScrollPane(area), BorderLayout.CENTER);
+    }
+
+    private String getMedicalRecordFromDB(String patientId) {
+        StringBuilder sb = new StringBuilder();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String sql = "SELECT * FROM MedicalRecords WHERE PatientID = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, patientId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                sb.append("Mã hồ sơ: ").append(rs.getString("RecordID")).append("\n");
+                sb.append("Ngày tạo: ").append(rs.getDate("RecordDate")).append("\n");
+                sb.append("Chẩn đoán: ").append(rs.getString("Diagnosis")).append("\n");
+                sb.append("Điều trị: ").append(rs.getString("Treatment")).append("\n");
+                sb.append("Ghi chú: ").append(rs.getString("Notes")).append("\n");
+            } else {
+                sb.append("Chưa có bệnh án.");
+            }
+        } catch (Exception e) {
+            sb.append("Lỗi khi lấy bệnh án: ").append(e.getMessage());
+        }
+        return sb.toString();
     }
 }
 
@@ -237,10 +267,36 @@ class PrescriptionPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createTitledBorder("Đơn thuốc"));
-        JTextArea area = new JTextArea("Chức năng xem đơn thuốc đang phát triển.");
+        JTextArea area = new JTextArea();
         area.setEditable(false);
         area.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        String prescriptions = getPrescriptionsFromDB(user.getUsername());
+        area.setText(prescriptions);
         add(new JScrollPane(area), BorderLayout.CENTER);
+    }
+
+    private String getPrescriptionsFromDB(String patientId) {
+        StringBuilder sb = new StringBuilder();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String sql = "SELECT * FROM Prescriptions WHERE PatientID = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, patientId);
+            ResultSet rs = stmt.executeQuery();
+            int count = 0;
+            while (rs.next()) {
+                count++;
+                sb.append("Đơn thuốc #").append(count).append("\n");
+                sb.append("Mã đơn: ").append(rs.getString("PrescriptionID")).append("\n");
+                sb.append("Ngày kê: ").append(rs.getDate("PrescriptionDate")).append("\n");
+                sb.append("Bác sĩ: ").append(rs.getString("DoctorID")).append("\n");
+                // Có thể truy vấn PrescriptionDetail để lấy chi tiết thuốc
+                sb.append("----------------------\n");
+            }
+            if (count == 0) sb.append("Chưa có đơn thuốc.");
+        } catch (Exception e) {
+            sb.append("Lỗi khi lấy đơn thuốc: ").append(e.getMessage());
+        }
+        return sb.toString();
     }
 }
 
@@ -249,10 +305,36 @@ class PaymentPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createTitledBorder("Thanh toán"));
-        JTextArea area = new JTextArea("Chức năng thanh toán đang phát triển.");
+        JTextArea area = new JTextArea();
         area.setEditable(false);
         area.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        String invoices = getInvoicesFromDB(user.getUsername());
+        area.setText(invoices);
         add(new JScrollPane(area), BorderLayout.CENTER);
+    }
+
+    private String getInvoicesFromDB(String patientId) {
+        StringBuilder sb = new StringBuilder();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String sql = "SELECT * FROM Invoice WHERE PatientID = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, patientId);
+            ResultSet rs = stmt.executeQuery();
+            int count = 0;
+            while (rs.next()) {
+                count++;
+                sb.append("Hóa đơn #").append(count).append("\n");
+                sb.append("Mã hóa đơn: ").append(rs.getString("InvoiceID")).append("\n");
+                sb.append("Ngày tạo: ").append(rs.getDate("CreatedDate")).append("\n");
+                sb.append("Tổng tiền: ").append(rs.getDouble("TotalAmount")).append("\n");
+                sb.append("Trạng thái: ").append(rs.getString("Status")).append("\n");
+                sb.append("----------------------\n");
+            }
+            if (count == 0) sb.append("Chưa có hóa đơn.");
+        } catch (Exception e) {
+            sb.append("Lỗi khi lấy hóa đơn: ").append(e.getMessage());
+        }
+        return sb.toString();
     }
 }
 
