@@ -19,7 +19,7 @@ public abstract class BENHNHAN implements IVIENPHI{
     protected Boolean PhongTYC ;
     protected Scanner sc;
 
-//    protected final double DGP = 150000;
+//    protected final double DGP = 150000
 
     public char getLoaiBH() {
         return LoaiBH;

@@ -5,7 +5,6 @@
 package model.backend;
 
 import model.entity.BENHNHAN;
-import model.entity.BENHNHANBAOHIEMXAHOI;
 import model.entity.BENHNHANBAOHIEMYTE;
 import model.utils.ExceptionUtils;
 import java.io.*;
@@ -86,10 +85,11 @@ public class Demo1 {
                     if (mabn != null && hoten != null && nnv != null && mabh != null) {
                         try {
                             if (lbn == 'y') {
-                                benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                                benhnhan = new BENHNHANBAOHIEMYTE('y', mabn, ghichu, lichhen, hoten, nnv, mabh, phongtyc);
                             } else {
-                            	 benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                                benhnhan = new BENHNHANBAOHIEMYTE('x', mabn, ghichu, lichhen, hoten, nnv, mabh, phongtyc);
                             }
+
 
                             Danhsach.put(benhnhan.getMABN(), benhnhan);
                             System.out.println("Đã thêm bệnh nhân: " + benhnhan.getMABN());
@@ -139,13 +139,14 @@ public class Demo1 {
                     }  
                 }
             }
-            
+
+            // Sửa đoạn cuối phương thức DocFile()
             if (flag) {
                 BENHNHAN benhnhan = null;
                 if(lbn == 'y')
-                	benhnhan = new BENHNHANBAOHIEMXAHOI(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                    benhnhan = new BENHNHANBAOHIEMYTE('y', mabn, ghichu, lichhen, hoten, nnv, mabh, phongtyc);
                 else
-                	 benhnhan = new BENHNHANBAOHIEMYTE(lbn, mabn,ghichu,lichhen, hoten, nnv, mabh, phongtyc);
+                    benhnhan = new BENHNHANBAOHIEMYTE('x', mabn, ghichu, lichhen, hoten, nnv, mabh, phongtyc);
                 Danhsach.put(benhnhan.getMABN(), benhnhan);
             }
             

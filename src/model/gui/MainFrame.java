@@ -42,10 +42,10 @@ public class MainFrame extends JFrame {
         // Menu Trợ giúp
         JMenu helpMenu = new JMenu("Trợ giúp");
         JMenuItem aboutItem = new JMenuItem("Giới thiệu");
-        aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this, 
-            "Hệ thống quản lý bệnh nhân\nVersion 1.0", 
-            "Giới thiệu", 
-            JOptionPane.INFORMATION_MESSAGE));
+        aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                "Hệ thống quản lý bệnh nhân\nVersion 1.0",
+                "Giới thiệu",
+                JOptionPane.INFORMATION_MESSAGE));
         helpMenu.add(aboutItem);
 
         menuBar.add(fileMenu);
@@ -56,21 +56,38 @@ public class MainFrame extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // Tạo các panel một lần và lưu lại
-        dashboardPanel = new DashboardPanel();
-        patientPanel = new PatientManagementPanel();
-        searchPanel = new SearchPanel();
-        filePanel = new FileManagementPanel();
+        try {
+            // Tạo các panel một lần và lưu lại
+            dashboardPanel = new DashboardPanel();
+            patientPanel = new PatientManagementPanel();
+            searchPanel = new SearchPanel();
+            filePanel = new FileManagementPanel();
 
-        // Thêm các panel vào panel chính
-        mainPanel.add(new LoginPanel(this), "LOGIN");
-        mainPanel.add(dashboardPanel, "DASHBOARD");
-        mainPanel.add(patientPanel, "PATIENT");
-        mainPanel.add(searchPanel, "SEARCH");
-        mainPanel.add(filePanel, "FILE");
+            // Thêm các panel vào panel chính
+            mainPanel.add(new LoginPanel(this), "LOGIN");
+            mainPanel.add(dashboardPanel, "DASHBOARD");
+            mainPanel.add(patientPanel, "PATIENT");
+            mainPanel.add(searchPanel, "SEARCH");
+            mainPanel.add(filePanel, "FILE");
+        } catch (Exception e) {
+            System.err.println("Error initializing panels: " + e.getMessage());
+            e.printStackTrace();
+            // Create empty panels if initialization fails
+            mainPanel.add(new JPanel(), "LOGIN");
+            mainPanel.add(new JPanel(), "DASHBOARD");
+            mainPanel.add(new JPanel(), "PATIENT");
+            mainPanel.add(new JPanel(), "SEARCH");
+            mainPanel.add(new JPanel(), "FILE");
+        }
 
         // Tạo navPanel một lần và lưu lại
-        navPanel = createNavPanel();
+        try {
+            navPanel = createNavPanel();
+        } catch (Exception e) {
+            System.err.println("Error creating navigation panel: " + e.getMessage());
+            e.printStackTrace();
+            navPanel = new JPanel();
+        }
 
         // Tạo panel nội dung chính
         JPanel contentPanel = new JPanel(new BorderLayout());
@@ -83,6 +100,8 @@ public class MainFrame extends JFrame {
 
         // Hiển thị màn hình đăng nhập ban đầu
         showLoginScreen();
+
+        // Set the static instance at the end, after successful initialization
         instance = this;
     }
 
@@ -99,23 +118,7 @@ public class MainFrame extends JFrame {
         button.setFocusPainted(false);
         button.setMargin(new Insets(0, 25, 0, 0));
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Load icon if exists
-        try {
-            URL iconUrl = getClass().getResource("/model/gui/icons/" + iconName);
-            if (iconUrl != null) {
-                ImageIcon icon = new ImageIcon(iconUrl);
-                Image img = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-                button.setIcon(new ImageIcon(img));
-                button.setIconTextGap(15);
-            }
-        } catch (Exception e) {
-            System.out.println("Không thể tải icon: " + iconName);
-        }
-
-        // Add hover effect using MouseListener class
         button.addMouseListener(new ButtonMouseListener(button));
-
         return button;
     }
 
@@ -155,15 +158,23 @@ public class MainFrame extends JFrame {
     }
 
     public DashboardPanel getDashboardPanel() {
+        if (dashboardPanel == null) {
+            try {
+                dashboardPanel = new DashboardPanel();
+            } catch (Exception e) {
+                System.err.println("Error creating DashboardPanel: " + e.getMessage());
+                dashboardPanel = null;
+            }
+        }
         return dashboardPanel;
     }
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
-        if (user != null) {
+        if (user != null && userNameLabel != null) {
             userNameLabel.setText(user.getFullName());
             // Cập nhật chữ cái đầu cho avatar mặc định
-            if (avatarLabel != null && avatarLabel.getIcon() == null) {
+            if (avatarLabel != null && avatarLabel.getIcon() == null && !user.getFullName().isEmpty()) {
                 String firstLetter = String.valueOf(user.getFullName().charAt(0)).toUpperCase();
                 BufferedImage image = new BufferedImage(150, 150, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g2d = image.createGraphics();
@@ -188,28 +199,38 @@ public class MainFrame extends JFrame {
     }
 
     public void showLoginScreen() {
-        navPanel.setVisible(false);
+        if (navPanel != null) {
+            navPanel.setVisible(false);
+        }
         if (currentButton != null) {
             currentButton.setBackground(new Color(41, 128, 185));
             currentButton = null;
         }
-        cardLayout.show(mainPanel, "LOGIN");
+        if (cardLayout != null && mainPanel != null) {
+            cardLayout.show(mainPanel, "LOGIN");
+        }
     }
 
     public void showMainContent() {
-        navPanel.setVisible(true);
+        if (navPanel != null) {
+            navPanel.setVisible(true);
+        }
         // Select home button by default
-        Component[] components = navPanel.getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JButton) {
-                JButton button = (JButton) comp;
-                if (button.getText().equals("Trang chủ")) {
-                    updateButtonSelection(button);
-                    break;
+        if (navPanel != null) {
+            Component[] components = navPanel.getComponents();
+            for (Component comp : components) {
+                if (comp instanceof JButton) {
+                    JButton button = (JButton) comp;
+                    if (button.getText().equals("Trang chủ")) {
+                        updateButtonSelection(button);
+                        break;
+                    }
                 }
             }
         }
-        cardLayout.show(mainPanel, "DASHBOARD");
+        if (cardLayout != null && mainPanel != null) {
+            cardLayout.show(mainPanel, "DASHBOARD");
+        }
     }
 
     private JPanel createNavPanel() {
@@ -251,7 +272,7 @@ public class MainFrame extends JFrame {
         avatarPanel.add(Box.createVerticalStrut(15));
 
         // User name panel
-        userNameLabel = new JLabel("pha");
+        userNameLabel = new JLabel("Guest");
         userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         userNameLabel.setForeground(Color.WHITE);
         userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -260,11 +281,38 @@ public class MainFrame extends JFrame {
         navPanel.add(avatarPanel);
         navPanel.add(Box.createVerticalStrut(20));
 
-        // Navigation buttons
+        // Navigation buttons with action listeners
         JButton btnDashboard = createNavButton("Trang chủ", "home.png");
+        btnDashboard.addActionListener(e -> {
+            updateButtonSelection(btnDashboard);
+            if (cardLayout != null && mainPanel != null) {
+                cardLayout.show(mainPanel, "DASHBOARD");
+            }
+        });
+
         JButton btnPatient = createNavButton("Quản lý bệnh nhân", "patient.png");
+        btnPatient.addActionListener(e -> {
+            updateButtonSelection(btnPatient);
+            if (cardLayout != null && mainPanel != null) {
+                cardLayout.show(mainPanel, "PATIENT");
+            }
+        });
+
         JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
+        btnSearch.addActionListener(e -> {
+            updateButtonSelection(btnSearch);
+            if (cardLayout != null && mainPanel != null) {
+                cardLayout.show(mainPanel, "SEARCH");
+            }
+        });
+
         JButton btnFiles = createNavButton("Quản lý tài liệu", "files.png");
+        btnFiles.addActionListener(e -> {
+            updateButtonSelection(btnFiles);
+            if (cardLayout != null && mainPanel != null) {
+                cardLayout.show(mainPanel, "FILE");
+            }
+        });
 
         navPanel.add(btnDashboard);
         navPanel.add(btnPatient);
@@ -275,6 +323,23 @@ public class MainFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MainFrame().setVisible(true));
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            System.err.println("Could not set system look and feel: " + e.getMessage());
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new MainFrame().setVisible(true);
+            } catch (Exception e) {
+                System.err.println("Error creating MainFrame: " + e.getMessage());
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null,
+                        "Application could not start: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 }

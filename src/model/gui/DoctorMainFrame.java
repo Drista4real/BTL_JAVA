@@ -175,14 +175,11 @@ class DoctorDashboardPanel extends JPanel {
         JPanel totalPatientBox = createStatBox("Tổng số bệnh nhân", "120");
         // Box: Bệnh nhân BHYT
         JPanel bhytBox = createStatBox("Bệnh nhân BHYT", "45");
-        // Box: Bệnh nhân BHXH
-        JPanel bhxhBox = createStatBox("Bệnh nhân BHXH", "30");
         // Box: Lịch hẹn hôm nay
         JPanel todayApptBox = createStatBox("Lịch hẹn hôm nay", "8");
 
         statsPanel.add(totalPatientBox);
         statsPanel.add(bhytBox);
-        statsPanel.add(bhxhBox);
         statsPanel.add(todayApptBox);
 
         // Thông báo mới
@@ -235,7 +232,7 @@ class DoctorPatientListPanel extends JPanel {
         searchField = new JTextField(18);
         searchField.setToolTipText("Tìm kiếm theo tên hoặc mã bệnh nhân");
         JButton searchBtn = new JButton("Tìm kiếm");
-        filterComboBox = new JComboBox<>(new String[]{"Tất cả", "BHYT", "BHXH", "Không bảo hiểm"});
+        filterComboBox = new JComboBox<>(new String[]{"Tất cả", "BHYT", "Không bảo hiểm"});
         JButton addBtn = new JButton("Thêm");
         JButton editBtn = new JButton("Sửa");
         JButton deleteBtn = new JButton("Xóa");

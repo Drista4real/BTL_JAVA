@@ -6,7 +6,6 @@ package model.gui;
 
 import model.backend.Demo1;
 import model.entity.BENHNHAN;
-import model.entity.BENHNHANBAOHIEMXAHOI;
 import model.entity.BENHNHANBAOHIEMYTE;
 import java.awt.*;
 import java.io.File;
@@ -257,7 +256,7 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             if (cobLoaiBH.getSelectedItem().equals("y")) {
                 benhnhan = new BENHNHANBAOHIEMYTE('y', txtMABN.getText(),"", null, txtHoten.getText(), NgayNV, txtMaBHYT.getText(), ckbPhongTYC.isSelected());
             } else {
-                benhnhan = new BENHNHANBAOHIEMXAHOI('x', txtMABN.getText(),"", null, txtHoten.getText(), NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
+                benhnhan = new BENHNHANBAOHIEMYTE('x', txtMABN.getText(),"", null, txtHoten.getText(), NgayNV, txtMaBHXH.getText(), ckbPhongTYC.isSelected());
             }
         } catch (ParseException e) {
             JOptionPane.showMessageDialog(this, "Ngày nhập viện không đúng định dạng (dd/MM/yyyy)");
@@ -299,7 +298,7 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Thông tin bệnh nhân không được xóa");
         }
         LoadDataTable();
-    }                                      
+    }
 
     public void setvalue(BENHNHAN bn) {
         if (bn != null) {
@@ -310,10 +309,10 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
 
             txtMABN.setText(bn.getMABN());
             txtHoten.setText(bn.getHoten());
-            if (bn instanceof BENHNHANBAOHIEMYTE) {
+            if (bn.getLoaiBH() == 'y') {
                 txtMaBHYT.setText(((BENHNHANBAOHIEMYTE) bn).getMSBH());
             } else {
-                txtMaBHXH.setText(((BENHNHANBAOHIEMXAHOI) bn).getMBHXH());
+                txtMaBHXH.setText(((BENHNHANBAOHIEMYTE) bn).getMBHXH());
             }
             txtNgaynhapvien.setText(NgayNV);
             cobLoaiBH.select(String.valueOf(bn.getLoaiBH()));
@@ -347,10 +346,10 @@ public class GUIBENHNHAN extends javax.swing.JFrame {
         // Thêm dữ liệu vào bảng
         SimpleDateFormat fmd = new SimpleDateFormat("dd/MM/yyyy");
         String maBH = "";
-        if (bn instanceof BENHNHANBAOHIEMYTE) {
+        if (bn.getLoaiBH() == 'y') {
             maBH = ((BENHNHANBAOHIEMYTE) bn).getMSBH();
         } else {
-            maBH = ((BENHNHANBAOHIEMXAHOI) bn).getMBHXH();
+            maBH = ((BENHNHANBAOHIEMYTE) bn).getMBHXH();
         }
 
         model.addRow(new Object[]{
