@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.DriverManager;
+import model.entity.Role;
 
 public class PatientMainFrame extends JFrame {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement";
@@ -182,7 +183,7 @@ public class PatientMainFrame extends JFrame {
             loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             loginFrame.setSize(1200, 700);
             loginFrame.setLocationRelativeTo(null);
-            loginFrame.setContentPane(new LoginPanel(null));
+            loginFrame.setContentPane(new LoginPanel(null, Role.PATIENT));
             loginFrame.setVisible(true);
         }
     }

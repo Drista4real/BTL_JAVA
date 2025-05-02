@@ -9,8 +9,8 @@ CREATE TABLE UserAccounts (
                               UserName VARCHAR(50) UNIQUE NOT NULL,
                               FullName VARCHAR(100) NOT NULL,
                               Role ENUM('Bac si', 'Benh nhan') NOT NULL,
-                              Email VARCHAR(100) UNIQUE NOT NULL,
-                              PhoneNumber VARCHAR(15) UNIQUE,
+                              Email VARCHAR(100) NULL,
+                              PhoneNumber VARCHAR(15) NULL,
                               Password VARCHAR(255) NOT NULL,
                               CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -149,3 +149,7 @@ INSERT INTO MedicalRecords (RecordID, PatientID, DoctorID, Diagnosis, Treatment,
                                                                                                         ('MR003', 'P003', 'U003', 'Tang huyet ap', 'Thuoc ha ap', '2025-04-03', 'Theo doi huyet ap hang ngay'),
                                                                                                         ('MR004', 'P004', 'U001', 'Viem da day', 'Thuoc bao ve niem mac', '2025-04-04', 'Tai kham sau 2 tuan'),
                                                                                                         ('MR005', 'P005', 'U002', 'Soi than', 'Phau thuat noi soi', '2025-04-05', 'Uong nhieu nuoc');
+
+-- Đảm bảo user MySQL có quyền INSERT vào các bảng này
+GRANT INSERT, SELECT, UPDATE ON PatientManagement.* TO 'root'@'localhost';
+FLUSH PRIVILEGES;

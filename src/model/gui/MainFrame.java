@@ -8,6 +8,8 @@ import java.awt.Graphics2D;
 import java.awt.FontMetrics;
 import java.awt.RenderingHints;
 import model.entity.User;
+import model.entity.Role;
+import model.gui.PatientRegisterPanel;
 
 public class MainFrame extends JFrame {
     private JPanel mainPanel;
@@ -30,60 +32,67 @@ public class MainFrame extends JFrame {
         setSize(1200, 700);
         setLocationRelativeTo(null);
 
-        // Tạo thanh menu
-        JMenuBar menuBar = new JMenuBar();
-
-        // Menu File
-        JMenu fileMenu = new JMenu("File");
-        JMenuItem exitItem = new JMenuItem("Thoát");
-        exitItem.addActionListener(e -> System.exit(0));
-        fileMenu.add(exitItem);
-
-        // Menu Trợ giúp
-        JMenu helpMenu = new JMenu("Trợ giúp");
-        JMenuItem aboutItem = new JMenuItem("Giới thiệu");
-        aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this, 
-            "Hệ thống quản lý bệnh nhân\nVersion 1.0", 
-            "Giới thiệu", 
-            JOptionPane.INFORMATION_MESSAGE));
-        helpMenu.add(aboutItem);
-
-        menuBar.add(fileMenu);
-        menuBar.add(helpMenu);
-        setJMenuBar(menuBar);
-
-        // Tạo panel chính với CardLayout
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-
-        // Tạo các panel một lần và lưu lại
-        dashboardPanel = new DashboardPanel();
-        patientPanel = new PatientManagementPanel();
-        searchPanel = new SearchPanel();
-        filePanel = new FileManagementPanel();
-
-        // Thêm các panel vào panel chính
-        mainPanel.add(new LoginPanel(this), "LOGIN");
-        mainPanel.add(dashboardPanel, "DASHBOARD");
-        mainPanel.add(patientPanel, "PATIENT");
-        mainPanel.add(searchPanel, "SEARCH");
-        mainPanel.add(filePanel, "FILE");
-
-        // Tạo navPanel một lần và lưu lại
-        navPanel = createNavPanel();
-
-        // Tạo panel nội dung chính
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.add(mainPanel, BorderLayout.CENTER);
-
-        // Thêm các thành phần vào frame
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(navPanel, BorderLayout.WEST);
-        getContentPane().add(contentPanel, BorderLayout.CENTER);
-
-        // Hiển thị màn hình đăng nhập ban đầu
-        showLoginScreen();
+        showRoleSelectionPanel();
         instance = this;
+    }
+
+    private void showRoleSelectionPanel() {
+        JPanel rolePanel = new JPanel(new GridBagLayout());
+        rolePanel.setBackground(Color.WHITE);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+
+        JLabel titleLabel = new JLabel("Vai trò của bạn là:");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setForeground(new Color(41, 128, 185));
+        rolePanel.add(titleLabel, gbc);
+
+        JButton btnDoctor = new JButton("Bác sĩ");
+        JButton btnPatient = new JButton("Bệnh nhân");
+        styleButton(btnDoctor);
+        styleButton(btnPatient);
+
+        gbc.gridwidth = 1;
+        gbc.gridy = 1; gbc.gridx = 0;
+        rolePanel.add(btnDoctor, gbc);
+        gbc.gridx = 1;
+        rolePanel.add(btnPatient, gbc);
+
+        // Đặt kích thước panel nhỏ gọn
+        rolePanel.setPreferredSize(new Dimension(350, 150));
+
+        setContentPane(rolePanel);
+        pack();
+        setLocationRelativeTo(null);
+        revalidate();
+        repaint();
+
+        btnDoctor.addActionListener(e -> {
+            setContentPane(new LoginPanel(this, Role.DOCTOR));
+            setSize(1200, 700);
+            setLocationRelativeTo(null);
+            revalidate();
+            repaint();
+        });
+        btnPatient.addActionListener(e -> {
+            setContentPane(new LoginPanel(this, Role.PATIENT));
+            setSize(1200, 700);
+            setLocationRelativeTo(null);
+            revalidate();
+            repaint();
+        });
+    }
+
+    private void styleButton(JButton button) {
+        Color btnColor = new Color(41, 128, 185);
+        button.setBackground(btnColor);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(btnColor.darker(), 1, true));
+        button.setPreferredSize(new Dimension(120, 36));
     }
 
     private JButton createNavButton(String text, String iconName) {

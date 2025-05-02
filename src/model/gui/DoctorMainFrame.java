@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.table.DefaultTableModel;
 import model.entity.DataManager;
 import model.entity.Appointment;
+import model.entity.Role;
 
 public class DoctorMainFrame extends JFrame {
     private JPanel mainPanel;
@@ -157,7 +158,7 @@ public class DoctorMainFrame extends JFrame {
             loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             loginFrame.setSize(1200, 700);
             loginFrame.setLocationRelativeTo(null);
-            loginFrame.setContentPane(new LoginPanel(null));
+            loginFrame.setContentPane(new LoginPanel(null, Role.DOCTOR));
             loginFrame.setVisible(true);
         }
     }

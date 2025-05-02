@@ -23,6 +23,7 @@ public class LoginPanel extends JPanel {
     private JCheckBox showPasswordCheckBox;
     private MainFrame mainFrame;
     private Image backgroundImage;
+    private Role currentRole;
 
     // Thông tin kết nối cơ sở dữ liệu từ database.properties
     private static String DB_DRIVER;
@@ -62,8 +63,9 @@ public class LoginPanel extends JPanel {
         }
     }
 
-    public LoginPanel(MainFrame mainFrame) {
+    public LoginPanel(MainFrame mainFrame, Role role) {
         this.mainFrame = mainFrame;
+        this.currentRole = role;
         loadBackgroundImage();
         initComponents();
     }
@@ -168,21 +170,29 @@ public class LoginPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         buttonPanel.setOpaque(false);
         loginButton = new JButton("Đăng nhập");
+        styleButton(loginButton);
         forgotPasswordButton = new JButton("Quên mật khẩu?");
         forgotPasswordButton.setBorderPainted(false);
         forgotPasswordButton.setContentAreaFilled(false);
         forgotPasswordButton.setForeground(new Color(0, 87, 146));
         forgotPasswordButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        loginButton.setBackground(new Color(0, 87, 146));
-        loginButton.setForeground(Color.WHITE);
-        loginButton.setFocusPainted(false);
-        loginButton.setBorderPainted(false);
-
         loginButton.addActionListener(e -> login());
         forgotPasswordButton.addActionListener(e -> showForgotPasswordDialog());
 
         buttonPanel.add(loginButton);
+
+        if (currentRole == Role.PATIENT) {
+            JButton btnRegister = new JButton("Đăng ký");
+            styleButton(btnRegister);
+            btnRegister.addActionListener(e -> {
+                if (mainFrame != null) {
+                    mainFrame.setContentPane(new PatientRegisterPanel(mainFrame));
+                    mainFrame.revalidate();
+                }
+            });
+            buttonPanel.add(btnRegister);
+        }
 
         gbc.gridy = 4;
         gbc.gridx = 0;
@@ -362,5 +372,15 @@ public class LoginPanel extends JPanel {
                 throw new IllegalArgumentException("Vai trò không hợp lệ: " + dbRole);
             }
         }
+    }
+
+    private void styleButton(JButton button) {
+        Color btnColor = new Color(41, 128, 185);
+        button.setBackground(btnColor);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(btnColor.darker(), 1, true));
+        button.setPreferredSize(new Dimension(120, 36));
     }
 }
