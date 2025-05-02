@@ -33,7 +33,7 @@ public class LoginPanel extends JPanel {
     static {
         // Tải cấu hình từ database.properties
         Properties props = new Properties();
-        try (InputStream input = LoginPanel.class.getClassLoader().getResourceAsStream("database.properties")) {
+        try (InputStream input = LoginPanel.class.getClassLoader().getResourceAsStream("main/database.properties")) {
             if (input == null) {
                 throw new IOException("Không tìm thấy tệp database.properties");
             }

@@ -22,7 +22,7 @@ public class DashboardPanel extends JPanel {
 
     static {
         Properties props = new Properties();
-        try (InputStream input = DashboardPanel.class.getClassLoader().getResourceAsStream("database.properties")) {
+        try (InputStream input = DashboardPanel.class.getClassLoader().getResourceAsStream("main/database.properties")) {
             if (input == null) {
                 throw new IOException("Không tìm thấy tệp database.properties");
             }

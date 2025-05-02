@@ -27,7 +27,7 @@ public class PatientManagementPanel extends JPanel {
 
     static {
         Properties props = new Properties();
-        try (InputStream input = PatientManagementPanel.class.getClassLoader().getResourceAsStream("database.properties")) {
+        try (InputStream input = PatientManagementPanel.class.getClassLoader().getResourceAsStream("main/database.properties")) {
             if (input == null) {
                 throw new IOException("Không tìm thấy tệp database.properties");
             }
