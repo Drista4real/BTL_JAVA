@@ -163,7 +163,7 @@ class PatientDashboardPanel extends JPanel {
             .filter(u -> u.getUsername().equals(username)).findFirst().orElse(null);
         String fullName = user != null ? user.getFullName() : "";
         String dob = ""; // Nếu có ngày sinh thì lấy ở đây
-        String phone = user != null ? user.getPhone() : "";
+        String phone = user != null ? user.getPhoneNumber() : "";
         String note = user != null ? user.getNote() : "";
         String illness = user != null ? user.getIllnessInfo() : "";
 

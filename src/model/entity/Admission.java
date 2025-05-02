@@ -1,139 +1,92 @@
 package model.entity;
 
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
-/**
- * Lớp Admission (Quản lý nhập viện bệnh nhân)
- * Lưu trữ thông tin về một lần nhập viện của bệnh nhân trong hệ thống quản lý bệnh viện
- */
 public class Admission {
-    private String admissionId;      // Mã nhập viện
-    private String patientId;        // Mã bệnh nhân
-    private LocalDate admissionDate; // Ngày nhập viện
-    private String doctorId;         // Mã bác sĩ phụ trách
-    private String roomId;           // Mã phòng bệnh
-    private LocalDate dischargeDate; // Ngày xuất viện
-    private String notes;            // Ghi chú
+    private String admissionId;
+    private String patientId;
+    private LocalDate admissionDate;
+    private String doctorId;
+    private String roomId;
+    private LocalDate dischargeDate;
+    private String notes;
 
-    /**
-     * Constructor cho trường hợp bệnh nhân mới nhập viện (chưa có ngày xuất viện)
-     *
-     * @param admissionId   Mã nhập viện
-     * @param patientId     Mã bệnh nhân
-     * @param admissionDate Ngày nhập viện
-     * @param doctorId      Mã bác sĩ phụ trách
-     * @param roomId        Mã phòng bệnh
-     * @param notes         Ghi chú
-     */
+    public Admission() {
+        this.admissionId = "";
+        this.patientId = "";
+        this.admissionDate = null;
+        this.doctorId = "";
+        this.roomId = "";
+        this.dischargeDate = null;
+        this.notes = "";
+    }
+
     public Admission(String admissionId, String patientId, LocalDate admissionDate,
                      String doctorId, String roomId, String notes) {
-        this.admissionId = admissionId;
-        this.patientId = patientId;
+        this.admissionId = admissionId != null ? admissionId : "";
+        this.patientId = patientId != null ? patientId : "";
         this.admissionDate = admissionDate;
-        this.doctorId = doctorId;
-        this.roomId = roomId;
-        this.notes = notes;
-        this.dischargeDate = null; // Khi mới nhập viện, chưa có ngày xuất viện
+        this.doctorId = doctorId != null ? doctorId : "";
+        this.roomId = roomId != null ? roomId : "";
+        this.notes = notes != null ? notes : "";
+        this.dischargeDate = null;
     }
 
-    /**
-     * Constructor đầy đủ cho trường hợp đã có thông tin xuất viện
-     *
-     * @param admissionId   Mã nhập viện
-     * @param patientId     Mã bệnh nhân
-     * @param admissionDate Ngày nhập viện
-     * @param doctorId      Mã bác sĩ phụ trách
-     * @param roomId        Mã phòng bệnh
-     * @param dischargeDate Ngày xuất viện
-     * @param notes         Ghi chú
-     */
     public Admission(String admissionId, String patientId, LocalDate admissionDate,
                      String doctorId, String roomId, LocalDate dischargeDate, String notes) {
-        this.admissionId = admissionId;
-        this.patientId = patientId;
+        this.admissionId = admissionId != null ? admissionId : "";
+        this.patientId = patientId != null ? patientId : "";
         this.admissionDate = admissionDate;
-        this.doctorId = doctorId;
-        this.roomId = roomId;
+        this.doctorId = doctorId != null ? doctorId : "";
+        this.roomId = roomId != null ? roomId : "";
         this.dischargeDate = dischargeDate;
-        this.notes = notes;
+        this.notes = notes != null ? notes : "";
     }
 
-    /**
-     * Constructor với kiểu dữ liệu chuỗi cho ngày tháng (để tương thích ngược)
-     *
-     * @param admissionId     Mã nhập viện
-     * @param patientId       Mã bệnh nhân
-     * @param admissionDateStr Ngày nhập viện (dạng chuỗi)
-     * @param doctorId        Mã bác sĩ phụ trách
-     * @param roomId          Mã phòng bệnh
-     * @param dischargeDateStr Ngày xuất viện (dạng chuỗi, có thể null)
-     * @param notes           Ghi chú
-     */
     public Admission(String admissionId, String patientId, String admissionDateStr,
                      String doctorId, String roomId, String dischargeDateStr, String notes) {
-        this.admissionId = admissionId;
-        this.patientId = patientId;
-        this.admissionDate = LocalDate.parse(admissionDateStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        this.doctorId = doctorId;
-        this.roomId = roomId;
-        this.notes = notes;
+        this.admissionId = admissionId != null ? admissionId : "";
+        this.patientId = patientId != null ? patientId : "";
+        this.doctorId = doctorId != null ? doctorId : "";
+        this.roomId = roomId != null ? roomId : "";
+        this.notes = notes != null ? notes : "";
+
+        if (admissionDateStr != null && !admissionDateStr.trim().isEmpty()) {
+            this.admissionDate = LocalDate.parse(admissionDateStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        } else {
+            this.admissionDate = null;
+        }
 
         if (dischargeDateStr != null && !dischargeDateStr.trim().isEmpty()) {
             this.dischargeDate = LocalDate.parse(dischargeDateStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            if (this.admissionDate != null && this.dischargeDate.isBefore(this.admissionDate)) {
+                throw new IllegalArgumentException("Ngày xuất viện không thể trước ngày nhập viện");
+            }
         } else {
             this.dischargeDate = null;
         }
     }
 
     // Getters
-    public String getAdmissionId() {
-        return admissionId;
-    }
+    public String getAdmissionId() { return admissionId; }
+    public String getPatientId() { return patientId; }
+    public LocalDate getAdmissionDate() { return admissionDate; } // Fixed getter
+    public String getDoctorId() { return doctorId; }
+    public String getRoomId() { return roomId; }
+    public LocalDate getDischargeDate() { return dischargeDate; }
+    public String getNotes() { return notes; }
 
-    public String getPatientId() {
-        return patientId;
-    }
-
-    public LocalDate getAdmissionDate() {
-        return admissionDate;
-    }
-
-    public String getDoctorId() {
-        return doctorId;
-    }
-
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public LocalDate getDischargeDate() {
-        return dischargeDate;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    /**
-     * Lấy ngày nhập viện dưới dạng chuỗi (dd/MM/yyyy)
-     * @return Chuỗi ngày nhập viện
-     */
     public String getAdmissionDateString() {
-        return admissionDate != null ? admissionDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : null;
+        return admissionDate != null ? admissionDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
     }
 
-    /**
-     * Lấy ngày xuất viện dưới dạng chuỗi (dd/MM/yyyy)
-     * @return Chuỗi ngày xuất viện hoặc null nếu chưa xuất viện
-     */
     public String getDischargeDateString() {
-        return dischargeDate != null ? dischargeDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : null;
+        return dischargeDate != null ? dischargeDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
     }
 
-    // Setters với validation
+    // Setters
     public void setAdmissionId(String admissionId) {
         if (admissionId == null || admissionId.trim().isEmpty()) {
             throw new IllegalArgumentException("Mã nhập viện không được để trống");
@@ -195,7 +148,6 @@ public class Admission {
             this.dischargeDate = null;
             return;
         }
-
         LocalDate date = LocalDate.parse(dischargeDateStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         if (admissionDate != null && date.isBefore(admissionDate)) {
             throw new IllegalArgumentException("Ngày xuất viện không thể trước ngày nhập viện");
@@ -204,28 +156,19 @@ public class Admission {
     }
 
     public void setNotes(String notes) {
-        this.notes = notes;
+        this.notes = notes != null ? notes : "";
     }
 
-    /**
-     * Kiểm tra xem bệnh nhân đã xuất viện chưa
-     * @return true nếu đã xuất viện, false nếu chưa
-     */
     public boolean isDischarged() {
         return dischargeDate != null;
     }
 
-    /**
-     * Tính số ngày nằm viện
-     * @return Số ngày nằm viện tính đến nay hoặc đến ngày xuất viện
-     */
     public long getHospitalStayDays() {
         if (admissionDate == null) {
             return 0;
         }
-
         LocalDate endDate = dischargeDate != null ? dischargeDate : LocalDate.now();
-        return java.time.temporal.ChronoUnit.DAYS.between(admissionDate, endDate) + 1; // +1 để tính cả ngày nhập viện
+        return java.time.temporal.ChronoUnit.DAYS.between(admissionDate, endDate) + 1;
     }
 
     @Override

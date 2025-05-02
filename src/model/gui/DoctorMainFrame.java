@@ -3,10 +3,10 @@ package model.gui;
 import javax.swing.*;
 import java.awt.*;
 import model.entity.User;
+import model.entity.Appointment;
+import model.entity.DataManager;
 import java.awt.image.BufferedImage;
 import javax.swing.table.DefaultTableModel;
-import model.entity.DataManager;
-import model.entity.Appointment;
 
 public class DoctorMainFrame extends JFrame {
     private JPanel mainPanel;
@@ -29,6 +29,7 @@ public class DoctorMainFrame extends JFrame {
         mainPanel.add(new DoctorDashboardPanel(), "DASHBOARD");
         mainPanel.add(new DoctorPatientListPanel(), "PATIENT_LIST");
         mainPanel.add(new DoctorAppointmentListPanel(), "APPOINTMENT_LIST");
+        mainPanel.add(new DoctorAdmissionPanel(user), "DOCTOR_ADMISSION");
 
         navPanel = createNavPanel();
         JPanel contentPanel = new JPanel(new BorderLayout());
@@ -68,7 +69,10 @@ public class DoctorMainFrame extends JFrame {
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Segoe UI", Font.BOLD, 60));
         FontMetrics fm = g2d.getFontMetrics();
-        String letter = currentUser.getFullName().substring(0, 1).toUpperCase();
+        String letter = "?"; // Ký tự mặc định nếu tên rỗng
+        if (currentUser.getFullName() != null && !currentUser.getFullName().isEmpty()) {
+            letter = currentUser.getFullName().substring(0, 1).toUpperCase();
+        }
         g2d.drawString(letter, (120 - fm.stringWidth(letter)) / 2, ((120 - fm.getHeight()) / 2) + fm.getAscent());
         g2d.dispose();
         avatarLabel.setIcon(new ImageIcon(image));
@@ -86,11 +90,13 @@ public class DoctorMainFrame extends JFrame {
         JButton btnDashboard = createNavButton("Trang chủ");
         JButton btnPatientList = createNavButton("Danh sách bệnh nhân");
         JButton btnAppointmentList = createNavButton("Danh sách lịch hẹn");
+        JButton btnDoctorAdmission = createNavButton("Hồ sơ nhập viện");
         JButton btnLogout = createNavButton("Đăng xuất");
 
         btnDashboard.addActionListener(e -> showDashboard());
         btnPatientList.addActionListener(e -> showPatientList());
         btnAppointmentList.addActionListener(e -> showAppointmentList());
+        btnDoctorAdmission.addActionListener(e -> showDoctorAdmission());
         btnLogout.addActionListener(e -> logout());
 
         navPanel.add(btnDashboard);
@@ -98,6 +104,8 @@ public class DoctorMainFrame extends JFrame {
         navPanel.add(btnPatientList);
         navPanel.add(Box.createVerticalStrut(1));
         navPanel.add(btnAppointmentList);
+        navPanel.add(Box.createVerticalStrut(1));
+        navPanel.add(btnDoctorAdmission);
         navPanel.add(Box.createVerticalStrut(1));
         navPanel.add(btnLogout);
         navPanel.add(Box.createVerticalGlue());
@@ -142,13 +150,34 @@ public class DoctorMainFrame extends JFrame {
 
     private void showDashboard() {
         cardLayout.show(mainPanel, "DASHBOARD");
+
+        // Tìm nút dashboard bằng cách lặp qua các thành phần
+        for (Component comp : navPanel.getComponents()) {
+            if (comp instanceof JButton) {
+                JButton btn = (JButton) comp;
+                if (btn.getText().equals("Trang chủ")) {
+                    updateButtonSelection(btn);
+                    break;
+                }
+            }
+        }
     }
+
     private void showPatientList() {
         cardLayout.show(mainPanel, "PATIENT_LIST");
+        updateButtonSelection((JButton) navPanel.getComponents()[2]);
     }
+
     private void showAppointmentList() {
         cardLayout.show(mainPanel, "APPOINTMENT_LIST");
+        updateButtonSelection((JButton) navPanel.getComponents()[3]);
     }
+
+    private void showDoctorAdmission() {
+        cardLayout.show(mainPanel, "DOCTOR_ADMISSION");
+        updateButtonSelection((JButton) navPanel.getComponents()[4]);
+    }
+
     private void logout() {
         int choice = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (choice == JOptionPane.YES_OPTION) {
@@ -171,18 +200,14 @@ class DoctorDashboardPanel extends JPanel {
         JPanel statsPanel = new JPanel(new GridLayout(1, 4, 20, 20));
         statsPanel.setBackground(Color.WHITE);
 
-        // Box: Tổng số bệnh nhân
         JPanel totalPatientBox = createStatBox("Tổng số bệnh nhân", "120");
-        // Box: Bệnh nhân BHYT
         JPanel bhytBox = createStatBox("Bệnh nhân BHYT", "45");
-        // Box: Lịch hẹn hôm nay
         JPanel todayApptBox = createStatBox("Lịch hẹn hôm nay", "8");
 
         statsPanel.add(totalPatientBox);
         statsPanel.add(bhytBox);
         statsPanel.add(todayApptBox);
 
-        // Thông báo mới
         JPanel notificationPanel = new JPanel();
         notificationPanel.setLayout(new BorderLayout());
         notificationPanel.setBackground(Color.WHITE);
@@ -226,7 +251,6 @@ class DoctorPatientListPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
 
-        // Top panel: search + filter + CRUD buttons
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         topPanel.setBackground(Color.WHITE);
         searchField = new JTextField(18);
@@ -247,7 +271,6 @@ class DoctorPatientListPanel extends JPanel {
         topPanel.add(deleteBtn);
         topPanel.add(noteBtn);
 
-        // Table
         String[] columns = {"Tên đăng nhập", "Họ tên", "Email", "Số điện thoại", "Loại bảo hiểm"};
         tableModel = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
@@ -261,7 +284,6 @@ class DoctorPatientListPanel extends JPanel {
 
         reloadTable();
 
-        // Sửa ghi chú/bệnh tình
         noteBtn.addActionListener(e -> editNoteIllness());
 
         add(topPanel, BorderLayout.NORTH);
@@ -271,7 +293,7 @@ class DoctorPatientListPanel extends JPanel {
     private void reloadTable() {
         tableModel.setRowCount(0);
         for (User u : DataManager.getInstance().getUsers()) {
-            tableModel.addRow(new Object[]{u.getUsername(), u.getFullName(), u.getEmail(), u.getPhone(), u.getRole()});
+            tableModel.addRow(new Object[]{u.getUsername(), u.getFullName(), u.getEmail(), u.getPhoneNumber(), u.getRole()});
         }
     }
 
@@ -311,7 +333,6 @@ class DoctorAppointmentListPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
 
-        // Top panel: search + filter + CRUD buttons
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         topPanel.setBackground(Color.WHITE);
         searchField = new JTextField(18);
@@ -330,7 +351,6 @@ class DoctorAppointmentListPanel extends JPanel {
         topPanel.add(editBtn);
         topPanel.add(deleteBtn);
 
-        // Table
         String[] columns = {"Mã lịch hẹn", "Tên bệnh nhân", "Bác sĩ", "Thời gian", "Trạng thái", "Ghi chú"};
         tableModel = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
@@ -342,7 +362,6 @@ class DoctorAppointmentListPanel extends JPanel {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         JScrollPane scrollPane = new JScrollPane(table);
 
-        // Load data
         reloadTable();
 
         add(topPanel, BorderLayout.NORTH);
@@ -353,8 +372,8 @@ class DoctorAppointmentListPanel extends JPanel {
         tableModel.setRowCount(0);
         for (Appointment appt : DataManager.getInstance().getAppointments()) {
             tableModel.addRow(new Object[]{
-                appt.getId(), appt.getPatient(), appt.getDoctor(), appt.getDate() + " " + appt.getTime(), appt.getStatus(), appt.getReason()
+                    appt.getId(), appt.getPatient(), appt.getDoctor(), appt.getDate() + " " + appt.getTime(), appt.getStatus(), appt.getReason()
             });
         }
     }
-} 
+}

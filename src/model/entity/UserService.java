@@ -1,304 +1,321 @@
 package model.entity;
 
-
-import model.entity.Role;
-import model.entity.User;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-/**
- * Class UserService cung cấp các chức năng quản lý người dùng trong hệ thống y tế.
- * Bao gồm các chức năng thêm, sửa, xóa người dùng (bác sĩ và bệnh nhân).
- */
 public class UserService {
-    // Sử dụng Map để lưu trữ người dùng, với username là key
-    private final Map<String, User> userMap = new HashMap<>();
+    private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
+    private static final String URL = "jdbc:mysql://localhost:3306/PatientManagement?allowPublicKeyRetrieval=true&useSSL=false&characterEncoding=UTF-8&useUnicode=true";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "050705";
 
-    /**
-     * Thêm người dùng mới vào hệ thống
-     *
-     * @param username Tên đăng nhập
-     * @param password Mật khẩu
-     * @param fullName Họ tên đầy đủ
-     * @param email Email
-     * @param phone Số điện thoại
-     * @param role Vai trò (DOCTOR hoặc PATIENT)
-     * @param additionalInfo Thông tin bổ sung (ghi chú cho bác sĩ hoặc thông tin bệnh tình cho bệnh nhân)
-     * @return User đối tượng người dùng đã được thêm
-     * @throws IllegalArgumentException nếu tên đăng nhập đã tồn tại hoặc thông tin không hợp lệ
-     */
-    public User addUser(String username, String password, String fullName,
-                        String email, String phone, Role role, String additionalInfo) {
-        // Kiểm tra thông tin đầu vào
-        validateUserInput(username, password, fullName, role);
-
-        // Kiểm tra username đã tồn tại chưa
-        if (userMap.containsKey(username)) {
-            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại: " + username);
+    public UserService() {
+        try {
+            Class.forName(DRIVER);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
-
-        // Tạo người dùng mới
-        User user = new User(username, password, fullName, email, phone, role);
-
-        // Thêm thông tin bổ sung tùy theo vai trò
-        if (role == Role.DOCTOR && additionalInfo != null && !additionalInfo.isEmpty()) {
-            user.setNote(additionalInfo);
-        } else if (role == Role.PATIENT && additionalInfo != null && !additionalInfo.isEmpty()) {
-            user.setIllnessInfo(additionalInfo);
-        }
-
-        // Lưu người dùng vào map
-        userMap.put(username, user);
-
-        return user;
     }
 
     /**
      * Thêm bác sĩ mới vào hệ thống
-     *
      * @param username Tên đăng nhập
      * @param password Mật khẩu
      * @param fullName Họ tên đầy đủ
      * @param email Email
      * @param phone Số điện thoại
-     * @param note Ghi chú cho bác sĩ
-     * @return User đối tượng bác sĩ đã được thêm
-     * @throws IllegalArgumentException nếu tên đăng nhập đã tồn tại hoặc thông tin không hợp lệ
+     * @param department Khoa/bộ phận
+     * @return Đối tượng User đã được thêm
      */
     public User addDoctor(String username, String password, String fullName,
-                          String email, String phone, String note) {
-        return addUser(username, password, fullName, email, phone, Role.DOCTOR, note);
+                          String email, String phone, String department) {
+        // Tạo ID tự động cho bác sĩ
+        String userId = "BS" + generateRandomId();
+
+        User doctor = new User(userId, username, password, fullName, email, phone, Role.DOCTOR);
+        doctor.setNote(department);
+
+        addUser(doctor);
+        return doctor;
     }
 
     /**
      * Thêm bệnh nhân mới vào hệ thống
-     *
      * @param username Tên đăng nhập
      * @param password Mật khẩu
      * @param fullName Họ tên đầy đủ
      * @param email Email
      * @param phone Số điện thoại
-     * @param illnessInfo Thông tin bệnh tình
-     * @return User đối tượng bệnh nhân đã được thêm
-     * @throws IllegalArgumentException nếu tên đăng nhập đã tồn tại hoặc thông tin không hợp lệ
+     * @param illnessInfo Thông tin bệnh lý
+     * @return Đối tượng User đã được thêm
      */
     public User addPatient(String username, String password, String fullName,
                            String email, String phone, String illnessInfo) {
-        return addUser(username, password, fullName, email, phone, Role.PATIENT, illnessInfo);
+        // Tạo ID tự động cho bệnh nhân
+        String userId = "BN" + generateRandomId();
+
+        User patient = new User(userId, username, password, fullName, email, phone, Role.PATIENT);
+        patient.setIllnessInfo(illnessInfo);
+
+        addUser(patient);
+        return patient;
     }
 
     /**
-     * Cập nhật thông tin người dùng
-     *
-     * @param username Tên đăng nhập của người dùng cần cập nhật
-     * @param password Mật khẩu mới (null nếu không thay đổi)
-     * @param fullName Họ tên mới (null nếu không thay đổi)
-     * @param email Email mới (null nếu không thay đổi)
-     * @param phone Số điện thoại mới (null nếu không thay đổi)
-     * @param additionalInfo Thông tin bổ sung mới (null nếu không thay đổi)
-     * @return User đối tượng người dùng đã cập nhật
-     * @throws IllegalArgumentException nếu không tìm thấy người dùng
+     * Tạo ID ngẫu nhiên gồm 4 ký tự số
      */
-    public User updateUser(String username, String password, String fullName,
-                           String email, String phone, String additionalInfo) {
-        // Kiểm tra username có tồn tại không
-        User user = getUserByUsername(username);
-        if (user == null) {
-            throw new IllegalArgumentException("Không tìm thấy người dùng: " + username);
-        }
-
-        // Cập nhật thông tin
-        if (password != null && !password.isEmpty()) {
-            user.setPassword(password);
-        }
-
-        if (fullName != null && !fullName.isEmpty()) {
-            user.setFullName(fullName);
-        }
-
-        if (email != null) {
-            user.setEmail(email);
-        }
-
-        if (phone != null) {
-            user.setPhone(phone);
-        }
-
-        if (additionalInfo != null) {
-            if (user.getRole() == Role.DOCTOR) {
-                user.setNote(additionalInfo);
-            } else if (user.getRole() == Role.PATIENT) {
-                user.setIllnessInfo(additionalInfo);
-            }
-        }
-
-        return user;
+    private String generateRandomId() {
+        return String.format("%04d", (int)(Math.random() * 9000) + 1000);
     }
 
     /**
-     * Xóa người dùng khỏi hệ thống
-     *
-     * @param username Tên đăng nhập của người dùng cần xóa
-     * @return User đối tượng người dùng đã xóa
-     * @throws IllegalArgumentException nếu không tìm thấy người dùng
-     */
-    public User deleteUser(String username) {
-        User user = userMap.remove(username);
-        if (user == null) {
-            throw new IllegalArgumentException("Không tìm thấy người dùng: " + username);
-        }
-        return user;
-    }
-
-    /**
-     * Lấy danh sách tất cả người dùng
-     *
-     * @return Danh sách tất cả người dùng
-     */
-    public List<User> getAllUsers() {
-        return new ArrayList<>(userMap.values());
-    }
-
-    /**
-     * Lấy danh sách tất cả bác sĩ
-     *
-     * @return Danh sách tất cả bác sĩ
-     */
-    public List<User> getAllDoctors() {
-        return userMap.values().stream()
-                .filter(user -> user.getRole() == Role.DOCTOR)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Lấy danh sách tất cả bệnh nhân
-     *
-     * @return Danh sách tất cả bệnh nhân
-     */
-    public List<User> getAllPatients() {
-        return userMap.values().stream()
-                .filter(user -> user.getRole() == Role.PATIENT)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Tìm kiếm người dùng theo tên đăng nhập
-     *
-     * @param username Tên đăng nhập cần tìm
-     * @return User đối tượng người dùng (null nếu không tìm thấy)
+     * Tìm người dùng theo tên đăng nhập
      */
     public User getUserByUsername(String username) {
-        return userMap.get(username);
-    }
-
-    /**
-     * Tìm kiếm người dùng theo họ tên (tìm kiếm mờ)
-     *
-     * @param name Phần họ tên cần tìm
-     * @return Danh sách người dùng có họ tên chứa chuỗi cần tìm
-     */
-    public List<User> searchUsersByName(String name) {
-        if (name == null || name.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        String searchTerm = name.toLowerCase();
-        return userMap.values().stream()
-                .filter(user -> user.getFullName().toLowerCase().contains(searchTerm))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Kiểm tra thông tin đăng nhập
-     *
-     * @param username Tên đăng nhập
-     * @param password Mật khẩu
-     * @return User đối tượng người dùng nếu đăng nhập thành công, null nếu thất bại
-     */
-    public User authenticate(String username, String password) {
-        User user = getUserByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
-            return user;
+        List<User> users = getAllUsers();
+        for (User user : users) {
+            if (user.getUsername().equals(username)) {
+                return user;
+            }
         }
         return null;
     }
 
     /**
+     * Xác thực người dùng khi đăng nhập
+     */
+    public User authenticate(String username, String password) {
+        System.out.println("Đang xác thực người dùng: " + username);
+        User user = getUserByUsername(username);
+        if (user != null) {
+            System.out.println("Tìm thấy người dùng: " + user.getUsername() + ", vai trò: " + user.getRole());
+            if (user.getPassword().equals(password)) {
+                System.out.println("Xác thực thành công!");
+                return user;
+            } else {
+                System.out.println("Sai mật khẩu!");
+            }
+        } else {
+            System.out.println("Không tìm thấy người dùng với tên đăng nhập: " + username);
+        }
+        return null;
+    }
+
+    /**
+     * Bí danh của getUserByUsername
+     */
+    public User findUserByUsername(String username) {
+        return getUserByUsername(username);
+    }
+
+    /**
      * Đếm số lượng người dùng theo vai trò
-     *
-     * @param role Vai trò cần đếm
-     * @return Số lượng người dùng có vai trò tương ứng
      */
     public int countUsersByRole(Role role) {
-        return (int) userMap.values().stream()
-                .filter(user -> user.getRole() == role)
-                .count();
-    }
-
-    /**
-     * Kiểm tra và xác thực thông tin người dùng
-     *
-     * @param username Tên đăng nhập
-     * @param password Mật khẩu
-     * @param fullName Họ tên
-     * @param role Vai trò
-     * @throws IllegalArgumentException nếu thông tin không hợp lệ
-     */
-    private void validateUserInput(String username, String password, String fullName, Role role) {
-        if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên đăng nhập không được để trống");
-        }
-
-        if (username.length() < 3) {
-            throw new IllegalArgumentException("Tên đăng nhập phải có ít nhất 3 ký tự");
-        }
-
-        if (password == null || password.trim().isEmpty()) {
-            throw new IllegalArgumentException("Mật khẩu không được để trống");
-        }
-
-        if (password.length() < 6) {
-            throw new IllegalArgumentException("Mật khẩu phải có ít nhất 6 ký tự");
-        }
-
-        if (fullName == null || fullName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Họ tên không được để trống");
-        }
-
-        if (role == null) {
-            throw new IllegalArgumentException("Vai trò không được để trống");
-        }
-    }
-
-    /**
-     * Thêm nhiều người dùng cùng lúc
-     *
-     * @param users Danh sách người dùng cần thêm
-     * @return Số lượng người dùng đã thêm thành công
-     */
-    public int addMultipleUsers(List<User> users) {
         int count = 0;
+        List<User> users = getAllUsers();
         for (User user : users) {
-            try {
-                if (!userMap.containsKey(user.getUsername())) {
-                    userMap.put(user.getUsername(), user);
-                    count++;
-                }
-            } catch (Exception e) {
-                // Bỏ qua người dùng gây lỗi và tiếp tục
+            if (user.getRole() == role) {
+                count++;
             }
         }
         return count;
     }
 
     /**
-     * Xóa tất cả người dùng
+     * Get a user by ID
      */
-    public void clearAllUsers() {
-        userMap.clear();
+    public User getUserById(String userId) {
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            String query = "SELECT ua.*, p.IllnessInfo FROM UserAccounts ua " +
+                    "LEFT JOIN Patients p ON ua.UserID = p.UserID WHERE ua.UserID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, userId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        // Xác định vai trò
+                        Role role;
+                        String roleStr = rs.getString("Role");
+                        if (roleStr == null || roleStr.trim().isEmpty()) {
+                            role = Role.DOCTOR; // Vai trò mặc định
+                        } else {
+                            roleStr = roleStr.trim();
+                            if (roleStr.equalsIgnoreCase("benh nhan") || roleStr.equalsIgnoreCase("Benh nhan")) {
+                                role = Role.PATIENT;
+                            } else if (roleStr.equalsIgnoreCase("bac si") || roleStr.equalsIgnoreCase("Bac si")) {
+                                role = Role.DOCTOR;
+                            } else {
+                                System.err.println("Vai trò không hợp lệ: " + roleStr);
+                                role = Role.DOCTOR; // Mặc định nếu vai trò không nhận diện được
+                            }
+                        }
+                        User user = new User(
+                                rs.getString("UserID"),
+                                rs.getString("UserName"),
+                                rs.getString("Password"),
+                                rs.getString("FullName"),
+                                rs.getString("Email"),
+                                rs.getString("PhoneNumber"),
+                                role
+                        );
+                        user.setNote(rs.getString("Note") != null ? rs.getString("Note") : "");
+                        user.setIllnessInfo(rs.getString("IllnessInfo") != null ? rs.getString("IllnessInfo") : "");
+                        return user;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Get all users
+     */
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            String query = "SELECT ua.*, p.IllnessInfo FROM UserAccounts ua " +
+                    "LEFT JOIN Patients p ON ua.UserID = p.UserID";
+            try (PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // Xác định vai trò
+                    Role role;
+                    String roleStr = rs.getString("Role");
+                    if (roleStr == null || roleStr.trim().isEmpty()) {
+                        role = Role.DOCTOR; // Vai trò mặc định
+                    } else {
+                        roleStr = roleStr.trim();
+                        if (roleStr.equalsIgnoreCase("benh nhan") || roleStr.equalsIgnoreCase("Benh nhan")) {
+                            role = Role.PATIENT;
+                        } else if (roleStr.equalsIgnoreCase("bac si") || roleStr.equalsIgnoreCase("Bac si")) {
+                            role = Role.DOCTOR;
+                        } else {
+                            System.err.println("Vai trò không hợp lệ: " + roleStr);
+                            role = Role.DOCTOR; // Mặc định nếu vai trò không nhận diện được
+                        }
+                    }
+
+                    User user = new User(
+                            rs.getString("UserID"),
+                            rs.getString("UserName"),
+                            rs.getString("Password"),
+                            rs.getString("FullName"),
+                            rs.getString("Email"),
+                            rs.getString("PhoneNumber"),
+                            role
+                    );
+                    user.setNote(rs.getString("Note") != null ? rs.getString("Note") : "");
+                    user.setIllnessInfo(rs.getString("IllnessInfo") != null ? rs.getString("IllnessInfo") : "");
+                    users.add(user);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    /**
+     * Update a user's information
+     */
+    public boolean updateUser(User user) {
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            // Update UserAccounts
+            String query1 = "UPDATE UserAccounts SET UserName = ?, FullName = ?, Email = ?, PhoneNumber = ?, Role = ?, Note = ? WHERE UserID = ?";
+            try (PreparedStatement ps1 = conn.prepareStatement(query1)) {
+                ps1.setString(1, user.getUsername());
+                ps1.setString(2, user.getFullName());
+                ps1.setString(3, user.getEmail());
+                ps1.setString(4, user.getPhoneNumber());
+                ps1.setString(5, user.getRole() == Role.PATIENT ? "Benh nhan" : "Bac si");
+                ps1.setString(6, user.getNote());
+                ps1.setString(7, user.getUserId());
+                ps1.executeUpdate();
+            }
+            // Update Patients (if user is a patient)
+            if (user.getRole() == Role.PATIENT) {
+                String query2 = "UPDATE Patients SET IllnessInfo = ? WHERE UserID = ?";
+                try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
+                    ps2.setString(1, user.getIllnessInfo());
+                    ps2.setString(2, user.getUserId());
+                    ps2.executeUpdate();
+                }
+            }
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Add a new user
+     */
+    public boolean addUser(User user) {
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            // Insert into UserAccounts
+            String query1 = "INSERT INTO UserAccounts (UserID, UserName, Password, FullName, Email, PhoneNumber, Role, Note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement ps1 = conn.prepareStatement(query1)) {
+                ps1.setString(1, user.getUserId());
+                ps1.setString(2, user.getUsername());
+                ps1.setString(3, user.getPassword());
+                ps1.setString(4, user.getFullName());
+                ps1.setString(5, user.getEmail());
+                ps1.setString(6, user.getPhoneNumber());
+                ps1.setString(7, user.getRole() == Role.PATIENT ? "Benh nhan" : "Bac si");
+                ps1.setString(8, user.getNote());
+                ps1.executeUpdate();
+            }
+            // Insert into Patients (if user is a patient)
+            if (user.getRole() == Role.PATIENT) {
+                String query2 = "INSERT INTO Patients (PatientID, UserID, FullName, DateOfBirth, Gender, PhoneNumber, Address, CreatedAt, IllnessInfo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
+                    ps2.setString(1, user.getUserId()); // Assume PatientID = UserID
+                    ps2.setString(2, user.getUserId());
+                    ps2.setString(3, user.getFullName());
+                    ps2.setString(4, "1990-01-01"); // Default DOB, adjust as needed
+                    ps2.setString(5, "Nam"); // Default gender, adjust as needed
+                    ps2.setString(6, user.getPhoneNumber());
+                    ps2.setString(7, ""); // Default address
+                    ps2.setString(8, java.time.LocalDate.now().toString());
+                    ps2.setString(9, user.getIllnessInfo());
+                    ps2.executeUpdate();
+                }
+            }
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Delete a user by ID
+     */
+    public boolean deleteUser(String userId) {
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            // Delete from Patients (if exists)
+            String query1 = "DELETE FROM Patients WHERE UserID = ?";
+            try (PreparedStatement ps1 = conn.prepareStatement(query1)) {
+                ps1.setString(1, userId);
+                ps1.executeUpdate();
+            }
+            // Delete from UserAccounts
+            String query2 = "DELETE FROM UserAccounts WHERE UserID = ?";
+            try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
+                ps2.setString(1, userId);
+                return ps2.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

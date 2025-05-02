@@ -2,6 +2,7 @@ package model.gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -70,9 +71,24 @@ public class LoginPanel extends JPanel {
 
     private void loadBackgroundImage() {
         try {
-            backgroundImage = new ImageIcon("resource/images/ảnh_nền_login.jpg").getImage();
+            // Tải hình ảnh từ resources
+            java.net.URL imageUrl = getClass().getClassLoader().getResource("main/background_login.jpg");
+            if (imageUrl != null) {
+                backgroundImage = new ImageIcon(imageUrl).getImage();
+                System.out.println("Tải hình ảnh thành công");
+            } else {
+                System.out.println("Không tìm thấy file hình nền");
+
+                // In thông tin debug để kiểm tra classpath
+                System.out.println("ClassLoader path: " + getClass().getClassLoader().getResource(""));
+
+                // Kiểm tra đường dẫn tuyệt đối
+                File projectDir = new File(".");
+                System.out.println("Thư mục hiện tại: " + projectDir.getAbsolutePath());
+            }
         } catch (Exception e) {
             System.out.println("Không thể tải hình nền: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

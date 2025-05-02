@@ -15,7 +15,7 @@ public class PersonalInfoPanel extends JPanel {
         add(new JLabel("Email:"));
         add(new JLabel(user.getEmail()));
         add(new JLabel("Số điện thoại:"));
-        add(new JLabel(user.getPhone()));
+        add(new JLabel(user.getPhoneNumber()));
         // Thêm các trường khác nếu cần
     }
 } 
