@@ -19,8 +19,7 @@ import model.entity.Role;
 /**
  * Panel hiển thị và quản lý hồ sơ bệnh án
  */
-public class
-MedicalRecordPanel extends JPanel {
+public class MedicalRecordPanel extends JPanel {
     private User currentUser;
     private MedicalRecord medicalRecord;
 
