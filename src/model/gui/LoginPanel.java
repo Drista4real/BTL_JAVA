@@ -207,70 +207,62 @@ public class LoginPanel extends JPanel {
         SwingUtilities.invokeLater(() -> usernameField.requestFocus());
     }
 
-    private void login() {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
+private void login() {
+    String username = usernameField.getText();
+    String password = String.valueOf(passwordField.getPassword());
 
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
-            return;
-        }
-
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            // Thêm code kiểm tra kết nối
-            System.out.println("Kết nối cơ sở dữ liệu thành công!");
-
-            String sql = "SELECT UserID, UserName, FullName, Email, PhoneNumber, Role, Password FROM UserAccounts WHERE UserName = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, username);
-            System.out.println("Đang tìm kiếm người dùng: " + username);
-            ResultSet rs = stmt.executeQuery();
-
-
-            if (rs.next()) {
-                String storedPassword = rs.getString("Password");
-                if (password.equals(storedPassword)) {
-                    Role role = Role.valueOf(mapRoleToEnum(rs.getString("Role")));
-                    User user = new User(
-                            rs.getString("UserName"),
-                            storedPassword,
-                            rs.getString("FullName"),
-                            rs.getString("Email"),
-                            rs.getString("PhoneNumber"),
-                            role
-                    );
-
-                    if (role == Role.DOCTOR) {
-                        SwingUtilities.invokeLater(() -> {
-                            JFrame doctorFrame = new DoctorMainFrame(user);
-                            doctorFrame.setVisible(true);
-                            Window w = SwingUtilities.getWindowAncestor(this);
-                            if (w != null) w.dispose();
-                        });
-                    } else if (role == Role.PATIENT) {
-                        SwingUtilities.invokeLater(() -> {
-                            JFrame patientFrame = new PatientMainFrame(user);
-                            patientFrame.setVisible(true);
-                            Window w = SwingUtilities.getWindowAncestor(this);
-                            if (w != null) w.dispose();
-                        });
-                    }
-
-                    // Xóa thông tin đăng nhập
-                    usernameField.setText("");
-                    passwordField.setText("");
-                    showPasswordCheckBox.setSelected(false);
-                    passwordField.setEchoChar('•');
-                } else {
-                    JOptionPane.showMessageDialog(this, "Mật khẩu không đúng!");
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Tên đăng nhập không tồn tại!");
-            }
-        } catch (SQLException e) {
-            ExceptionUtils.handleValidationException(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
-        }
+    if (username.isEmpty() || password.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Vui lòng nhập tên đăng nhập và mật khẩu", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        return;
     }
+
+    try (Connection conn = DriverManager.getConnection(DB_URL, "root", "Pha2k5@")) {
+        String sql = "SELECT ua.*, p.DateOfBirth, p.Gender, p.Address, p.PatientID " +
+                     "FROM UserAccounts ua " +
+                     "LEFT JOIN Patients p ON ua.UserID = p.UserID " +
+                     "WHERE ua.UserName = ? AND ua.Password = ?";
+        
+        PreparedStatement stmt = conn.prepareStatement(sql);
+        stmt.setString(1, username);
+        stmt.setString(2, password);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            String dbUsername = rs.getString("UserName");
+            String dbPassword = rs.getString("Password");
+            String fullName = rs.getString("FullName");
+            String email = rs.getString("Email") != null ? rs.getString("Email") : "";
+            String phone = rs.getString("PhoneNumber") != null ? rs.getString("PhoneNumber") : "";
+            String dbRole = rs.getString("Role");
+            
+            // Lấy thêm các thông tin bệnh nhân nếu có
+            String dateOfBirth = rs.getString("DateOfBirth") != null ? rs.getString("DateOfBirth") : "";
+            String gender = rs.getString("Gender") != null ? rs.getString("Gender") : "";
+            String address = rs.getString("Address") != null ? rs.getString("Address") : "";
+            String patientID = rs.getString("PatientID") != null ? rs.getString("PatientID") : "";
+
+            // Chuyển đổi vai trò từ DB (Bac si, Benh nhan) sang Role enum (DOCTOR, PATIENT)
+            Role role = "Bac si".equals(dbRole) ? Role.DOCTOR : Role.PATIENT;
+
+            User user = new User(dbUsername, dbPassword, fullName, email, phone, role, 
+                                 dateOfBirth, gender, address, "", false);
+
+            if (mainFrame != null) {
+                mainFrame.dispose();
+                if (role == Role.DOCTOR) {
+                    new DoctorMainFrame(user).setVisible(true);
+                } else if (role == Role.PATIENT) {
+                    new PatientMainFrame(user).setVisible(true);
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc mật khẩu không đúng", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+        }
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage(),
+            "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+}
 
     private void showForgotPasswordDialog() {
         JTextField usernameField = new JTextField();

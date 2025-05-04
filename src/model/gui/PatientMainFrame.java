@@ -7,10 +7,9 @@ import java.awt.image.BufferedImage;
 import javax.swing.table.DefaultTableModel;
 import model.entity.DataManager;
 import model.entity.Appointment;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.DriverManager;
+
+import java.sql.*;
+
 import model.entity.Role;
 
 public class PatientMainFrame extends JFrame {
@@ -179,12 +178,13 @@ public class PatientMainFrame extends JFrame {
         int choice = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (choice == JOptionPane.YES_OPTION) {
             this.dispose();
-            JFrame loginFrame = new JFrame();
-            loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            loginFrame.setSize(1200, 700);
-            loginFrame.setLocationRelativeTo(null);
-            loginFrame.setContentPane(new LoginPanel(null, Role.PATIENT));
-            loginFrame.setVisible(true);
+            MainFrame mainFrame = new MainFrame();
+            mainFrame.setContentPane(new LoginPanel(mainFrame, Role.PATIENT));
+            mainFrame.revalidate();
+            mainFrame.pack();
+            mainFrame.setSize(1200, 700);
+            mainFrame.setLocationRelativeTo(null);
+            mainFrame.setVisible(true);
         }
     }
 }
@@ -228,6 +228,11 @@ class PersonalInfoPanel extends JPanel {
 }
 
 class MedicalRecordPanel extends JPanel {
+    // Thêm các biến kết nối database
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Pha2k5@";
+
     public MedicalRecordPanel(User user) {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
@@ -256,14 +261,20 @@ class MedicalRecordPanel extends JPanel {
             } else {
                 sb.append("Chưa có bệnh án.");
             }
-        } catch (Exception e) {
-            sb.append("Lỗi khi lấy bệnh án: ").append(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "Lỗi khi truy vấn dữ liệu: " + e.getMessage();
         }
         return sb.toString();
     }
 }
 
 class PrescriptionPanel extends JPanel {
+    // Thêm các biến kết nối database
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Pha2k5@";
+
     public PrescriptionPanel(User user) {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
@@ -302,6 +313,11 @@ class PrescriptionPanel extends JPanel {
 }
 
 class PaymentPanel extends JPanel {
+    // Thêm các biến kết nối database
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Pha2k5@";
+
     public PaymentPanel(User user) {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
@@ -447,4 +463,4 @@ class PatientAppointmentPanel extends JPanel {
             }
         }
     }
-} 
+}

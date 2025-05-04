@@ -154,14 +154,16 @@ public class DoctorMainFrame extends JFrame {
         int choice = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (choice == JOptionPane.YES_OPTION) {
             this.dispose();
-            JFrame loginFrame = new JFrame();
-            loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            loginFrame.setSize(1200, 700);
-            loginFrame.setLocationRelativeTo(null);
-            loginFrame.setContentPane(new LoginPanel(null, Role.DOCTOR));
-            loginFrame.setVisible(true);
+            MainFrame mainFrame = new MainFrame();
+            mainFrame.setContentPane(new LoginPanel(mainFrame, Role.DOCTOR));
+            mainFrame.revalidate();
+            mainFrame.pack();
+            mainFrame.setSize(1200, 700);
+            mainFrame.setLocationRelativeTo(null);
+            mainFrame.setVisible(true);
         }
     }
+
 }
 
 class DoctorDashboardPanel extends JPanel {
@@ -358,4 +360,4 @@ class DoctorAppointmentListPanel extends JPanel {
             });
         }
     }
-} 
+}

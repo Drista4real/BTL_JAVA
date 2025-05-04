@@ -3,6 +3,7 @@ package model.utils;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,4 +52,6 @@ public class ExceptionUtils {
         }
         return true;
     }
-} 
+
+
+}

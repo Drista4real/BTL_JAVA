@@ -4,6 +4,7 @@
  */
 package model.gui;
 
+import model.entity.Role;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
@@ -116,6 +117,17 @@ public class PatientRegisterPanel extends JPanel {
             // Lưu vào SQL
             try (Connection conn = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/PatientManagement", "root", "Pha2k5@")) {
+                // Kiểm tra username đã tồn tại chưa
+                PreparedStatement checkStmt = conn.prepareStatement(
+                    "SELECT UserID FROM UserAccounts WHERE UserName = ?");
+                checkStmt.setString(1, username);
+                ResultSet checkRs = checkStmt.executeQuery();
+                
+                if (checkRs.next()) {
+                    JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác!");
+                    return;
+                }
+                
                 // 1. Thêm vào UserAccounts
                 String userId = "U" + System.currentTimeMillis();
                 PreparedStatement ps1 = conn.prepareStatement(
@@ -131,7 +143,6 @@ public class PatientRegisterPanel extends JPanel {
 
                 // 2. Thêm vào Patients
                 String patientId = "P" + System.currentTimeMillis();
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 PreparedStatement ps2 = conn.prepareStatement(
                     "INSERT INTO Patients (PatientID, UserID, FullName, DateOfBirth, Gender, PhoneNumber, Address, CreatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())");
                 ps2.setString(1, patientId);
@@ -143,10 +154,26 @@ public class PatientRegisterPanel extends JPanel {
                 ps2.setString(7, address);
                 ps2.executeUpdate();
 
-                JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.");
-                if (mainFrame != null) {
-                    mainFrame.setContentPane(new LoginPanel(mainFrame, model.entity.Role.PATIENT));
-                    mainFrame.revalidate();
+                int choice = JOptionPane.showConfirmDialog(this, 
+                    "Đăng ký thành công! Bạn có muốn đăng nhập ngay không?", 
+                    "Đăng ký thành công", 
+                    JOptionPane.YES_NO_OPTION);
+                    
+                if (choice == JOptionPane.YES_OPTION) {
+                    // Tạo user object và đăng nhập trực tiếp
+                    model.entity.User user = new model.entity.User(username, password, username, email, phone, model.entity.Role.PATIENT,
+                                       dob, gender, address, "", false);
+
+                    if (mainFrame != null) {
+                        mainFrame.dispose();
+                        new PatientMainFrame(user).setVisible(true);
+                    }
+                } else {
+                    // Trở về màn hình đăng nhập
+                    if (mainFrame != null) {
+                        mainFrame.setContentPane(new LoginPanel(mainFrame, Role.PATIENT));
+                        mainFrame.revalidate();
+                    }
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Lỗi đăng ký: " + ex.getMessage());

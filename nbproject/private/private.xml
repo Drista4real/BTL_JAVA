@@ -5,7 +5,8 @@
         <group>
             <file>file:/C:/Users/son/IdeaProjects/BTL_JAVA/src/model/gui/MainFrame.java</file>
             <file>file:/C:/Users/son/IdeaProjects/BTL_JAVA/src/model/backend/Demo1.java</file>
-            <file>file:/C:/Users/son/IdeaProjects/BTL_JAVA/src/model/database/databaseConnection.java</file>
+            <file>file:/C:/Users/son/IdeaProjects/BTL_JAVA/src/model/gui/PatientMainFrame.java</file>
+            <file>file:/C:/Users/son/IdeaProjects/BTL_JAVA/src/model/gui/PatientRegisterPanel.java</file>
         </group>
     </open-files>
 </project-private>
