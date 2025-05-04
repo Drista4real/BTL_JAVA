@@ -5,6 +5,8 @@
 package model.gui;
 
 import model.entity.Role;
+import model.entity.User;
+import model.utils.ExceptionUtils;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
@@ -18,6 +20,10 @@ import java.text.SimpleDateFormat;
  * @author son
  */
 public class PatientRegisterPanel extends JPanel {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Pha2k5@";
+    
     public PatientRegisterPanel(MainFrame mainFrame) {
         setLayout(new GridBagLayout());
         setBackground(Color.WHITE);
@@ -95,65 +101,83 @@ public class PatientRegisterPanel extends JPanel {
 
         // Xử lý nút Đăng ký
         btnRegister.addActionListener(e -> {
-            String username = usernameField.getText().trim();
-            String password = new String(passwordField.getPassword());
-            String confirmPassword = new String(confirmPasswordField.getPassword());
-            String email = emailField.getText().trim();
-            String phone = phoneField.getText().trim();
-            String dob = yearBox.getSelectedItem() + "-" + monthBox.getSelectedItem() + "-" + dayBox.getSelectedItem();
-            String gender = (String) genderBox.getSelectedItem();
-            String address = addressField.getText().trim();
+            try {
+                registerNewPatient(
+                    usernameField.getText().trim(),
+                    new String(passwordField.getPassword()),
+                    new String(confirmPasswordField.getPassword()),
+                    emailField.getText().trim(),
+                    phoneField.getText().trim(),
+                    yearBox.getSelectedItem() + "-" + monthBox.getSelectedItem() + "-" + dayBox.getSelectedItem(),
+                    (String) genderBox.getSelectedItem(),
+                    addressField.getText().trim(),
+                    mainFrame
+                );
+            } catch (Exception ex) {
+                ExceptionUtils.handleGeneralException(this, ex);
+            }
+        });
 
-            if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || email.isEmpty() ||
-                phone.isEmpty() || dob.isEmpty() || gender.isEmpty() || address.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
+        // Xử lý nút Cancel
+        btnCancel.addActionListener(e -> {
+            if (mainFrame != null) {
+                mainFrame.setContentPane(new LoginPanel(mainFrame, Role.PATIENT));
+                mainFrame.revalidate();
+            }
+        });
+    }
+
+    /**
+     * Xử lý đăng ký người dùng mới
+     */
+    private void registerNewPatient(String username, String password, String confirmPassword, 
+            String email, String phone, String dob, String gender, String address, MainFrame mainFrame) {
+        
+        // Kiểm tra trường thông tin trống
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || 
+            email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
+            ExceptionUtils.handleValidationException(this, "Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
+        
+        // Kiểm tra mật khẩu khớp
+        if (!password.equals(confirmPassword)) {
+            ExceptionUtils.handleValidationException(this, "Mật khẩu xác nhận không khớp!");
+            return;
+        }
+        
+        // Kiểm tra định dạng email
+        if (!ExceptionUtils.validateEmail(this, email)) {
+            return;
+        }
+        
+        // Kiểm tra định dạng số điện thoại
+        if (!ExceptionUtils.validatePhone(this, phone)) {
+            return;
+        }
+        
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            // Kiểm tra username đã tồn tại chưa
+            if (isUsernameExists(conn, username)) {
+                ExceptionUtils.handleValidationException(this, "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác!");
                 return;
             }
-            if (!password.equals(confirmPassword)) {
-                JOptionPane.showMessageDialog(this, "Mật khẩu xác nhận không khớp!");
-                return;
-            }
-
-            // Lưu vào SQL
-            try (Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/PatientManagement", "root", "Pha2k5@")) {
-                // Kiểm tra username đã tồn tại chưa
-                PreparedStatement checkStmt = conn.prepareStatement(
-                    "SELECT UserID FROM UserAccounts WHERE UserName = ?");
-                checkStmt.setString(1, username);
-                ResultSet checkRs = checkStmt.executeQuery();
-                
-                if (checkRs.next()) {
-                    JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác!");
-                    return;
-                }
-                
+            
+            conn.setAutoCommit(false);  // Bắt đầu transaction
+            
+            try {
                 // 1. Thêm vào UserAccounts
                 String userId = "U" + System.currentTimeMillis();
-                PreparedStatement ps1 = conn.prepareStatement(
-                    "INSERT INTO UserAccounts (UserID, UserName, FullName, Role, Email, PhoneNumber, Password) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                ps1.setString(1, userId);
-                ps1.setString(2, username);
-                ps1.setString(3, username); // Hoặc cho phép nhập họ tên riêng
-                ps1.setString(4, "Benh nhan");
-                ps1.setString(5, email);
-                ps1.setString(6, phone);
-                ps1.setString(7, password);
-                ps1.executeUpdate();
-
+                addUserAccount(conn, userId, username, password, email, phone);
+                
                 // 2. Thêm vào Patients
                 String patientId = "P" + System.currentTimeMillis();
-                PreparedStatement ps2 = conn.prepareStatement(
-                    "INSERT INTO Patients (PatientID, UserID, FullName, DateOfBirth, Gender, PhoneNumber, Address, CreatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())");
-                ps2.setString(1, patientId);
-                ps2.setString(2, userId);
-                ps2.setString(3, username); // Hoặc cho phép nhập họ tên riêng
-                ps2.setString(4, dob);
-                ps2.setString(5, gender);
-                ps2.setString(6, phone);
-                ps2.setString(7, address);
-                ps2.executeUpdate();
-
+                addPatientRecord(conn, patientId, userId, username, dob, gender, phone, address);
+                
+                // Xác nhận transaction
+                conn.commit();
+                
+                // Hiển thị thông báo thành công
                 int choice = JOptionPane.showConfirmDialog(this, 
                     "Đăng ký thành công! Bạn có muốn đăng nhập ngay không?", 
                     "Đăng ký thành công", 
@@ -161,9 +185,8 @@ public class PatientRegisterPanel extends JPanel {
                     
                 if (choice == JOptionPane.YES_OPTION) {
                     // Tạo user object và đăng nhập trực tiếp
-                    model.entity.User user = new model.entity.User(username, password, username, email, phone, model.entity.Role.PATIENT,
+                    User user = new User(username, password, username, email, phone, Role.PATIENT,
                                        dob, gender, address, "", false);
-
                     if (mainFrame != null) {
                         mainFrame.dispose();
                         new PatientMainFrame(user).setVisible(true);
@@ -175,18 +198,63 @@ public class PatientRegisterPanel extends JPanel {
                         mainFrame.revalidate();
                     }
                 }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi đăng ký: " + ex.getMessage());
+            } catch (SQLException ex) {
+                // Nếu có lỗi, rollback transaction
+                conn.rollback();
+                throw ex;
             }
-        });
-
-        // Xử lý nút Cancel
-        btnCancel.addActionListener(e -> {
-            if (mainFrame != null) {
-                mainFrame.setContentPane(new LoginPanel(mainFrame, model.entity.Role.PATIENT));
-                mainFrame.revalidate();
+        } catch (SQLException ex) {
+            ExceptionUtils.handleGeneralException(this, new Exception("Lỗi kết nối hoặc thao tác với cơ sở dữ liệu: " + ex.getMessage()));
+        }
+    }
+    
+    /**
+     * Kiểm tra username đã tồn tại trong DB chưa
+     */
+    private boolean isUsernameExists(Connection conn, String username) throws SQLException {
+        try (PreparedStatement checkStmt = conn.prepareStatement(
+            "SELECT UserID FROM UserAccounts WHERE UserName = ?")) {
+            checkStmt.setString(1, username);
+            try (ResultSet checkRs = checkStmt.executeQuery()) {
+                return checkRs.next();
             }
-        });
+        }
+    }
+    
+    /**
+     * Thêm bản ghi vào bảng UserAccounts
+     */
+    private void addUserAccount(Connection conn, String userId, String username, String password, 
+            String email, String phone) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+            "INSERT INTO UserAccounts (UserID, UserName, FullName, Role, Email, PhoneNumber, Password) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+            ps.setString(1, userId);
+            ps.setString(2, username);
+            ps.setString(3, username);
+            ps.setString(4, "Benh nhan");
+            ps.setString(5, email);
+            ps.setString(6, phone);
+            ps.setString(7, password);
+            ps.executeUpdate();
+        }
+    }
+    
+    /**
+     * Thêm bản ghi vào bảng Patients
+     */
+    private void addPatientRecord(Connection conn, String patientId, String userId, String fullName, 
+            String dob, String gender, String phone, String address) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+            "INSERT INTO Patients (PatientID, UserID, FullName, DateOfBirth, Gender, PhoneNumber, Address, CreatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())")) {
+            ps.setString(1, patientId);
+            ps.setString(2, userId);
+            ps.setString(3, fullName);
+            ps.setString(4, dob);
+            ps.setString(5, gender);
+            ps.setString(6, phone);
+            ps.setString(7, address);
+            ps.executeUpdate();
+        }
     }
 
     private void styleButton(JButton button) {
