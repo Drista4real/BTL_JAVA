@@ -14,6 +14,11 @@ public class User {
     private String address;    // Nơi cư trú
     private String cccd;       // Số CCCD
     private boolean hasInsurance; // Có giấy BHYT không
+    
+    // Thêm các thuộc tính mới
+    private String patientId;  // Mã bệnh nhân
+    private String insuranceId; // Mã BHYT
+    private String insuranceExpDate; // Ngày hết hạn BHYT
 
     public User(String username, String password, String fullName, String email, String phone, Role role,
                 String dateOfBirth, String gender, String address, String cccd, boolean hasInsurance) {
@@ -30,6 +35,9 @@ public class User {
         this.address = address;
         this.cccd = cccd;
         this.hasInsurance = hasInsurance;
+        this.patientId = null;
+        this.insuranceId = null;
+        this.insuranceExpDate = null;
     }
 
     // Constructor cũ để tương thích
@@ -51,6 +59,11 @@ public class User {
     public String getAddress() { return address; }
     public String getCccd() { return cccd; }
     public boolean isHasInsurance() { return hasInsurance; }
+    
+    // Getters và setters cho các thuộc tính mới
+    public String getPatientId() { return patientId; }
+    public String getInsuranceId() { return insuranceId; }
+    public String getInsuranceExpDate() { return insuranceExpDate; }
 
     public void setUsername(String username) { this.username = username; }
     public void setPassword(String password) { this.password = password; }
@@ -65,4 +78,7 @@ public class User {
     public void setAddress(String address) { this.address = address; }
     public void setCccd(String cccd) { this.cccd = cccd; }
     public void setHasInsurance(boolean hasInsurance) { this.hasInsurance = hasInsurance; }
-} 
+    public void setPatientId(String patientId) { this.patientId = patientId; }
+    public void setInsuranceId(String insuranceId) { this.insuranceId = insuranceId; }
+    public void setInsuranceExpDate(String insuranceExpDate) { this.insuranceExpDate = insuranceExpDate; }
+}

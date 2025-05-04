@@ -14,6 +14,8 @@ import java.util.Random;
 import java.util.Properties;
 import java.io.InputStream;
 import java.io.IOException;
+import java.sql.DatabaseMetaData;
+import java.util.Date;
 
 public class LoginPanel extends JPanel {
     private JTextField usernameField;
@@ -208,59 +210,171 @@ public class LoginPanel extends JPanel {
     }
 
 private void login() {
-    String username = usernameField.getText();
-    String password = String.valueOf(passwordField.getPassword());
+    String username = usernameField.getText().trim();
+    String password = new String(passwordField.getPassword());
 
     if (username.isEmpty() || password.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Vui lòng nhập tên đăng nhập và mật khẩu", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin đăng nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
-    try (Connection conn = DriverManager.getConnection(DB_URL, "root", "Pha2k5@")) {
-        String sql = "SELECT ua.*, p.DateOfBirth, p.Gender, p.Address, p.PatientID " +
-                     "FROM UserAccounts ua " +
-                     "LEFT JOIN Patients p ON ua.UserID = p.UserID " +
-                     "WHERE ua.UserName = ? AND ua.Password = ?";
+    System.out.println("Thực hiện đăng nhập với username: " + username);
+
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+        System.out.println("Kết nối đến cơ sở dữ liệu thành công!");
         
+        // Debug: Kiểm tra tài khoản trong bảng UserAccounts
+        String checkUserSql = "SELECT UserName, Password, Role FROM UserAccounts";
+        PreparedStatement checkStmt = conn.prepareStatement(checkUserSql);
+        ResultSet checkRs = checkStmt.executeQuery();
+        System.out.println("Danh sách tài khoản trong hệ thống:");
+        while (checkRs.next()) {
+            String dbUser = checkRs.getString("UserName");
+            String dbPass = checkRs.getString("Password");
+            String dbRole = checkRs.getString("Role");
+            System.out.println("Username: " + dbUser + ", Password: " + dbPass + ", Role: " + dbRole);
+        }
+        
+        // Truy vấn đăng nhập sửa lại để sử dụng dấu bằng chính xác cho cả username và password
+        String sql = "SELECT * FROM UserAccounts WHERE UserName = ? AND Password = ?";
         PreparedStatement stmt = conn.prepareStatement(sql);
         stmt.setString(1, username);
         stmt.setString(2, password);
-        ResultSet rs = stmt.executeQuery();
+        System.out.println("Truy vấn: " + sql);
+        System.out.println("Với tham số: Username=" + username + ", Password=" + password);
 
+        ResultSet rs = stmt.executeQuery();
         if (rs.next()) {
-            String dbUsername = rs.getString("UserName");
-            String dbPassword = rs.getString("Password");
+            String userId = rs.getString("UserID");
             String fullName = rs.getString("FullName");
-            String email = rs.getString("Email") != null ? rs.getString("Email") : "";
-            String phone = rs.getString("PhoneNumber") != null ? rs.getString("PhoneNumber") : "";
+            String email = rs.getString("Email");
+            String phone = rs.getString("PhoneNumber");
             String dbRole = rs.getString("Role");
             
-            // Lấy thêm các thông tin bệnh nhân nếu có
-            String dateOfBirth = rs.getString("DateOfBirth") != null ? rs.getString("DateOfBirth") : "";
-            String gender = rs.getString("Gender") != null ? rs.getString("Gender") : "";
-            String address = rs.getString("Address") != null ? rs.getString("Address") : "";
-            String patientID = rs.getString("PatientID") != null ? rs.getString("PatientID") : "";
-
-            // Chuyển đổi vai trò từ DB (Bac si, Benh nhan) sang Role enum (DOCTOR, PATIENT)
-            Role role = "Bac si".equals(dbRole) ? Role.DOCTOR : Role.PATIENT;
-
-            User user = new User(dbUsername, dbPassword, fullName, email, phone, role, 
-                                 dateOfBirth, gender, address, "", false);
-
-            if (mainFrame != null) {
-                mainFrame.dispose();
-                if (role == Role.DOCTOR) {
-                    new DoctorMainFrame(user).setVisible(true);
-                } else if (role == Role.PATIENT) {
-                    new PatientMainFrame(user).setVisible(true);
+            System.out.println("Đăng nhập thành công! UserID=" + userId + ", FullName=" + fullName + ", Role=" + dbRole);
+            
+            // Xác định vai trò bằng cách sử dụng phương thức fromDbValue của enum Role
+            Role userRole;
+            try {
+                userRole = Role.fromDbValue(dbRole);
+                System.out.println("Vai trò người dùng: " + userRole);
+            } catch (Exception e) {
+                System.out.println("Lỗi xác định vai trò: " + e.getMessage());
+                JOptionPane.showMessageDialog(this, "Vai trò người dùng không hợp lệ: " + dbRole, 
+                                           "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Tạo đối tượng User
+            User user = new User(username, password, fullName, email, phone, userRole);
+            
+            // Nếu là bệnh nhân, lấy thêm thông tin từ bảng Patients
+            if (userRole == Role.PATIENT) {
+                try {
+                    System.out.println("Lấy thông tin bệnh nhân cho UserID: " + userId);
+                    String patientSql = "SELECT * FROM Patients WHERE UserID = ?";
+                    PreparedStatement patientStmt = conn.prepareStatement(patientSql);
+                    patientStmt.setString(1, userId);
+                    ResultSet patientRs = patientStmt.executeQuery();
+                    
+                    if (patientRs.next()) {
+                        String patientId = patientRs.getString("PatientID");
+                        Date dobDate = patientRs.getDate("DateOfBirth");
+                        String dob = dobDate != null ? dobDate.toString() : "";
+                        String gender = patientRs.getString("Gender");
+                        String address = patientRs.getString("Address");
+                        String illnessInfo = patientRs.getString("IllnessInfo");
+                        
+                        System.out.println("Tìm thấy thông tin bệnh nhân: PatientID=" + patientId);
+                        
+                        user.setPatientId(patientId);
+                        user.setDateOfBirth(dob);
+                        user.setGender(gender);
+                        user.setAddress(address != null ? address : "");
+                        user.setIllnessInfo(illnessInfo != null ? illnessInfo : "");
+                        
+                        // Kiểm tra bảo hiểm
+                        String insuranceSql = "SELECT * FROM Insurance WHERE PatientID = ?";
+                        PreparedStatement insuranceStmt = conn.prepareStatement(insuranceSql);
+                        insuranceStmt.setString(1, patientId);
+                        ResultSet insuranceRs = insuranceStmt.executeQuery();
+                        
+                        if (insuranceRs.next()) {
+                            String policyNumber = insuranceRs.getString("PolicyNumber");
+                            Date expDate = insuranceRs.getDate("ExpirationDate");
+                            String expDateStr = expDate != null ? expDate.toString() : "";
+                            
+                            user.setHasInsurance(true);
+                            user.setInsuranceId(policyNumber);
+                            user.setInsuranceExpDate(expDateStr);
+                            
+                            System.out.println("Thông tin bảo hiểm: PolicyNumber=" + policyNumber);
+                        } else {
+                            user.setHasInsurance(false);
+                            System.out.println("Không tìm thấy thông tin bảo hiểm");
+                        }
+                        
+                        // Mở giao diện bệnh nhân
+                        System.out.println("Mở giao diện bệnh nhân...");
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                PatientMainFrame patientFrame = new PatientMainFrame(user);
+                                patientFrame.setVisible(true);
+                                if (mainFrame != null) {
+                                    mainFrame.dispose();
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                JOptionPane.showMessageDialog(null, "Lỗi khi mở giao diện bệnh nhân: " + e.getMessage(), 
+                                                           "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        return;
+                    } else {
+                        System.out.println("Không tìm thấy thông tin bệnh nhân cho UserID: " + userId);
+                        JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin bệnh nhân trong cơ sở dữ liệu!", 
+                                                   "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Lỗi SQL khi truy vấn thông tin bệnh nhân: " + e.getMessage());
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Lỗi truy vấn thông tin bệnh nhân: " + e.getMessage(), 
+                                               "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
+            } else if (userRole == Role.DOCTOR) {
+                System.out.println("Đăng nhập bác sĩ thành công, mở giao diện bác sĩ...");
+                mainFrame.setCurrentUser(user);
+                mainFrame.showMainContent();
+                return;
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc mật khẩu không đúng", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+            // Kiểm tra xem username có tồn tại không
+            String checkUsernameSql = "SELECT Password, Role FROM UserAccounts WHERE UserName = ?";
+            PreparedStatement checkUsernameStmt = conn.prepareStatement(checkUsernameSql);
+            checkUsernameStmt.setString(1, username);
+            ResultSet checkUsernameRs = checkUsernameStmt.executeQuery();
+            
+            if (checkUsernameRs.next()) {
+                String correctPassword = checkUsernameRs.getString("Password");
+                String userRole = checkUsernameRs.getString("Role");
+                System.out.println("Tìm thấy username '" + username + "' với role '" + userRole + 
+                                  "' nhưng mật khẩu không đúng!");
+                System.out.println("Mật khẩu trong DB: " + correctPassword);
+                System.out.println("Mật khẩu nhập vào: " + password);
+                JOptionPane.showMessageDialog(this, "Mật khẩu không đúng!", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+            } else {
+                System.out.println("Không tìm thấy tài khoản với username: " + username);
+                JOptionPane.showMessageDialog(this, "Tên đăng nhập không tồn tại!", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+            }
         }
     } catch (SQLException e) {
-        JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage(),
-            "Lỗi", JOptionPane.ERROR_MESSAGE);
+        System.out.println("Lỗi SQL: " + e.getMessage());
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Lỗi kết nối đến cơ sở dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+    } catch (Exception e) {
+        System.out.println("Lỗi không xác định: " + e.getMessage());
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Lỗi không xác định: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
 }
 
@@ -334,35 +448,16 @@ private void login() {
     }
 
     private String mapRoleToEnum(String dbRole) {
-        System.out.println("Vai trò từ DB: " + dbRole);
-
-        // Kiểm tra nếu chuỗi chứa 'Bác' hoặc 'bác' ở bất kỳ định dạng nào
-        if (dbRole != null && (dbRole.contains("ác") || dbRole.toLowerCase().contains("bac") ||
-                dbRole.contains("B") || dbRole.contains("s"))) {
-            System.out.println("Xác định là bác sĩ");
-            return "DOCTOR";
+        if (dbRole == null) {
+            throw new IllegalArgumentException("Vai trò không được để trống!");
         }
-        // Kiểm tra nếu chuỗi chứa 'Bệnh' hoặc 'bệnh' ở bất kỳ định dạng nào
-        else if (dbRole != null && (dbRole.contains("ệnh") || dbRole.toLowerCase().contains("benh") ||
-                dbRole.contains("nhân") || dbRole.toLowerCase().contains("nhan"))) {
-            System.out.println("Xác định là bệnh nhân");
-            return "PATIENT";
-        } else {
-            // Trong trường hợp không thể xác định, kiểm tra mã byte
-            System.out.println("Không xác định được vai trò, hiển thị mã byte:");
-            for (byte b : dbRole.getBytes()) {
-                System.out.print(b + " ");
-            }
-            System.out.println();
-
-            // Thử dựa vào ký tự đầu tiên để phân biệt
-            char firstChar = dbRole.charAt(0);
-            if (firstChar == 'B' || firstChar == 'b') {
-                System.out.println("Giả định là bác sĩ dựa vào ký tự đầu");
+        switch (dbRole.trim()) {
+            case "Bac si":
                 return "DOCTOR";
-            } else {
+            case "Benh nhan":
+                return "PATIENT";
+            default:
                 throw new IllegalArgumentException("Vai trò không hợp lệ: " + dbRole);
-            }
         }
     }
 
@@ -375,4 +470,60 @@ private void login() {
         button.setBorder(BorderFactory.createLineBorder(btnColor.darker(), 1, true));
         button.setPreferredSize(new Dimension(120, 36));
     }
+    
+    
+// Thêm phương thức sau vào lớp LoginPanel
+private void checkDatabase() {
+    System.out.println("--------- KIỂM TRA CƠ SỞ DỮ LIỆU ---------");
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+        System.out.println("1. Kết nối thành công đến: " + DB_URL);
+        
+        // Kiểm tra bảng UserAccounts
+        String query = "SELECT COUNT(*) AS total FROM UserAccounts";
+        try (PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                int total = rs.getInt("total");
+                System.out.println("2. Tổng số bản ghi trong UserAccounts: " + total);
+            }
+        }
+        
+        // Kiểm tra tài khoản bệnh nhân
+        query = "SELECT UserName, Password, Role FROM UserAccounts WHERE Role = 'PATIENT'";
+        try (PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            System.out.println("3. Danh sách tài khoản bệnh nhân:");
+            int count = 0;
+            while (rs.next()) {
+                count++;
+                String userName = rs.getString("UserName");
+                String password = rs.getString("Password");
+                String role = rs.getString("Role");
+                System.out.println("   " + count + ". UserName: " + userName + 
+                                   ", Password: " + password + ", Role: " + role);
+            }
+            if (count == 0) {
+                System.out.println("   Không tìm thấy tài khoản bệnh nhân nào!");
+            }
+        }
+        
+        // Kiểm tra bảng trong cơ sở dữ liệu
+        DatabaseMetaData meta = conn.getMetaData();
+        ResultSet tables = meta.getTables(null, null, "%", new String[] {"TABLE"});
+        System.out.println("4. Danh sách các bảng trong cơ sở dữ liệu:");
+        int tableCount = 0;
+        while (tables.next()) {
+            tableCount++;
+            System.out.println("   " + tableCount + ". " + tables.getString("TABLE_NAME"));
+        }
+        if (tableCount == 0) {
+            System.out.println("   Không tìm thấy bảng nào trong cơ sở dữ liệu!");
+        }
+        
+    } catch (SQLException e) {
+        System.out.println("LỖI KẾT NỐI CƠ SỞ DỮ LIỆU: " + e.getMessage());
+        e.printStackTrace();
+    }
+    System.out.println("----------------------------------------");
+}
 }

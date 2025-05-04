@@ -104,4 +104,27 @@ public class ExceptionUtils {
         }
         return true;
     }
+    
+    // Thêm phương thức này vào class ExceptionUtils
+    public static void showError(Exception e) {
+        LOGGER.log(Level.SEVERE, "Lỗi: " + e.getMessage(), e);
+        
+        if (e instanceof SQLException) {
+            SQLException sqlEx = (SQLException) e;
+            // Hiển thị thông tin chi tiết về SQLException
+            StringBuilder errorDetails = new StringBuilder();
+            errorDetails.append("Lỗi SQL: ").append(e.getMessage()).append("\n");
+            errorDetails.append("Mã lỗi SQL: ").append(sqlEx.getErrorCode()).append("\n");
+            errorDetails.append("SQL State: ").append(sqlEx.getSQLState());
+            
+            JOptionPane.showMessageDialog(null, errorDetails.toString(), 
+                    "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
+        } else {
+            // Hiển thị stack trace trong console để debug
+            e.printStackTrace();
+            
+            JOptionPane.showMessageDialog(null, "Lỗi: " + e.getMessage(), 
+                    "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }

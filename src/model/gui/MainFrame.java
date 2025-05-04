@@ -36,7 +36,7 @@ public class MainFrame extends JFrame {
         instance = this;
     }
 
-    private void showRoleSelectionPanel() {
+    public void showRoleSelectionPanel() {
         JPanel rolePanel = new JPanel(new GridBagLayout());
         rolePanel.setBackground(Color.WHITE);
 
@@ -109,17 +109,21 @@ public class MainFrame extends JFrame {
         button.setMargin(new Insets(0, 25, 0, 0));
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Load icon if exists
-        try {
-            URL iconUrl = getClass().getResource("/model/gui/icons/" + iconName);
-            if (iconUrl != null) {
+        // Load icon if exists - sửa lại để xử lý an toàn
+        URL iconUrl = getClass().getResource("/model/gui/icons/" + iconName);
+        if (iconUrl != null) {
+            try {
                 ImageIcon icon = new ImageIcon(iconUrl);
                 Image img = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
                 button.setIcon(new ImageIcon(img));
                 button.setIconTextGap(15);
+            } catch (Exception e) {
+                System.out.println("Không thể tải icon: " + iconName);
             }
-        } catch (Exception e) {
-            System.out.println("Không thể tải icon: " + iconName);
+        } else {
+            // Không tìm thấy icon, chỉ tăng thêm padding bên trái
+            button.setMargin(new Insets(0, 35, 0, 0));
+            System.out.println("Không tìm thấy icon: " + iconName);
         }
 
         // Add hover effect using MouseListener class
@@ -169,7 +173,7 @@ public class MainFrame extends JFrame {
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
-        if (user != null) {
+        if (user != null && userNameLabel != null) {
             userNameLabel.setText(user.getFullName());
             // Cập nhật chữ cái đầu cho avatar mặc định
             if (avatarLabel != null && avatarLabel.getIcon() == null) {
@@ -196,29 +200,85 @@ public class MainFrame extends JFrame {
         }
     }
 
+    // Thêm phương thức xử lý đăng nhập cho bệnh nhân
+    public void handlePatientLogin(User user) {
+        // Đóng frame hiện tại
+        this.setVisible(false);
+        this.dispose(); // Giải phóng tài nguyên của frame hiện tại
+        
+        // Mở frame cho bệnh nhân
+        SwingUtilities.invokeLater(() -> {
+            PatientMainFrame patientFrame = new PatientMainFrame(user);
+            patientFrame.setVisible(true);
+        });
+    }
+
     public void showLoginScreen() {
-        navPanel.setVisible(false);
+        if (navPanel != null) {
+            navPanel.setVisible(false);
+        }
         if (currentButton != null) {
             currentButton.setBackground(new Color(41, 128, 185));
             currentButton = null;
         }
-        cardLayout.show(mainPanel, "LOGIN");
+        if (cardLayout != null && mainPanel != null) {
+            cardLayout.show(mainPanel, "LOGIN");
+        }
     }
 
     public void showMainContent() {
-        navPanel.setVisible(true);
-        // Select home button by default
-        Component[] components = navPanel.getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JButton) {
-                JButton button = (JButton) comp;
-                if (button.getText().equals("Trang chủ")) {
-                    updateButtonSelection(button);
-                    break;
+        if (navPanel != null) {
+            navPanel.setVisible(true);
+            
+            // Select home button by default
+            Component[] components = navPanel.getComponents();
+            for (Component comp : components) {
+                if (comp instanceof JButton) {
+                    JButton button = (JButton) comp;
+                    if (button.getText().equals("Trang chủ")) {
+                        updateButtonSelection(button);
+                        break;
+                    }
                 }
             }
+            
+            if (cardLayout != null && mainPanel != null) {
+                cardLayout.show(mainPanel, "DASHBOARD");
+            }
+        } else {
+            // Khởi tạo thủ công nếu chưa được khởi tạo
+            initMainUI();
+            navPanel.setVisible(true);
+            cardLayout.show(mainPanel, "DASHBOARD");
         }
-        cardLayout.show(mainPanel, "DASHBOARD");
+    }
+
+    // Thêm phương thức để khởi tạo giao diện chính nếu chưa được khởi tạo
+    private void initMainUI() {
+        mainPanel = new JPanel();
+        cardLayout = new CardLayout();
+        mainPanel.setLayout(cardLayout);
+        
+        // Tạo các panel cần thiết
+        dashboardPanel = new DashboardPanel();
+        patientPanel = new PatientManagementPanel();
+        searchPanel = new SearchPanel();
+        filePanel = new FileManagementPanel();
+        
+        mainPanel.add(dashboardPanel, "DASHBOARD");
+        mainPanel.add(patientPanel, "PATIENT");
+        mainPanel.add(searchPanel, "SEARCH");
+        mainPanel.add(filePanel, "FILES");
+        
+        // Khởi tạo navPanel
+        navPanel = createNavPanel();
+        
+        // Cấu trúc giao diện
+        JPanel contentPane = new JPanel(new BorderLayout());
+        contentPane.add(navPanel, BorderLayout.WEST);
+        contentPane.add(mainPanel, BorderLayout.CENTER);
+        
+        setContentPane(contentPane);
     }
 
     private JPanel createNavPanel() {
@@ -275,10 +335,60 @@ public class MainFrame extends JFrame {
         JButton btnSearch = createNavButton("Tìm kiếm", "search.png");
         JButton btnFiles = createNavButton("Quản lý tài liệu", "files.png");
 
+        btnDashboard.addActionListener(e -> {
+            updateButtonSelection(btnDashboard);
+            cardLayout.show(mainPanel, "DASHBOARD");
+        });
+        
+        btnPatient.addActionListener(e -> {
+            updateButtonSelection(btnPatient);
+            cardLayout.show(mainPanel, "PATIENT");
+        });
+        
+        btnSearch.addActionListener(e -> {
+            updateButtonSelection(btnSearch);
+            cardLayout.show(mainPanel, "SEARCH");
+        });
+        
+        btnFiles.addActionListener(e -> {
+            updateButtonSelection(btnFiles);
+            cardLayout.show(mainPanel, "FILES");
+        });
+
         navPanel.add(btnDashboard);
         navPanel.add(btnPatient);
         navPanel.add(btnSearch);
         navPanel.add(btnFiles);
+        
+        // Thêm nút đăng xuất
+        navPanel.add(Box.createVerticalGlue()); // Đẩy nút đăng xuất xuống cuối
+        
+        logoutButton = new JButton("Đăng xuất");
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setBackground(new Color(231, 76, 60));
+        logoutButton.setBorderPainted(false);
+        logoutButton.setFocusPainted(false);
+        logoutButton.setMaximumSize(new Dimension(250, 45));
+        logoutButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        logoutButton.setMargin(new Insets(10, 0, 10, 0));
+        
+        logoutButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Bạn có chắc chắn muốn đăng xuất?",
+                    "Xác nhận đăng xuất",
+                    JOptionPane.YES_NO_OPTION
+            );
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                currentUser = null;
+                showRoleSelectionPanel();
+            }
+        });
+        
+        navPanel.add(logoutButton);
+        navPanel.add(Box.createVerticalStrut(20)); // Thêm khoảng trống ở dưới
 
         return navPanel;
     }
