@@ -10,8 +10,8 @@ import java.io.IOException;
 public class databaseConnection {
     private static String DB_DRIVER;
     private static String DB_URL = "jdbc:mysql://localhost:3306/PatientManagement?allowPublicKeyRetrieval=true&useSSL=false";
-    private static String DB_USER;
-    private static String DB_PASSWORD;
+    private static String DB_USER = "root";
+    private static String DB_PASSWORD = "Pha2k5@";
     
     static {
         // Load configuration from database.properties

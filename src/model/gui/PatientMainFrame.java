@@ -11,6 +11,12 @@ import model.entity.Prescription;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.DefaultTableCellRenderer;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 
 public class PatientMainFrame extends JFrame {
     private User currentUser;
@@ -42,6 +48,12 @@ public class PatientMainFrame extends JFrame {
     private JTable detailsTable;
     private JTable invoicesTable;
 
+    // Thêm các biến thành viên để lưu trữ số liệu tổng quan
+    private int upcomingAppointmentCount = 0;
+    private int currentPrescriptionCount = 0;
+    private int medicalRecordCount = 0;
+    private int unpaidBillCount = 0;
+
     public PatientMainFrame(User user) {
         this.currentUser = user;
 
@@ -67,7 +79,6 @@ public class PatientMainFrame extends JFrame {
         mainPanel.add(appointmentPanel, "APPOINTMENTS");
         mainPanel.add(medicalHistoryPanel, "MEDICAL_HISTORY");
         mainPanel.add(prescriptionPanel, "PRESCRIPTIONS");
-        mainPanel.add(personalInfoPanel, "PERSONAL_INFO");
         mainPanel.add(paymentsPanel, "PAYMENTS");
 
         // Create navigation panel
@@ -91,124 +102,457 @@ public class PatientMainFrame extends JFrame {
         paymentsPanel = createPaymentsPanel();
     }
 
+    // Phương thức createPatientDashboard đã được chỉnh sửa để sử dụng giá trị động
     private JPanel createPatientDashboard() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
+        // Cập nhật các số liệu tổng quan từ database
+        updateDashboardStats();
 
-        // Welcome header
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(41, 128, 185));
-        headerPanel.setPreferredSize(new Dimension(panel.getWidth(), 100));
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel welcomeLabel = new JLabel("Chào mừng, " + currentUser.getFullName());
-        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        welcomeLabel.setForeground(Color.WHITE);
-        headerPanel.add(welcomeLabel);
+        // Phần tiêu đề "Xin chào"
+        JPanel welcomePanel = new JPanel(new BorderLayout());
+        JLabel welcomeLabel = new JLabel("Xin chào, " + currentUser.getFullName());
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        welcomePanel.add(welcomeLabel, BorderLayout.CENTER);
 
-        // Dashboard content
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        contentPanel.setBackground(Color.WHITE);
+        // Thẻ thông tin tổng quan với màu xanh và giá trị động
+        JPanel statsPanel = new JPanel(new GridLayout(1, 4, 10, 0));
+        statsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        statsPanel.add(createInfoCard("Lịch hẹn sắp tới", String.valueOf(upcomingAppointmentCount), new Color(0, 102, 204)));
+        statsPanel.add(createInfoCard("Đơn thuốc hiện tại", String.valueOf(currentPrescriptionCount), new Color(0, 102, 204)));
+        statsPanel.add(createInfoCard("Hồ sơ khám bệnh", String.valueOf(medicalRecordCount), new Color(0, 102, 204)));
+        statsPanel.add(createInfoCard("Hóa đơn chờ thanh toán", String.valueOf(unpaidBillCount), new Color(0, 102, 204)));
 
-        JLabel infoLabel = new JLabel("Thông tin tổng quan");
-        infoLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        contentPanel.add(Box.createVerticalStrut(30));
-        contentPanel.add(infoLabel);
+        // Thêm khung thông tin cá nhân bên dưới thông tin tổng quan
+        JPanel personalInfoBoxPanel = createPersonalInfoBox();
 
-        // Thêm các widget thông tin
-        JPanel statsPanel = new JPanel(new GridLayout(2, 2, 20, 20));
-        statsPanel.setBackground(Color.WHITE);
-        statsPanel.setMaximumSize(new Dimension(800, 200));
-        statsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Tạo panel chứa các phần thông tin
+        JPanel contentPanel = new JPanel(new BorderLayout(0, 20));
+        contentPanel.add(statsPanel, BorderLayout.NORTH);
+        contentPanel.add(personalInfoBoxPanel, BorderLayout.CENTER);
 
-        statsPanel.add(createInfoCard("Lịch hẹn sắp tới", "2", new Color(52, 152, 219)));
-        statsPanel.add(createInfoCard("Đơn thuốc hiện tại", "1", new Color(46, 204, 113)));
-        statsPanel.add(createInfoCard("Kết quả xét nghiệm mới", "3", new Color(155, 89, 182)));
-        statsPanel.add(createInfoCard("Hóa đơn chưa thanh toán", "0", new Color(230, 126, 34)));
-
-        contentPanel.add(Box.createVerticalStrut(30));
-        contentPanel.add(statsPanel);
-
-        panel.add(headerPanel, BorderLayout.NORTH);
-        panel.add(contentPanel, BorderLayout.CENTER);
+        // Đưa tất cả vào panel chính
+        panel.add(createSectionHeader("Tổng quan"), BorderLayout.NORTH);
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.add(welcomePanel, BorderLayout.NORTH);
+        centerPanel.add(contentPanel, BorderLayout.CENTER);
+        panel.add(centerPanel, BorderLayout.CENTER);
 
         return panel;
     }
 
+    // Phương thức mới để cập nhật số liệu tổng quan từ cơ sở dữ liệu
+    private void updateDashboardStats() {
+        try {
+            // Lấy patientID từ currentUser
+            String patientID = getPatientIDFromUserID(currentUser.getId());
+            if (patientID == null) {
+                // Nếu không tìm thấy thông tin bệnh nhân, sử dụng giá trị mặc định
+                return;
+            }
+
+            Connection connection = getDBConnection();
+            if (connection == null) {
+                return; // Không thể kết nối, giữ nguyên giá trị mặc định
+            }
+
+            // 1. Đếm số lịch hẹn sắp tới
+            String appointmentQuery = "SELECT COUNT(*) FROM Appointments WHERE PatientID = ? AND AppointmentDate >= CURRENT_DATE() AND Status != 'Huy'";
+            try (PreparedStatement pstmt = connection.prepareStatement(appointmentQuery)) {
+                pstmt.setString(1, patientID);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    upcomingAppointmentCount = rs.getInt(1);
+                }
+            }
+
+            // 2. Đếm số đơn thuốc hiện tại (trong 30 ngày gần đây)
+            String prescriptionQuery = "SELECT COUNT(*) FROM Prescriptions WHERE PatientID = ? AND PrescriptionDate >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)";
+            try (PreparedStatement pstmt = connection.prepareStatement(prescriptionQuery)) {
+                pstmt.setString(1, patientID);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    currentPrescriptionCount = rs.getInt(1);
+                }
+            }
+
+            // 3. Đếm tổng số hồ sơ khám bệnh
+            String medicalRecordQuery = "SELECT COUNT(*) FROM MedicalRecords WHERE PatientID = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(medicalRecordQuery)) {
+                pstmt.setString(1, patientID);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    medicalRecordCount = rs.getInt(1);
+                }
+            }
+
+            // 4. Đếm số hóa đơn chưa thanh toán (giả sử có bảng Invoices với cột Status)
+            // Nếu không có bảng Invoices, bạn có thể bỏ qua phần này hoặc đếm từ bảng khác
+            // Đây là ví dụ, bạn cần điều chỉnh theo cấu trúc CSDL thực tế của bạn
+            String unpaidBillQuery = "SELECT COUNT(*) FROM Prescriptions WHERE PatientID = ? AND PrescriptionDate >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)";
+            try (PreparedStatement pstmt = connection.prepareStatement(unpaidBillQuery)) {
+                pstmt.setString(1, patientID);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    unpaidBillCount = rs.getInt(1);
+                }
+            }
+
+            connection.close();
+        } catch (SQLException e) {
+            // Xử lý lỗi, giữ lại giá trị mặc định
+            System.err.println("Lỗi khi cập nhật số liệu tổng quan: " + e.getMessage());
+        }
+    }
+
+    // Phương thức để lấy PatientID từ UserID
+    private String getPatientIDFromUserID(String userID) {
+        try {
+            Connection connection = getDBConnection();
+            if (connection == null) return null;
+
+            String query = "SELECT PatientID FROM Patients WHERE UserID = ?";
+            PreparedStatement pstmt = connection.prepareStatement(query);
+            pstmt.setString(1, userID);
+            ResultSet rs = pstmt.executeQuery();
+
+            String patientID = null;
+            if (rs.next()) {
+                patientID = rs.getString("PatientID");
+            }
+
+            rs.close();
+            pstmt.close();
+            connection.close();
+
+            return patientID;
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi lấy PatientID: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // Phương thức để lấy kết nối đến CSDL
+    private Connection getDBConnection() {
+        String url = "jdbc:mysql://localhost:3306/PatientManagement?allowPublicKeyRetrieval=true&useSSL=false&characterEncoding=UTF-8&useUnicode=true";
+        String username = "root"; // Thay đổi nếu cần
+        String password = "Pha2k5@";
+
+        try {
+            // Thử kết nối với một số cấu hình phổ biến
+            try {
+                // Cố gắng kết nối với user root và mật khẩu trống
+                return DriverManager.getConnection("jdbc:mysql://localhost:3306/PatientManagement", "root", "Pha2k5@");
+            } catch (SQLException rootErr) {
+                try {
+                    // Thử lại với user root và mật khẩu mặc định khác
+                    return DriverManager.getConnection("jdbc:mysql://localhost:3306/PatientManagement", "root", "Pha2k5@");
+                } catch (SQLException rootDefaultErr) {
+                    // Nếu vẫn không được, sử dụng kết nối với SSL disabled và allowPublicKeyRetrieval=true
+                    return DriverManager.getConnection(
+                            "jdbc:mysql://localhost:3306/PatientManagement?useSSL=false&allowPublicKeyRetrieval=true",
+                            "root", "Pha2k5@");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Không thể kết nối đến cơ sở dữ liệu: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // Thêm phương thức để làm mới trang tổng quan khi cần
+    public void refreshDashboard() {
+        updateDashboardStats(); // Cập nhật số liệu
+
+        // Tạo lại panel dashboard với dữ liệu mới
+        JPanel newDashboardPanel = createPatientDashboard();
+
+        // Cập nhật mainPanel với panel mới
+        mainPanel.remove(dashboardPanel);
+        dashboardPanel = newDashboardPanel;
+        mainPanel.add(dashboardPanel, "dashboard");
+
+        // Hiển thị lại panel dashboard
+        cardLayout.show(mainPanel, "dashboard");
+        // Cập nhật giao diện
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+
+    // Phương thức tạo khung thông tin cá nhân (không sử dụng SQL)
+    private JPanel createPersonalInfoBox() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(new Color(0, 102, 204), 2, true),
+                        "Thông tin cá nhân"
+                ),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        JPanel infoGrid = new JPanel(new GridLayout(0, 2, 15, 10));
+
+        // Thêm thông tin mẫu (thay vì từ SQL)
+        // Giả sử chúng ta có dữ liệu mẫu
+        String fullName = currentUser.getFullName();
+        String patientID = "P00" + currentUser.getId();
+
+        infoGrid.add(createInfoRow("Họ và tên:", fullName));
+        infoGrid.add(createInfoRow("Mã bệnh nhân:", patientID));
+        infoGrid.add(createInfoRow("Ngày sinh:", "01/01/1990"));
+        infoGrid.add(createInfoRow("Giới tính:", "Nam"));
+        infoGrid.add(createInfoRow("Số điện thoại:", currentUser.getPhone() != null ? currentUser.getPhone() : "Chưa cập nhật"));
+        infoGrid.add(createInfoRow("Địa chỉ:", currentUser.getAddress() != null ? currentUser.getAddress() : "Chưa cập nhật"));
+        infoGrid.add(createInfoRow("Chiều cao:", "170 cm"));
+        infoGrid.add(createInfoRow("Cân nặng:", "65 kg"));
+        infoGrid.add(createInfoRow("Nhóm máu:", "O+"));
+        infoGrid.add(createInfoRow("Số BHYT:", "SH12345678"));
+
+        panel.add(infoGrid, BorderLayout.CENTER);
+
+        // Thêm nút chỉnh sửa thông tin
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton editButton = new JButton("Chỉnh sửa thông tin");
+        editButton.addActionListener(e -> moHopThoaiChinhSuaThongTin());
+        buttonPanel.add(editButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel createInfoRow(String label, String value) {
+        JPanel panel = new JPanel(new BorderLayout(10, 0));
+        JLabel labelComponent = new JLabel(label);
+        labelComponent.setFont(new Font("Arial", Font.BOLD, 12));
+
+        JLabel valueComponent = new JLabel(value);
+        valueComponent.setFont(new Font("Arial", Font.PLAIN, 12));
+
+        panel.add(labelComponent, BorderLayout.WEST);
+        panel.add(valueComponent, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    // Cập nhật phương thức createInfoCard để sử dụng màu xanh
     private JPanel createInfoCard(String title, String value, Color color) {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(color);
+        JPanel card = new JPanel(new BorderLayout());
+        // Sử dụng màu xanh cho tất cả các thẻ
+        card.setBackground(new Color(0, 102, 204)); // Màu xanh đồng nhất
         card.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
 
         JLabel valueLabel = new JLabel(value);
         valueLabel.setForeground(Color.WHITE);
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
-        valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        valueLabel.setFont(new Font("Arial", Font.BOLD, 24));
 
-        card.add(titleLabel);
-        card.add(Box.createVerticalStrut(10));
-        card.add(valueLabel);
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(valueLabel, BorderLayout.CENTER);
 
         return card;
     }
 
+    // Cập nhật phương thức moHopThoaiChinhSuaThongTin để không sử dụng SQL
+    private void moHopThoaiChinhSuaThongTin() {
+        JDialog dialog = new JDialog(this, "Chỉnh sửa thông tin cá nhân", true);
+        dialog.setSize(400, 550);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Sử dụng thông tin mẫu thay vì từ SQL
+        String fullName = currentUser.getFullName();
+        String phone = currentUser.getPhone() != null ? currentUser.getPhone() : "";
+        String address = currentUser.getAddress() != null ? currentUser.getAddress() : "";
+
+        // Tạo các trường chỉnh sửa với dữ liệu mẫu
+        JTextField nameField = new JTextField(fullName, 20);
+        JTextField phoneField = new JTextField(phone, 20);
+        JTextField addressField = new JTextField(address, 20);
+        JTextField heightField = new JTextField("170", 20);
+        JTextField weightField = new JTextField("65", 20);
+        JTextField bloodTypeField = new JTextField("O+", 20);
+
+        // Tạo panel chứa form với GridBagLayout
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Thêm các trường vào form
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        formPanel.add(new JLabel("Họ và tên:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(nameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        formPanel.add(new JLabel("Số điện thoại:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(phoneField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        formPanel.add(new JLabel("Địa chỉ:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(addressField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        formPanel.add(new JLabel("Chiều cao (cm):"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(heightField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        formPanel.add(new JLabel("Cân nặng (kg):"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(weightField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        formPanel.add(new JLabel("Nhóm máu:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(bloodTypeField, gbc);
+
+        // Thêm panel form vào panel chính
+        panel.add(formPanel);
+
+        // Thêm các nút lưu và hủy
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton saveButton = new JButton("Lưu thay đổi");
+        JButton cancelButton = new JButton("Hủy");
+
+        saveButton.addActionListener(e -> {
+            // Cập nhật thông tin (ở đây chỉ cập nhật thông tin người dùng trong bộ nhớ)
+            currentUser.setFullName(nameField.getText());
+            currentUser.setPhone(phoneField.getText());
+            currentUser.setAddress(addressField.getText());
+
+            JOptionPane.showMessageDialog(dialog,
+                    "Cập nhật thông tin thành công!",
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+            // Refresh dashboard để hiển thị tên người dùng mới
+            JLabel welcomeLabel = new JLabel("Xin chào, " + currentUser.getFullName());
+            welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
+
+            // Tạo lại các panel để cập nhật thông tin
+            createPanels();
+            cardLayout.show(mainPanel, "dashboard");
+            setActiveButton(homeButton);
+            refreshAppointmentsTable();
+            refreshDashboard();
+            dialog.dispose();
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(saveButton);
+        panel.add(Box.createVerticalStrut(20));
+        panel.add(buttonPanel);
+
+        dialog.add(panel);
+        dialog.setVisible(true);
+    }
+    /**
+     * Làm mới bảng lịch hẹn và cập nhật trang tổng quan
+     */
+    public void refreshAppointmentsTable() {
+        try {
+            // Cập nhật dữ liệu bảng lịch hẹn
+            updateAppointmentsTable();
+
+            // Cập nhật số liệu trên trang tổng quan
+            updateDashboardStats();
+
+            // Làm mới giao diện nếu đang ở tab tổng quan
+            if (activeButton == homeButton) {
+                refreshDashboard();
+            }
+
+            // Làm mới giao diện nếu đang ở tab lịch hẹn
+            if (activeButton == appointmentButton) {
+                if (appointmentsTable != null) {
+                    appointmentsTable.revalidate();
+                    appointmentsTable.repaint();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi làm mới bảng lịch hẹn: " + e.getMessage());
+        }
+    }
+    
+    private ImageIcon loadIcon(String path) {
+        try {
+            java.net.URL iconUrl = getClass().getResource(path);
+            if (iconUrl != null) {
+                return new ImageIcon(iconUrl);
+            }
+        } catch (Exception e) {
+            System.err.println("Không thể tải icon từ đường dẫn " + path + ": " + e.getMessage());
+        }
+        return null;
+    }
+
     private JPanel createAppointmentPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        JPanel headerPanel = createSectionHeader("Quản lý lịch hẹn khám bệnh");
-
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(Color.WHITE);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Tạo tiêu đề phần lịch hẹn
+        panel.add(createSectionHeader("Quản lý lịch hẹn"), BorderLayout.NORTH);
 
         // Tạo bảng lịch hẹn
-        String[] columns = {"Mã lịch hẹn", "Ngày", "Giờ", "Bác sĩ", "Lý do khám", "Trạng thái"};
-        Object[][] data = {
-                {"AP001", "30/04/2025", "09:00", "Nguyễn Văn An", "Khám định kỳ", "Đã xác nhận"},
-                {"AP003", "30/04/2025", "11:00", "Lê Văn Cường", "Khám tim mạch", "Đã xác nhận"}
+        String[] columns = {"Mã lịch hẹn", "Ngày hẹn", "Bác sĩ", "Lý do khám", "Trạng thái"};
+        DefaultTableModel appointmentModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Không cho phép chỉnh sửa trực tiếp
+            }
         };
 
-        appointmentsTable = new JTable(data, columns);
-        JScrollPane scrollPane = new JScrollPane(appointmentsTable);
-
-        // Cài đặt thuộc tính cho bảng
+        appointmentsTable = new JTable(appointmentModel);
         setupTable(appointmentsTable);
 
-        // Đặt độ rộng cụ thể cho từng cột
-        appointmentsTable.getColumnModel().getColumn(0).setPreferredWidth(100);  // Mã lịch hẹn
-        appointmentsTable.getColumnModel().getColumn(1).setPreferredWidth(100);  // Ngày
-        appointmentsTable.getColumnModel().getColumn(2).setPreferredWidth(80);   // Giờ
-        appointmentsTable.getColumnModel().getColumn(3).setPreferredWidth(150);  // Bác sĩ
-        appointmentsTable.getColumnModel().getColumn(4).setPreferredWidth(200);  // Lý do khám
-        appointmentsTable.getColumnModel().getColumn(5).setPreferredWidth(120);  // Trạng thái
+        JScrollPane tableScrollPane = new JScrollPane(appointmentsTable);
+        tableScrollPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        panel.add(tableScrollPane, BorderLayout.CENTER);
 
-        // Panel nút điều khiển
+        // Tạo panel chứa các nút chức năng
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.setBackground(Color.WHITE);
 
-        JButton newAppointmentBtn = new JButton("Đặt lịch hẹn mới");
-        JButton cancelAppointmentBtn = new JButton("Hủy lịch hẹn");
+        // Tạo nút đặt lịch hẹn mới
+        JButton addButton = new JButton("Đặt lịch hẹn mới");
+        ImageIcon addIcon = loadIcon("/images/add.png");
+        if (addIcon != null) {
+            addButton.setIcon(addIcon);
+        }
+        addButton.addActionListener(e -> moHopThoaiDatLichHen());
 
-        // Thêm xử lý sự kiện cho các nút
-        newAppointmentBtn.addActionListener(e -> moHopThoaiDatLichHen());
-        cancelAppointmentBtn.addActionListener(e -> huyLichHenDaChon());
+        // Tạo nút hủy lịch hẹn
+        JButton cancelButton = new JButton("Hủy lịch hẹn");
+        ImageIcon cancelIcon = loadIcon("/images/cancel.png");
+        if (cancelIcon != null) {
+            cancelButton.setIcon(cancelIcon);
+        }
+        cancelButton.addActionListener(e -> huyLichHenDaChon());
 
-        buttonPanel.add(newAppointmentBtn);
-        buttonPanel.add(cancelAppointmentBtn);
+        buttonPanel.add(addButton);
+        buttonPanel.add(cancelButton);
 
-        contentPanel.add(scrollPane, BorderLayout.CENTER);
-        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
 
-        panel.add(headerPanel, BorderLayout.NORTH);
-        panel.add(contentPanel, BorderLayout.CENTER);
+        // Cập nhật dữ liệu cho bảng
+        updateAppointmentsTable();  // Sử dụng updateAppointmentsTable thay vì refreshAppointmentsTable
 
         return panel;
     }
@@ -557,10 +901,12 @@ public class PatientMainFrame extends JFrame {
         userPanel.add(roleLabel);
 
         // Navigation buttons
-        homeButton = createNavButton("Trang chủ", e -> {
+        homeButton = createNavButton("Tổng quan", e -> {
+            refreshDashboard(); // Gọi refreshDashboard() trước để cập nhật dữ liệu mới nhất
+            cardLayout.show(mainPanel, "dashboard");
             setActiveButton(homeButton);
-            cardLayout.show(mainPanel, "DASHBOARD");
         });
+
         appointmentButton = createNavButton("Lịch hẹn khám bệnh", e -> {
             setActiveButton(appointmentButton);
             cardLayout.show(mainPanel, "APPOINTMENTS");
@@ -572,10 +918,6 @@ public class PatientMainFrame extends JFrame {
         prescriptionButton = createNavButton("Đơn thuốc", e -> {
             setActiveButton(prescriptionButton);
             cardLayout.show(mainPanel, "PRESCRIPTIONS");
-        });
-        personalInfoButton = createNavButton("Thông tin cá nhân", e -> {
-            setActiveButton(personalInfoButton);
-            cardLayout.show(mainPanel, "PERSONAL_INFO");
         });
         paymentsButton = createNavButton("Thanh toán & Hóa đơn", e -> {
             setActiveButton(paymentsButton);
@@ -607,7 +949,6 @@ public class PatientMainFrame extends JFrame {
         navPanel.add(appointmentButton);
         navPanel.add(medicalHistoryButton);
         navPanel.add(prescriptionButton);
-        navPanel.add(personalInfoButton);
         navPanel.add(paymentsButton);
         navPanel.add(Box.createVerticalGlue());
         navPanel.add(logoutButton);
@@ -615,6 +956,7 @@ public class PatientMainFrame extends JFrame {
 
         // Đặt mặc định nút trang chủ là active
         setActiveButton(homeButton);
+
 
         return navPanel;
     }
@@ -777,6 +1119,7 @@ public class PatientMainFrame extends JFrame {
             dialog.dispose();
         });
 
+        refreshAppointmentsTable();
         panel.add(confirmButton, gbc);
         dialog.add(panel);
         dialog.setVisible(true);
@@ -784,39 +1127,63 @@ public class PatientMainFrame extends JFrame {
 
     // Phương thức hủy lịch hẹn đã chọn
     private void huyLichHenDaChon() {
-        int selectedRow = appointmentsTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this,
-                    "Vui lòng chọn lịch hẹn cần hủy",
-                    "Chưa chọn lịch hẹn",
-                    JOptionPane.WARNING_MESSAGE);
+        int row = appointmentsTable.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn lịch hẹn cần hủy!");
             return;
         }
 
-        // Lấy mã lịch hẹn từ dòng đã chọn
-        String maLichHen = (String) appointmentsTable.getValueAt(selectedRow, 0);
+        // Lấy mã lịch hẹn từ bảng
+        String appointmentID = appointmentsTable.getValueAt(row, 0).toString();
+        String status = appointmentsTable.getValueAt(row, 4).toString();
+
+        // Kiểm tra trạng thái
+        if (!"Chờ".equals(status)) {
+            JOptionPane.showMessageDialog(this, "Chỉ có thể hủy lịch hẹn có trạng thái 'Chờ'!");
+            return;
+        }
 
         // Hiển thị hộp thoại xác nhận
-        int option = JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có chắc chắn muốn hủy lịch hẹn này?",
-                "Xác nhận hủy lịch hẹn",
-                JOptionPane.YES_NO_OPTION
-        );
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
+                "Xác nhận hủy lịch hẹn", JOptionPane.YES_NO_OPTION);
 
-        if (option == JOptionPane.YES_OPTION) {
-            // Hủy lịch hẹn trong cơ sở dữ liệu
-            // ...
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Connection connection = getDBConnection();
+                if (connection != null) {
+                    // Cập nhật trạng thái lịch hẹn trong CSDL
+                    String query = "UPDATE Appointments SET Status = 'Đã hủy' WHERE AppointmentID = ?";
+                    PreparedStatement pstmt = connection.prepareStatement(query);
+                    pstmt.setString(1, appointmentID);
 
-            // Cập nhật giao diện
-            DefaultTableModel model = (DefaultTableModel) appointmentsTable.getModel();
-            if (model instanceof DefaultTableModel) {
-                model.removeRow(selectedRow);
+                    int result = pstmt.executeUpdate();
+                    pstmt.close();
+                    connection.close();
 
-                JOptionPane.showMessageDialog(this,
-                        "Đã hủy lịch hẹn thành công",
-                        "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
+                    if (result > 0) {
+                        JOptionPane.showMessageDialog(this, "Hủy lịch hẹn thành công!");
+
+                        // Cập nhật trạng thái trên UI
+                        appointmentsTable.setValueAt("Đã hủy", row, 4);
+
+                        // Làm mới dashboard
+                        updateDashboardStats();
+                        refreshDashboard();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Không thể hủy lịch hẹn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    // Cập nhật UI trong trường hợp không có kết nối CSDL (dùng cho demo)
+                    JOptionPane.showMessageDialog(this, "Hủy lịch hẹn thành công! (Chế độ Offline)");
+                    appointmentsTable.setValueAt("Đã hủy", row, 4);
+
+                    // Làm mới dashboard
+                    updateDashboardStats();
+                    refreshDashboard();
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi hủy lịch hẹn: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -891,163 +1258,6 @@ public class PatientMainFrame extends JFrame {
 
         // Không cho phép thay đổi kích thước cột
         table.getTableHeader().setResizingAllowed(false);
-    }
-
-    // Phương thức mở hộp thoại chỉnh sửa thông tin cá nhân
-    private void moHopThoaiChinhSuaThongTin() {
-        JDialog dialog = new JDialog(this, "Chỉnh sửa thông tin cá nhân", true);
-        dialog.setSize(500, 500);
-        dialog.setLocationRelativeTo(this);
-
-        // Tạo panel với các trường chỉnh sửa đã điền sẵn thông tin người dùng hiện tại
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // Thêm các trường nhập liệu
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Họ và tên:"), gbc);
-
-        gbc.gridx = 1;
-        JTextField nameField = new JTextField(currentUser.getFullName(), 20);
-        panel.add(nameField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Ngày sinh:"), gbc);
-
-        gbc.gridx = 1;
-        JTextField dobField = new JTextField(currentUser.getDateOfBirth(), 20);
-        panel.add(dobField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Giới tính:"), gbc);
-
-        gbc.gridx = 1;
-        String[] genders = {"Nam", "Nữ", "Khác"};
-        JComboBox<String> genderComboBox = new JComboBox<>(genders);
-        genderComboBox.setSelectedItem(currentUser.getGender());
-        panel.add(genderComboBox, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Địa chỉ:"), gbc);
-
-        gbc.gridx = 1;
-        JTextField addressField = new JTextField(currentUser.getAddress(), 20);
-        panel.add(addressField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Số điện thoại:"), gbc);
-
-        gbc.gridx = 1;
-        JTextField phoneField = new JTextField(currentUser.getPhone(), 20);
-        panel.add(phoneField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("Email:"), gbc);
-
-        gbc.gridx = 1;
-        JTextField emailField = new JTextField(currentUser.getEmail(), 20);
-        panel.add(emailField, gbc);
-
-        // Thông tin bảo hiểm
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        panel.add(new JLabel("Thông tin bảo hiểm y tế"), gbc);
-
-        gbc.gridy = 7;
-        gbc.gridwidth = 1;
-        panel.add(new JLabel("Có BHYT:"), gbc);
-
-        gbc.gridx = 1;
-        JCheckBox insuranceCheckbox = new JCheckBox();
-        insuranceCheckbox.setSelected(currentUser.isHasInsurance());
-        panel.add(insuranceCheckbox, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        panel.add(new JLabel("Mã BHYT:"), gbc);
-
-        gbc.gridx = 1;
-        JTextField insuranceIdField = new JTextField(currentUser.getInsuranceId(), 20);
-        insuranceIdField.setEnabled(currentUser.isHasInsurance());
-        panel.add(insuranceIdField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        panel.add(new JLabel("Ngày hết hạn:"), gbc);
-
-        gbc.gridx = 1;
-        JTextField insuranceExpField = new JTextField(currentUser.getInsuranceExpDate(), 20);
-        insuranceExpField.setEnabled(currentUser.isHasInsurance());
-        panel.add(insuranceExpField, gbc);
-
-        // Kích hoạt/vô hiệu hóa các trường bảo hiểm dựa trên checkbox
-        insuranceCheckbox.addActionListener(e -> {
-            boolean hasInsurance = insuranceCheckbox.isSelected();
-            insuranceIdField.setEnabled(hasInsurance);
-            insuranceExpField.setEnabled(hasInsurance);
-        });
-
-        // Thêm nút lưu
-        gbc.gridx = 0;
-        gbc.gridy = 10;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-
-        JButton saveButton = new JButton("Lưu thay đổi");
-        saveButton.addActionListener(saveEvent -> {
-            // Lưu thay đổi vào đối tượng người dùng và cập nhật cơ sở dữ liệu
-            currentUser.setFullName(nameField.getText());
-            currentUser.setDateOfBirth(dobField.getText());
-            currentUser.setGender((String) genderComboBox.getSelectedItem());
-            currentUser.setAddress(addressField.getText());
-            currentUser.setPhone(phoneField.getText());
-            currentUser.setEmail(emailField.getText());
-
-            // Cập nhật thông tin bảo hiểm
-            currentUser.setHasInsurance(insuranceCheckbox.isSelected());
-            if (insuranceCheckbox.isSelected()) {
-                currentUser.setInsuranceId(insuranceIdField.getText());
-                currentUser.setInsuranceExpDate(insuranceExpField.getText());
-            }
-
-            // Cập nhật dữ liệu trong cơ sở dữ liệu
-            // ...
-
-            // Cập nhật giao diện
-            SwingUtilities.invokeLater(() -> {
-                // Làm mới giao diện thông tin cá nhân
-                mainPanel.remove(personalInfoPanel);
-                personalInfoPanel = createPersonalInfoPanel();
-                mainPanel.add(personalInfoPanel, "PERSONAL_INFO");
-
-                // Cập nhật tên người dùng trong panel navigation
-                // ...
-
-                cardLayout.show(mainPanel, "PERSONAL_INFO");
-            });
-
-            JOptionPane.showMessageDialog(dialog,
-                    "Đã cập nhật thông tin thành công!",
-                    "Thông báo",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            dialog.dispose();
-        });
-
-        panel.add(saveButton, gbc);
-
-        dialog.add(panel);
-        dialog.setVisible(true);
     }
 
     // Phương thức xử lý xem chi tiết hóa đơn
@@ -1264,10 +1474,113 @@ public class PatientMainFrame extends JFrame {
 
         panel.add(confirmButton, gbc);
 
+        refreshDashboard();
         dialog.add(panel);
         dialog.setVisible(true);
     }
+    /**
+     * Cập nhật dữ liệu cho bảng lịch hẹn từ cơ sở dữ liệu
+     */
+    private void updateAppointmentsTable() {
+        try {
+            // Kiểm tra nếu bảng appointmentsTable chưa được khởi tạo
+            if (appointmentsTable == null) {
+                System.err.println("Lỗi: Bảng lịch hẹn chưa được khởi tạo");
+                return;
+            }
 
+            // Lấy model của bảng
+            DefaultTableModel model = (DefaultTableModel) appointmentsTable.getModel();
+
+            // Xóa dữ liệu cũ
+            model.setRowCount(0);
+
+            // Lấy ID của bệnh nhân hiện tại
+            String patientID = currentUser != null ? currentUser.getId() : null;
+            if (patientID == null) {
+                System.err.println("Không có thông tin bệnh nhân");
+                return;
+            }
+
+            Connection connection = getDBConnection();
+            if (connection != null) {
+                // Lấy danh sách lịch hẹn từ CSDL
+                String query = "SELECT a.AppointmentID, a.AppointmentDate, d.FullName AS DoctorName, " +
+                        "a.Reason, a.Status FROM Appointments a " +
+                        "LEFT JOIN UserAccounts d ON a.DoctorID = d.UserID " +
+                        "WHERE a.PatientID = ? ORDER BY a.AppointmentDate DESC";
+
+                PreparedStatement pstmt = connection.prepareStatement(query);
+                pstmt.setString(1, patientID);
+                ResultSet rs = pstmt.executeQuery();
+
+                // Thêm dữ liệu vào model
+                while (rs.next()) {
+                    String appointmentID = rs.getString("AppointmentID");
+                    String appointmentDate = rs.getString("AppointmentDate");
+                    String doctorName = rs.getString("DoctorName");
+                    String description = rs.getString("Description");
+                    String status = rs.getString("Status");
+
+                    model.addRow(new Object[]{appointmentID, appointmentDate, doctorName, description, status});
+                }
+
+                rs.close();
+                pstmt.close();
+                connection.close();
+            } else {
+                // Dữ liệu mẫu cho trường hợp không có kết nối CSDL (demo)
+                model.addRow(new Object[]{"A1001", "2023-06-15 09:00", "Bác sĩ Nguyễn Văn A", "Khám định kỳ", "Chờ"});
+                model.addRow(new Object[]{"A1002", "2023-06-10 14:30", "Bác sĩ Trần Thị B", "Đau đầu", "Hoàn thành"});
+                model.addRow(new Object[]{"A1003", "2023-05-28 10:15", "Bác sĩ Lê Văn C", "Tiêm vắc-xin", "Hoàn thành"});
+
+                System.out.println("Sử dụng dữ liệu mẫu cho bảng lịch hẹn do không có kết nối CSDL");
+            }
+
+            // Cập nhật số lịch hẹn sắp tới cho dashboard
+            updateUpcomingAppointmentCount();
+
+        } catch (ClassCastException e) {
+            System.err.println("Lỗi khi chuyển đổi kiểu của bảng: " + e.getMessage());
+
+            // Khắc phục vấn đề về model
+            String[] columns = {"Mã lịch hẹn", "Ngày hẹn", "Bác sĩ", "Lý do khám", "Trạng thái"};
+            DefaultTableModel newModel = new DefaultTableModel(columns, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            appointmentsTable.setModel(newModel);
+
+            // Thử lại việc cập nhật dữ liệu
+            updateAppointmentsTable();
+        } catch (SQLException e) {
+            System.err.println("Lỗi SQL khi cập nhật bảng lịch hẹn: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Lỗi không xác định khi cập nhật bảng lịch hẹn: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Cập nhật số lượng lịch hẹn sắp tới cho dashboard
+     */
+    private void updateUpcomingAppointmentCount() {
+        try {
+            upcomingAppointmentCount = 0;
+
+            // Đếm số lịch hẹn có trạng thái "Chờ"
+            DefaultTableModel model = (DefaultTableModel) appointmentsTable.getModel();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String status = model.getValueAt(i, 4).toString();
+                if ("Chờ".equals(status)) {
+                    upcomingAppointmentCount++;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi cập nhật số lịch hẹn sắp tới: " + e.getMessage());
+        }
+    }
     // Khởi chạy ứng dụng (phương thức main cho test)
     public static void main(String[] args) {
         // Tạo user mẫu để test

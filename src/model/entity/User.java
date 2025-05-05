@@ -52,15 +52,15 @@ public class User {
         this(username, password, fullName, email, phone, role, "", "", "", "", false);
     }
     
-    // Default constructor for authentication
-    public User() {
-    }
-    
     // Constructor for authentication with role
     public User(String username, String password, Role role) {
         this.username = username;
         this.password = password;
         this.role = role;
+    }
+
+    public User() {
+
     }
 
     // Getters and setters
