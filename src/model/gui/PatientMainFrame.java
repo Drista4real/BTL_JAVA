@@ -66,30 +66,46 @@ public class PatientMainFrame extends JFrame {
     }
 
     private void initComponents() {
-        // Initialize the main panel with card layout
+        // Thiết lập thuộc tính cơ bản của frame
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Hệ thống quản lý bệnh nhân - " + currentUser.getUsername());
+        setSize(1200, 700);
+        setLocationRelativeTo(null);
+
+        // Tạo layout chính với BorderLayout
+        JPanel contentPane = new JPanel(new BorderLayout(0, 0)); // Loại bỏ khoảng cách giữa các thành phần
+        setContentPane(contentPane);
+
+        // Tạo navigation panel
+        JPanel navPanel = createNavigationPanel();
+        contentPane.add(navPanel, BorderLayout.WEST);
+
+        // Khởi tạo main panel với CardLayout
         mainPanel = new JPanel();
         cardLayout = new CardLayout();
         mainPanel.setLayout(cardLayout);
 
-        // Create all panels
+        // Tạo tất cả các panel chức năng
         createPanels();
 
-        // Add panels to card layout
+        // Thêm các panel vào CardLayout
         mainPanel.add(dashboardPanel, "DASHBOARD");
         mainPanel.add(appointmentPanel, "APPOINTMENTS");
         mainPanel.add(medicalHistoryPanel, "MEDICAL_HISTORY");
         mainPanel.add(prescriptionPanel, "PRESCRIPTIONS");
+        mainPanel.add(personalInfoPanel, "PERSONAL_INFO");
         mainPanel.add(paymentsPanel, "PAYMENTS");
 
-        // Create navigation panel
-        JPanel navPanel = createNavigationPanel();
-
-        // Set up the main layout
-        JPanel contentPane = new JPanel(new BorderLayout());
-        contentPane.add(navPanel, BorderLayout.WEST);
+        // Thêm main panel vào content pane
         contentPane.add(mainPanel, BorderLayout.CENTER);
 
-        setContentPane(contentPane);
+        // Thiết lập button Home là active mặc định
+        if (homeButton != null) {
+            setActiveButton(homeButton);
+        }
+
+        // Hiển thị dashboard khi mở ứng dụng
+        cardLayout.show(mainPanel, "DASHBOARD");
     }
 
     private void createPanels() {
@@ -491,7 +507,7 @@ public class PatientMainFrame extends JFrame {
             System.err.println("Lỗi khi làm mới bảng lịch hẹn: " + e.getMessage());
         }
     }
-    
+
     private ImageIcon loadIcon(String path) {
         try {
             java.net.URL iconUrl = getClass().getResource(path);
@@ -505,8 +521,8 @@ public class PatientMainFrame extends JFrame {
     }
 
     private JPanel createAppointmentPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        JPanel panel = new JPanel(new BorderLayout(0, 0)); // Loại bỏ khoảng cách
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Loại bỏ border
 
         // Tạo tiêu đề phần lịch hẹn
         panel.add(createSectionHeader("Quản lý lịch hẹn"), BorderLayout.NORTH);
@@ -524,13 +540,13 @@ public class PatientMainFrame extends JFrame {
         setupTable(appointmentsTable);
 
         JScrollPane tableScrollPane = new JScrollPane(appointmentsTable);
-        tableScrollPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        tableScrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0)); // Loại bỏ border
         panel.add(tableScrollPane, BorderLayout.CENTER);
 
         // Tạo panel chứa các nút chức năng
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Tạo nút đặt lịch hẹn mới
         JButton addButton = new JButton("Đặt lịch hẹn mới");
         ImageIcon addIcon = loadIcon("/images/add.png");
         if (addIcon != null) {
@@ -538,7 +554,6 @@ public class PatientMainFrame extends JFrame {
         }
         addButton.addActionListener(e -> moHopThoaiDatLichHen());
 
-        // Tạo nút hủy lịch hẹn
         JButton cancelButton = new JButton("Hủy lịch hẹn");
         ImageIcon cancelIcon = loadIcon("/images/cancel.png");
         if (cancelIcon != null) {
@@ -552,7 +567,7 @@ public class PatientMainFrame extends JFrame {
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         // Cập nhật dữ liệu cho bảng
-        updateAppointmentsTable();  // Sử dụng updateAppointmentsTable thay vì refreshAppointmentsTable
+        updateAppointmentsTable();
 
         return panel;
     }
@@ -966,16 +981,18 @@ public class PatientMainFrame extends JFrame {
 
     // Phương thức để đặt button active
     private void setActiveButton(JButton button) {
-        // Reset button cũ về trạng thái bình thường
-        if (activeButton != null && activeButton != logoutButton) {
-            activeButton.setBackground(new Color(41, 128, 185, 0)); // Transparent để thấy gradient
+        // Reset button cũ
+        if (activeButton != null) {
+            activeButton.setBackground(new Color(52, 73, 94));
+            activeButton.setForeground(Color.WHITE);
         }
 
-        // Đặt button mới là active
-        if (button != logoutButton) {
-            button.setBackground(new Color(52, 152, 219));
-            activeButton = button;
-        }
+        // Thiết lập trạng thái active cho button mới
+        button.setBackground(new Color(41, 128, 185));
+        button.setForeground(Color.WHITE);
+
+        // Cập nhật button active
+        activeButton = button;
     }
 
     private JButton createNavButton(String text, ActionListener listener) {
