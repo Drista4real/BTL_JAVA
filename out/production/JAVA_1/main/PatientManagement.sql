@@ -230,3 +230,14 @@ INSERT INTO PrescriptionDetails (DetailID, PrescriptionID, MedicationID, Dosage,
 
 UPDATE UserAccounts SET Role = 'DOCTOR' WHERE Role = 'Bac si';
 UPDATE UserAccounts SET Role = 'PATIENT' WHERE Role = 'Benh nhan';
+-- Add this section to your SQL file to create patient accounts
+
+-- Insert sample patient accounts with PATIENT role
+INSERT INTO users (username, password, fullName, role) 
+VALUES ('patient1', 'password123', 'Nguyễn Văn A', 'PATIENT');
+
+INSERT INTO users (username, password, fullName, role) 
+VALUES ('patient2', 'password123', 'Trần Thị B', 'PATIENT');
+
+INSERT INTO users (username, password, fullName, role) 
+VALUES ('patient3', 'password123', 'Lê Văn C', 'PATIENT');
