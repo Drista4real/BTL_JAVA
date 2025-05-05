@@ -5,28 +5,30 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
 
 public class MedicalRecord {
     private String recordId;
-    private String patientId; // Tham chiếu đến User.username của bệnh nhân
+    private String patientId;
     private LocalDate creationDate;
     private List<MedicalEntry> medicalHistory;
+    private String bloodType;
+    private Double height;
+    private Double weight;
+    private String allergies;
+    private String chronicConditions;
+    private String familyMedicalHistory;
+    private String additionalNotes;
 
-    // Thông tin hồ sơ bệnh án
-    private String bloodType; // Nhóm máu
-    private Double height; // Chiều cao (cm)
-    private Double weight; // Cân nặng (kg)
-    private String allergies; // Thông tin dị ứng
-    private String chronicConditions; // Bệnh mãn tính
-    private String familyMedicalHistory; // Tiền sử bệnh gia đình
-    private String additionalNotes; // Ghi chú bổ sung
+    private static final Set<String> VALID_BLOOD_TYPES = new HashSet<>(List.of(
+            "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"
+    ));
 
-    // Constructor
     public MedicalRecord(String patientId) {
         this.recordId = UUID.randomUUID().toString();
-        this.patientId = patientId;
+        this.patientId = validateNonEmpty(patientId, "Patient ID cannot be empty");
         this.creationDate = LocalDate.now();
         this.medicalHistory = new ArrayList<>();
         this.allergies = "";
@@ -35,136 +37,88 @@ public class MedicalRecord {
         this.additionalNotes = "";
     }
 
-    // Constructor đầy đủ
     public MedicalRecord(String recordId, String patientId, LocalDate creationDate,
                          String bloodType, Double height, Double weight,
                          String allergies, String chronicConditions,
                          String familyMedicalHistory, String additionalNotes) {
-        this.recordId = recordId;
-        this.patientId = patientId;
-        this.creationDate = creationDate;
+        this.recordId = validateNonEmpty(recordId, "Record ID cannot be empty");
+        this.patientId = validateNonEmpty(patientId, "Patient ID cannot be empty");
+        this.creationDate = validateCreationDate(creationDate);
         this.medicalHistory = new ArrayList<>();
-        this.bloodType = bloodType;
-        this.height = height;
-        this.weight = weight;
-        this.allergies = allergies;
-        this.chronicConditions = chronicConditions;
-        this.familyMedicalHistory = familyMedicalHistory;
-        this.additionalNotes = additionalNotes;
+        setBloodType(bloodType);
+        setHeight(height);
+        setWeight(weight);
+        this.allergies = allergies != null ? allergies : "";
+        this.chronicConditions = chronicConditions != null ? chronicConditions : "";
+        this.familyMedicalHistory = familyMedicalHistory != null ? familyMedicalHistory : "";
+        this.additionalNotes = additionalNotes != null ? additionalNotes : "";
     }
 
-    // Lớp nội bộ để lưu trữ mỗi lần khám và chuẩn đoán
     public static class MedicalEntry {
         private String entryId;
         private LocalDateTime date;
-        private String doctorId; // Tham chiếu đến User.username của bác sĩ
-        private String symptoms; // Triệu chứng
-        private String diagnosis; // Chuẩn đoán
-        private String treatmentPlan; // Kế hoạch điều trị
-        private String medications; // Thuốc kê đơn
-        private String labResults; // Kết quả xét nghiệm
-        private String followUpInstructions; // Hướng dẫn tái khám
-        private String notes; // Ghi chú
+        private String doctorId;
+        private String symptoms;
+        private String diagnosis;
+        private String treatmentPlan;
+        private String medications;
+        private String labResults;
+        private String followUpInstructions;
+        private String notes;
+        private String lifestyleRecommendations;
 
         public MedicalEntry(String doctorId, String symptoms, String diagnosis,
                             String treatmentPlan, String medications) {
             this.entryId = UUID.randomUUID().toString();
             this.date = LocalDateTime.now();
-            this.doctorId = doctorId;
-            this.symptoms = symptoms;
-            this.diagnosis = diagnosis;
-            this.treatmentPlan = treatmentPlan;
-            this.medications = medications;
+            this.doctorId = validateNonEmpty(doctorId, "Doctor ID cannot be empty");
+            this.symptoms = symptoms != null ? symptoms : "";
+            this.diagnosis = diagnosis != null ? diagnosis : "";
+            this.treatmentPlan = treatmentPlan != null ? treatmentPlan : "";
+            this.medications = medications != null ? medications : "";
             this.labResults = "";
             this.followUpInstructions = "";
             this.notes = "";
+            this.lifestyleRecommendations = "";
         }
 
-        // Constructor đầy đủ
         public MedicalEntry(String entryId, LocalDateTime date, String doctorId,
                             String symptoms, String diagnosis, String treatmentPlan,
                             String medications, String labResults,
-                            String followUpInstructions, String notes) {
-            this.entryId = entryId;
-            this.date = date;
-            this.doctorId = doctorId;
-            this.symptoms = symptoms;
-            this.diagnosis = diagnosis;
-            this.treatmentPlan = treatmentPlan;
-            this.medications = medications;
-            this.labResults = labResults;
-            this.followUpInstructions = followUpInstructions;
-            this.notes = notes;
+                            String followUpInstructions, String notes,
+                            String lifestyleRecommendations) {
+            this.entryId = validateNonEmpty(entryId, "Entry ID cannot be empty");
+            this.date = validateNonNull(date, "Date cannot be null");
+            this.doctorId = validateNonEmpty(doctorId, "Doctor ID cannot be empty");
+            this.symptoms = symptoms != null ? symptoms : "";
+            this.diagnosis = diagnosis != null ? diagnosis : "";
+            this.treatmentPlan = treatmentPlan != null ? treatmentPlan : "";
+            this.medications = medications != null ? medications : "";
+            this.labResults = labResults != null ? labResults : "";
+            this.followUpInstructions = followUpInstructions != null ? followUpInstructions : "";
+            this.notes = notes != null ? notes : "";
+            this.lifestyleRecommendations = lifestyleRecommendations != null ? lifestyleRecommendations : "";
         }
 
-        // Getters and Setters
-        public String getEntryId() {
-            return entryId;
-        }
-
-        public LocalDateTime getDate() {
-            return date;
-        }
-
-        public String getDoctorId() {
-            return doctorId;
-        }
-
-        public String getSymptoms() {
-            return symptoms;
-        }
-
-        public void setSymptoms(String symptoms) {
-            this.symptoms = symptoms;
-        }
-
-        public String getDiagnosis() {
-            return diagnosis;
-        }
-
-        public void setDiagnosis(String diagnosis) {
-            this.diagnosis = diagnosis;
-        }
-
-        public String getTreatmentPlan() {
-            return treatmentPlan;
-        }
-
-        public void setTreatmentPlan(String treatmentPlan) {
-            this.treatmentPlan = treatmentPlan;
-        }
-
-        public String getMedications() {
-            return medications;
-        }
-
-        public void setMedications(String medications) {
-            this.medications = medications;
-        }
-
-        public String getLabResults() {
-            return labResults;
-        }
-
-        public void setLabResults(String labResults) {
-            this.labResults = labResults;
-        }
-
-        public String getFollowUpInstructions() {
-            return followUpInstructions;
-        }
-
-        public void setFollowUpInstructions(String followUpInstructions) {
-            this.followUpInstructions = followUpInstructions;
-        }
-
-        public String getNotes() {
-            return notes;
-        }
-
-        public void setNotes(String notes) {
-            this.notes = notes;
-        }
+        public String getEntryId() { return entryId; }
+        public LocalDateTime getDate() { return date; }
+        public String getDoctorId() { return doctorId; }
+        public String getSymptoms() { return symptoms; }
+        public void setSymptoms(String symptoms) { this.symptoms = symptoms != null ? symptoms : ""; }
+        public String getDiagnosis() { return diagnosis; }
+        public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis != null ? diagnosis : ""; }
+        public String getTreatmentPlan() { return treatmentPlan; }
+        public void setTreatmentPlan(String treatmentPlan) { this.treatmentPlan = treatmentPlan != null ? treatmentPlan : ""; }
+        public String getMedications() { return medications; }
+        public void setMedications(String medications) { this.medications = medications != null ? medications : ""; }
+        public String getLabResults() { return labResults; }
+        public void setLabResults(String labResults) { this.labResults = labResults != null ? labResults : ""; }
+        public String getFollowUpInstructions() { return followUpInstructions; }
+        public void setFollowUpInstructions(String followUpInstructions) { this.followUpInstructions = followUpInstructions != null ? followUpInstructions : ""; }
+        public String getNotes() { return notes; }
+        public void setNotes(String notes) { this.notes = notes != null ? notes : ""; }
+        public String getLifestyleRecommendations() { return lifestyleRecommendations; }
+        public void setLifestyleRecommendations(String lifestyleRecommendations) { this.lifestyleRecommendations = lifestyleRecommendations != null ? lifestyleRecommendations : ""; }
 
         @Override
         public String toString() {
@@ -177,34 +131,32 @@ public class MedicalRecord {
                     "\nThuốc kê đơn: " + medications +
                     "\nKết quả xét nghiệm: " + labResults +
                     "\nHướng dẫn tái khám: " + followUpInstructions +
-                    "\nGhi chú: " + notes;
+                    "\nGhi chú: " + notes +
+                    "\nLời khuyên: " + lifestyleRecommendations;
         }
     }
 
-    // Phương thức thêm lần khám mới
     public void addMedicalEntry(MedicalEntry entry) {
+        validateNonNull(entry, "Medical entry cannot be null");
         this.medicalHistory.add(entry);
     }
 
-    // Phương thức tạo lần khám mới
+    public void removeMedicalEntry(String entryId) {
+        medicalHistory.removeIf(entry -> entry.getEntryId().equals(entryId));
+    }
+
     public MedicalEntry createNewMedicalEntry(String doctorId, String symptoms,
                                               String diagnosis, String treatmentPlan,
                                               String medications) {
-        MedicalEntry entry = new MedicalEntry(doctorId, symptoms, diagnosis,
-                treatmentPlan, medications);
+        MedicalEntry entry = new MedicalEntry(doctorId, symptoms, diagnosis, treatmentPlan, medications);
         this.medicalHistory.add(entry);
         return entry;
     }
 
-    // Phương thức lấy lần khám gần nhất
     public MedicalEntry getLatestEntry() {
-        if (medicalHistory.isEmpty()) {
-            return null;
-        }
-        return medicalHistory.get(medicalHistory.size() - 1);
+        return medicalHistory.isEmpty() ? null : medicalHistory.get(medicalHistory.size() - 1);
     }
 
-    // Phương thức lấy lần khám theo id
     public MedicalEntry getEntryById(String entryId) {
         for (MedicalEntry entry : medicalHistory) {
             if (entry.getEntryId().equals(entryId)) {
@@ -214,101 +166,64 @@ public class MedicalRecord {
         return null;
     }
 
-    // Getters and Setters
-    public String getRecordId() {
-        return recordId;
-    }
-
-    public String getPatientId() {
-        return patientId;
-    }
-
-    public LocalDate getCreationDate() {
-        return creationDate;
-    }
-
-    public List<MedicalEntry> getMedicalHistory() {
-        return new ArrayList<>(medicalHistory); // Trả về bản sao để tránh sửa đổi trực tiếp
-    }
-
-    public String getBloodType() {
-        return bloodType;
-    }
+    public String getRecordId() { return recordId; }
+    public String getPatientId() { return patientId; }
+    public LocalDate getCreationDate() { return creationDate; }
+    public List<MedicalEntry> getMedicalHistory() { return new ArrayList<>(medicalHistory); }
+    public String getBloodType() { return bloodType; }
 
     public void setBloodType(String bloodType) {
+        if (bloodType != null && !bloodType.trim().isEmpty() && !VALID_BLOOD_TYPES.contains(bloodType)) {
+            throw new IllegalArgumentException("Invalid blood type. Must be one of: " + VALID_BLOOD_TYPES);
+        }
         this.bloodType = bloodType;
     }
 
-    public Double getHeight() {
-        return height;
-    }
+    public Double getHeight() { return height; }
 
     public void setHeight(Double height) {
+        if (height != null && height <= 0) {
+            throw new IllegalArgumentException("Height must be positive");
+        }
         this.height = height;
     }
 
-    public Double getWeight() {
-        return weight;
-    }
+    public Double getWeight() { return weight; }
 
     public void setWeight(Double weight) {
+        if (weight != null && weight <= 0) {
+            throw new IllegalArgumentException("Weight must be positive");
+        }
         this.weight = weight;
     }
 
-    // Tính BMI (Body Mass Index)
     public Double getBMI() {
         if (height == null || weight == null || height <= 0) {
             return null;
         }
-        // BMI = weight(kg) / (height(m) * height(m))
         return weight / ((height / 100) * (height / 100));
     }
 
-    public String getAllergies() {
-        return allergies;
-    }
+    public String getAllergies() { return allergies; }
+    public void setAllergies(String allergies) { this.allergies = allergies != null ? allergies : ""; }
+    public String getChronicConditions() { return chronicConditions; }
+    public void setChronicConditions(String chronicConditions) { this.chronicConditions = chronicConditions != null ? chronicConditions : ""; }
+    public String getFamilyMedicalHistory() { return familyMedicalHistory; }
+    public void setFamilyMedicalHistory(String familyMedicalHistory) { this.familyMedicalHistory = familyMedicalHistory != null ? familyMedicalHistory : ""; }
+    public String getAdditionalNotes() { return additionalNotes; }
+    public void setAdditionalNotes(String additionalNotes) { this.additionalNotes = additionalNotes != null ? additionalNotes : ""; }
 
-    public void setAllergies(String allergies) {
-        this.allergies = allergies;
-    }
-
-    public String getChronicConditions() {
-        return chronicConditions;
-    }
-
-    public void setChronicConditions(String chronicConditions) {
-        this.chronicConditions = chronicConditions;
-    }
-
-    public String getFamilyMedicalHistory() {
-        return familyMedicalHistory;
-    }
-
-    public void setFamilyMedicalHistory(String familyMedicalHistory) {
-        this.familyMedicalHistory = familyMedicalHistory;
-    }
-
-    public String getAdditionalNotes() {
-        return additionalNotes;
-    }
-
-    public void setAdditionalNotes(String additionalNotes) {
-        this.additionalNotes = additionalNotes;
-    }
-
-    // Phương thức cập nhật thông tin cơ bản
     public void updateBasicInfo(String bloodType, Double height, Double weight) {
-        this.bloodType = bloodType;
-        this.height = height;
-        this.weight = weight;
+        setBloodType(bloodType);
+        setHeight(height);
+        setWeight(weight);
     }
 
-    // Phương thức cập nhật tiền sử bệnh
     public void updateMedicalHistory(String allergies, String chronicConditions,
                                      String familyMedicalHistory) {
-        this.allergies = allergies;
-        this.chronicConditions = chronicConditions;
-        this.familyMedicalHistory = familyMedicalHistory;
+        setAllergies(allergies);
+        setChronicConditions(chronicConditions);
+        setFamilyMedicalHistory(familyMedicalHistory);
     }
 
     @Override
@@ -327,11 +242,9 @@ public class MedicalRecord {
         sb.append("Bệnh mãn tính: ").append(chronicConditions != null && !chronicConditions.isEmpty() ? chronicConditions : "Không có").append("\n");
         sb.append("Tiền sử bệnh gia đình: ").append(familyMedicalHistory != null && !familyMedicalHistory.isEmpty() ? familyMedicalHistory : "Không có").append("\n");
         sb.append("Ghi chú bổ sung: ").append(additionalNotes != null && !additionalNotes.isEmpty() ? additionalNotes : "Không có").append("\n");
-
         return sb.toString();
     }
 
-    // Xuất lịch sử khám chữa bệnh
     public String printMedicalHistory() {
         StringBuilder sb = new StringBuilder();
         sb.append("LỊCH SỬ KHÁM BỆNH\n");
@@ -359,12 +272,36 @@ public class MedicalRecord {
                 if (entry.getNotes() != null && !entry.getNotes().isEmpty()) {
                     sb.append("Ghi chú: ").append(entry.getNotes()).append("\n");
                 }
+                if (entry.getLifestyleRecommendations() != null && !entry.getLifestyleRecommendations().isEmpty()) {
+                    sb.append("Lời khuyên: ").append(entry.getLifestyleRecommendations()).append("\n");
+                }
                 sb.append("\n");
             }
         }
-
         return sb.toString();
     }
 
-}
+    private static String validateNonEmpty(String value, String errorMessage) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return value;
+    }
 
+    private static <T> T validateNonNull(T value, String errorMessage) {
+        if (value == null) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return value;
+    }
+
+    private LocalDate validateCreationDate(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("Creation date cannot be null");
+        }
+        if (date.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Creation date cannot be in the future");
+        }
+        return date;
+    }
+}

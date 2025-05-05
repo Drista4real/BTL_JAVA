@@ -145,7 +145,7 @@ public class UserSearchPanel extends JPanel {
         JLabel searchLabel = new JLabel("Tìm kiếm:");
         searchField = new JTextField(20);
 
-        String[] roleOptions = {"Tất cả", "Bác sĩ", "Bệnh nhân", "Quản trị viên"};
+        String[] roleOptions = {"Tất cả", "Bác sĩ", "Bệnh nhân"}; // Removed "Quản trị viên"
         roleFilter = new JComboBox<>(roleOptions);
 
         JButton searchButton = new JButton("Tìm kiếm");
@@ -371,6 +371,7 @@ public class UserSearchPanel extends JPanel {
         return panel;
     }
 
+
     /**
      * Tạo label hiển thị thông tin với định dạng nhất quán
      */
@@ -389,7 +390,6 @@ public class UserSearchPanel extends JPanel {
         switch (selectedIndex) {
             case 1: return Role.DOCTOR;
             case 2: return Role.PATIENT;
-            case 3: return Role.ADMIN;
             default: return null;
         }
     }
@@ -474,11 +474,11 @@ public class UserSearchPanel extends JPanel {
         // Thêm dữ liệu mới
         for (User user : currentResults) {
             Object[] rowData = {
-                    user.getUsername(),
+                    user.getUserId(), // Changed to getUserId() to match User.java
                     user.getFullName(),
                     getRoleDisplayName(user.getRole()),
                     user.getEmail() != null ? user.getEmail() : "",
-                    user.getPhone() != null ? user.getPhone() : ""
+                    user.getPhoneNumber() != null ? user.getPhoneNumber() : "" // Changed to getPhoneNumber()
             };
             tableModel.addRow(rowData);
         }
@@ -506,11 +506,11 @@ public class UserSearchPanel extends JPanel {
         }
 
         // Cập nhật thông tin
-        idLabel.setText("ID: " + user.getUsername());
+        idLabel.setText("ID: " + user.getUserId()); // Changed to getUserId()
         nameLabel.setText("Họ tên: " + user.getFullName());
         roleLabel.setText("Vai trò: " + getRoleDisplayName(user.getRole()));
         emailLabel.setText("Email: " + (user.getEmail() != null ? user.getEmail() : "Chưa cung cấp"));
-        phoneLabel.setText("Số điện thoại: " + (user.getPhone() != null ? user.getPhone() : "Chưa cung cấp"));
+        phoneLabel.setText("Số điện thoại: " + (user.getPhoneNumber() != null ? user.getPhoneNumber() : "Chưa cung cấp")); // Changed to getPhoneNumber()
         statusLabel.setText("Trạng thái: Đang hoạt động");
 
         // Đặt màu nền cho avatar dựa theo vai trò
@@ -518,10 +518,6 @@ public class UserSearchPanel extends JPanel {
             avatarLabel.setBackground(new Color(100, 180, 220));  // Xanh dương cho bác sĩ
         } else if (user.getRole() == Role.PATIENT) {
             avatarLabel.setBackground(new Color(100, 200, 150));  // Xanh lá cho bệnh nhân
-        } else if (user.getRole() == Role.ADMIN) {
-            avatarLabel.setBackground(new Color(200, 130, 100));  // Cam cho admin
-        } else {
-            avatarLabel.setBackground(Color.LIGHT_GRAY);  // Mặc định
         }
 
         // Hiển thị ký tự đầu của tên người dùng trên avatar
@@ -556,7 +552,6 @@ public class UserSearchPanel extends JPanel {
         switch (role) {
             case DOCTOR: return "Bác sĩ";
             case PATIENT: return "Bệnh nhân";
-            case ADMIN: return "Quản trị viên";
             default: return "Không xác định";
         }
     }
@@ -602,7 +597,7 @@ public class UserSearchPanel extends JPanel {
         gbc.gridy = 0;
         gbc.gridheight = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
-        infoPanel.add(new JLabel("ID: " + user.getUsername()), gbc);
+        infoPanel.add(new JLabel("ID: " + user.getUserId()), gbc); // Changed to getUserId()
 
         gbc.gridy++;
         infoPanel.add(new JLabel("Họ tên: " + user.getFullName()), gbc);
@@ -614,7 +609,7 @@ public class UserSearchPanel extends JPanel {
         infoPanel.add(new JLabel("Email: " + (user.getEmail() != null ? user.getEmail() : "Chưa cung cấp")), gbc);
 
         gbc.gridy++;
-        infoPanel.add(new JLabel("Số điện thoại: " + (user.getPhone() != null ? user.getPhone() : "Chưa cung cấp")), gbc);
+        infoPanel.add(new JLabel("Số điện thoại: " + (user.getPhoneNumber() != null ? user.getPhoneNumber() : "Chưa cung cấp")), gbc); // Changed to getPhoneNumber()
 
         gbc.gridy++;
         infoPanel.add(new JLabel("Trạng thái: Đang hoạt động"), gbc);

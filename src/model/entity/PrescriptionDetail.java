@@ -243,4 +243,5 @@ public class PrescriptionDetail {
     public int hashCode() {
         return Objects.hash(detailId);
     }
+
 }

@@ -2,6 +2,7 @@ package model.gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -70,9 +71,24 @@ public class LoginPanel extends JPanel {
 
     private void loadBackgroundImage() {
         try {
-            backgroundImage = new ImageIcon("resource/images/ảnh_nền_login.jpg").getImage();
+            // Tải hình ảnh từ resources
+            java.net.URL imageUrl = getClass().getClassLoader().getResource("main/background_login.jpg");
+            if (imageUrl != null) {
+                backgroundImage = new ImageIcon(imageUrl).getImage();
+                System.out.println("Tải hình ảnh thành công");
+            } else {
+                System.out.println("Không tìm thấy file hình nền");
+
+                // In thông tin debug để kiểm tra classpath
+                System.out.println("ClassLoader path: " + getClass().getClassLoader().getResource(""));
+
+                // Kiểm tra đường dẫn tuyệt đối
+                File projectDir = new File(".");
+                System.out.println("Thư mục hiện tại: " + projectDir.getAbsolutePath());
+            }
         } catch (Exception e) {
             System.out.println("Không thể tải hình nền: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -216,12 +232,12 @@ public class LoginPanel extends JPanel {
             System.out.println("Đang tìm kiếm người dùng: " + username);
             ResultSet rs = stmt.executeQuery();
 
-
             if (rs.next()) {
                 String storedPassword = rs.getString("Password");
                 if (password.equals(storedPassword)) {
                     Role role = Role.valueOf(mapRoleToEnum(rs.getString("Role")));
                     User user = new User(
+                            rs.getString("UserID"), // Sử dụng UserID từ cơ sở dữ liệu
                             rs.getString("UserName"),
                             storedPassword,
                             rs.getString("FullName"),
@@ -333,34 +349,24 @@ public class LoginPanel extends JPanel {
 
     private String mapRoleToEnum(String dbRole) {
         System.out.println("Vai trò từ DB: " + dbRole);
-
-        // Kiểm tra nếu chuỗi chứa 'Bác' hoặc 'bác' ở bất kỳ định dạng nào
-        if (dbRole != null && (dbRole.contains("ác") || dbRole.toLowerCase().contains("bac") ||
-                dbRole.contains("B") || dbRole.contains("s"))) {
-            System.out.println("Xác định là bác sĩ");
-            return "DOCTOR";
+        if (dbRole == null) {
+            throw new IllegalArgumentException("Vai trò không hợp lệ: null");
         }
-        // Kiểm tra nếu chuỗi chứa 'Bệnh' hoặc 'bệnh' ở bất kỳ định dạng nào
-        else if (dbRole != null && (dbRole.contains("ệnh") || dbRole.toLowerCase().contains("benh") ||
-                dbRole.contains("nhân") || dbRole.toLowerCase().contains("nhan"))) {
-            System.out.println("Xác định là bệnh nhân");
-            return "PATIENT";
-        } else {
-            // Trong trường hợp không thể xác định, kiểm tra mã byte
-            System.out.println("Không xác định được vai trò, hiển thị mã byte:");
-            for (byte b : dbRole.getBytes()) {
-                System.out.print(b + " ");
-            }
-            System.out.println();
-
-            // Thử dựa vào ký tự đầu tiên để phân biệt
-            char firstChar = dbRole.charAt(0);
-            if (firstChar == 'B' || firstChar == 'b') {
-                System.out.println("Giả định là bác sĩ dựa vào ký tự đầu");
+        switch (dbRole) {
+            case "DOCTOR":
+                System.out.println("Xác định là bác sĩ");
                 return "DOCTOR";
-            } else {
+            case "PATIENT":
+                System.out.println("Xác định là bệnh nhân");
+                return "PATIENT";
+            case "Bac si":
+                System.out.println("Xác định là bác sĩ");
+                return "DOCTOR";
+            case "Benh nhan":
+                System.out.println("Xác định là bệnh nhân");
+                return "PATIENT";
+            default:
                 throw new IllegalArgumentException("Vai trò không hợp lệ: " + dbRole);
-            }
         }
     }
 }

@@ -26,9 +26,6 @@ public class HealthSystemApp extends JFrame {
         userService = new UserService();
         initializeSampleData();
 
-        // Đăng nhập mặc định với tài khoản quản trị viên
-        currentUser = userService.getUserByUsername("admin");
-
         // Thiết lập giao diện
         setupUI();
     }
@@ -38,10 +35,6 @@ public class HealthSystemApp extends JFrame {
      */
     private void initializeSampleData() {
         try {
-            // Thêm quản trị viên
-            userService.addUser("admin", "admin123", "Quản Trị Viên",
-                    "admin@hospital.com", "0901234567", Role.ADMIN, "Quản trị hệ thống");
-
             // Thêm bác sĩ
             userService.addDoctor("bsnam", "doctor123", "Bác Sĩ Hoàng Nam",
                     "nam@hospital.com", "0912345678", "Khoa Nội");
@@ -282,8 +275,14 @@ public class HealthSystemApp extends JFrame {
 
                 try {
                     // Gọi service để thêm người dùng
-                    User newUser = userService.addUser(username, password, fullName,
-                            email, phone, role, additionalInfo);
+                    boolean success = userService.addUser(new User(username, password, fullName,
+                            email, phone, additionalInfo, role));
+
+                    if (!success) {
+                        throw new IllegalArgumentException("Không thể thêm người dùng, hãy kiểm tra lại thông tin.");
+                    }
+
+                    User newUser = userService.findUserByUsername(username);
 
                     // Hiển thị thông báo thành công
                     JOptionPane.showMessageDialog(panel,
@@ -364,11 +363,15 @@ public class HealthSystemApp extends JFrame {
         addStatisticItem(userStatsPanel, "Tổng số người dùng:", String.valueOf(totalUsers));
 
         // Số lượng bác sĩ
-        int doctorCount = userService.countUsersByRole(Role.DOCTOR);
+        int doctorCount = (int) userService.getAllUsers().stream()
+                .filter(user -> user.getRole() == Role.DOCTOR)
+                .count();
         addStatisticItem(userStatsPanel, "Số lượng bác sĩ:", String.valueOf(doctorCount));
 
         // Số lượng bệnh nhân
-        int patientCount = userService.countUsersByRole(Role.PATIENT);
+        int patientCount = (int) userService.getAllUsers().stream()
+                .filter(user -> user.getRole() == Role.PATIENT)
+                .count();
         addStatisticItem(userStatsPanel, "Số lượng bệnh nhân:", String.valueOf(patientCount));
 
         // Thêm các panel thống kê vào panel chính
