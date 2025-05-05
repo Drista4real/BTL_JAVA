@@ -3,11 +3,13 @@ package model.backend;
 import model.entity.BENHNHAN;
 import model.entity.BENHNHANBAOHIEMYTE;
 import model.entity.Admission;
+import model.entity.MedicalRecord;
 import model.utils.ExceptionUtils;
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.util.Hashtable;
+import java.util.UUID;
 import javax.swing.JPanel;
 
 public class Demo1 {
@@ -17,6 +19,15 @@ public class Demo1 {
     private static final String URL = "jdbc:mysql://localhost:3306/PatientManagement?allowPublicKeyRetrieval=true&useSSL=false";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "050705";
+    private final model.entity.MedicalRecordService medicalRecordService;
+
+    static {
+        try {
+            Class.forName(DRIVER);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Không thể tải driver MySQL: " + e.getMessage());
+        }
+    }
 
     public Hashtable<String, BENHNHAN> getDanhsach() {
         return Danhsach;
@@ -29,12 +40,12 @@ public class Demo1 {
     public Demo1(JPanel parentPanel) {
         this.Danhsach = new Hashtable<>();
         this.parentPanel = parentPanel;
+        this.medicalRecordService = new model.entity.MedicalRecordService(parentPanel);
     }
 
     public void GhiFile() throws SQLException {
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-            Class.forName(DRIVER);
-            String patientQuery = "INSERT INTO Patients (PatientID, UserID, FullName, DateOfBirth, Gender, PhoneNumber, Address, CreatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            String patientQuery = "INSERT INTO Patients (PatientID, UserID, FullName, DateOfBirth, Gender, PhoneNumber, Address, CreatedAt, Height, Weight, BloodType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             String insuranceQuery = "INSERT INTO Insurance (InsuranceID, PatientID, Provider, PolicyNumber, StartDate, ExpirationDate, Status) VALUES (?, ?, ?, ?, ?, ?, ?)";
             String admissionQuery = "INSERT INTO Admissions (AdmissionID, PatientID, DoctorID, RoomID, AdmissionDate, Notes) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -45,13 +56,16 @@ public class Demo1 {
                     // Insert into Patients
                     try (PreparedStatement psPatient = conn.prepareStatement(patientQuery)) {
                         psPatient.setString(1, patient.getMABN());
-                        psPatient.setString(2, "U" + patient.getMABN()); // Giả định UserID
+                        psPatient.setString(2, "U" + patient.getMABN());
                         psPatient.setString(3, patient.getHoten());
-                        psPatient.setDate(4, java.sql.Date.valueOf(LocalDate.now().minusYears(30))); // Giả định DOB
-                        psPatient.setString(5, "Nam"); // Giả định giới tính
-                        psPatient.setString(6, "09" + patient.getMABN().substring(1)); // Giả định số điện thoại
-                        psPatient.setString(7, "Unknown Address"); // Giả định địa chỉ
+                        psPatient.setDate(4, java.sql.Date.valueOf(LocalDate.now().minusYears(30)));
+                        psPatient.setString(5, "Nam");
+                        psPatient.setString(6, "09" + patient.getMABN().substring(1));
+                        psPatient.setString(7, "Unknown Address");
                         psPatient.setDate(8, patient.getNgaynhapvien() != null ? java.sql.Date.valueOf(patient.getNgaynhapvien()) : null);
+                        psPatient.setDouble(9, 170.0); // Giả định Height
+                        psPatient.setDouble(10, 65.0); // Giả định Weight
+                        psPatient.setString(11, "A+"); // Giả định BloodType
                         psPatient.executeUpdate();
                     }
 
@@ -74,8 +88,8 @@ public class Demo1 {
                         try (PreparedStatement psAdmission = conn.prepareStatement(admissionQuery)) {
                             psAdmission.setString(1, "AD" + patient.getMABN());
                             psAdmission.setString(2, patient.getMABN());
-                            psAdmission.setString(3, "U001"); // Giả định DoctorID
-                            psAdmission.setString(4, patient.getPhongTYC() ? "R002" : "R001"); // R002 là VIP
+                            psAdmission.setString(3, "U001");
+                            psAdmission.setString(4, patient.getPhongTYC() ? "R002" : "R001");
                             psAdmission.setDate(5, java.sql.Date.valueOf(patient.getNgaynhapvien()));
                             psAdmission.setString(6, patient.getGhiChu());
                             psAdmission.executeUpdate();
@@ -83,7 +97,7 @@ public class Demo1 {
                     }
                 }
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             ExceptionUtils.handleGeneralException(parentPanel, e);
             throw new SQLException("Lỗi khi ghi dữ liệu vào cơ sở dữ liệu: " + e.getMessage());
         }
@@ -91,10 +105,9 @@ public class Demo1 {
 
     public void DocFile() {
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-            Class.forName(DRIVER);
             Danhsach.clear();
 
-            String query = "SELECT p.PatientID, p.FullName, p.CreatedAt, i.PolicyNumber, a.RoomID, a.AdmissionDate, a.Notes " +
+            String query = "SELECT p.PatientID, p.FullName, p.CreatedAt, i.PolicyNumber, a.AdmissionID, a.DoctorID, a.RoomID, a.AdmissionDate, a.Notes " +
                     "FROM Patients p " +
                     "LEFT JOIN Insurance i ON p.PatientID = i.PatientID " +
                     "LEFT JOIN Admissions a ON p.PatientID = a.PatientID";
@@ -106,24 +119,28 @@ public class Demo1 {
                     LocalDate ngaynhapvien = rs.getDate("AdmissionDate") != null ?
                             rs.getDate("AdmissionDate").toLocalDate() : null;
                     String mabh = rs.getString("PolicyNumber");
-                    boolean phongtyc = rs.getString("RoomID") != null && rs.getString("RoomID").equals("R002");
+                    String admissionId = rs.getString("AdmissionID");
+                    String doctorId = rs.getString("DoctorID");
+                    String roomId = rs.getString("RoomID");
+                    String admissionDateStr = rs.getDate("AdmissionDate") != null ?
+                            rs.getDate("AdmissionDate").toLocalDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+                    String notes = rs.getString("Notes");
+                    boolean phongtyc = roomId != null && roomId.equals("R002");
                     char loaiBH = (mabh != null && !mabh.isEmpty()) ? 'y' : 'x';
-                    String ghichu = rs.getString("Notes");
 
                     Admission admission = null;
-                    if (rs.getString("RoomID") != null) {
-                        admission = new Admission(); // Giả định lớp Admission
-                        // Cần thêm logic để gán các thuộc tính cho admission
+                    if (admissionId != null && roomId != null) {
+                        admission = new Admission(admissionId, mabn, admissionDateStr, doctorId != null ? doctorId : "U001", roomId, notes);
                     }
 
                     BENHNHANBAOHIEMYTE benhnhan = new BENHNHANBAOHIEMYTE(
-                            loaiBH, mabn, ghichu, null, hoten, ngaynhapvien, mabh, phongtyc, admission
+                            loaiBH, mabn, notes, null, hoten, ngaynhapvien, mabh, phongtyc, admission
                     );
                     Danhsach.put(mabn, benhnhan);
                     System.out.println("Đã thêm bệnh nhân: " + mabn);
                 }
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             ExceptionUtils.handleGeneralException(parentPanel, e);
         }
     }
@@ -131,7 +148,7 @@ public class Demo1 {
     public void NhapGUI(BENHNHAN benhnhan) {
         Danhsach.put(benhnhan.getMABN(), benhnhan);
         try {
-            GhiFile(); // Lưu vào cơ sở dữ liệu ngay sau khi thêm
+            GhiFile();
         } catch (SQLException e) {
             ExceptionUtils.handleGeneralException(parentPanel, e);
         }
@@ -140,32 +157,30 @@ public class Demo1 {
     public void SuaGUI(BENHNHAN benhnhan) {
         Danhsach.replace(benhnhan.getMABN(), benhnhan);
         try {
-            // Cập nhật cơ sở dữ liệu
             try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-                Class.forName(DRIVER);
-                String patientQuery = "UPDATE Patients SET FullName = ?, CreatedAt = ? WHERE PatientID = ?";
+                String patientQuery = "UPDATE Patients SET FullName = ?, CreatedAt = ?, Height = ?, Weight = ?, BloodType = ? WHERE PatientID = ?";
                 String insuranceQuery = "UPDATE Insurance SET PolicyNumber = ? WHERE PatientID = ?";
                 String admissionQuery = "UPDATE Admissions SET RoomID = ?, AdmissionDate = ?, Notes = ? WHERE PatientID = ?";
 
                 if (benhnhan instanceof BENHNHANBAOHIEMYTE) {
                     BENHNHANBAOHIEMYTE patient = (BENHNHANBAOHIEMYTE) benhnhan;
 
-                    // Cập nhật Patients
                     try (PreparedStatement psPatient = conn.prepareStatement(patientQuery)) {
                         psPatient.setString(1, patient.getHoten());
                         psPatient.setDate(2, patient.getNgaynhapvien() != null ? java.sql.Date.valueOf(patient.getNgaynhapvien()) : null);
-                        psPatient.setString(3, patient.getMABN());
+                        psPatient.setDouble(3, 170.0); // Giả định Height
+                        psPatient.setDouble(4, 65.0); // Giả định Weight
+                        psPatient.setString(5, "A+"); // Giả định BloodType
+                        psPatient.setString(6, patient.getMABN());
                         psPatient.executeUpdate();
                     }
 
-                    // Cập nhật Insurance
                     try (PreparedStatement psInsurance = conn.prepareStatement(insuranceQuery)) {
                         psInsurance.setString(1, patient.getMSBH());
                         psInsurance.setString(2, patient.getMABN());
                         psInsurance.executeUpdate();
                     }
 
-                    // Cập nhật Admissions
                     if (patient.getAdmission() != null) {
                         try (PreparedStatement psAdmission = conn.prepareStatement(admissionQuery)) {
                             psAdmission.setString(1, patient.getPhongTYC() ? "R002" : "R001");
@@ -177,7 +192,7 @@ public class Demo1 {
                     }
                 }
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             ExceptionUtils.handleGeneralException(parentPanel, e);
         }
     }
@@ -193,7 +208,6 @@ public class Demo1 {
     public void Xoa(String mabn) {
         Danhsach.remove(mabn);
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-            Class.forName(DRIVER);
             String[] queries = {
                     "DELETE FROM Admissions WHERE PatientID = ?",
                     "DELETE FROM Insurance WHERE PatientID = ?",
@@ -206,7 +220,7 @@ public class Demo1 {
                     ps.executeUpdate();
                 }
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             ExceptionUtils.handleGeneralException(parentPanel, e);
         }
     }
@@ -228,24 +242,22 @@ public class Demo1 {
         BENHNHAN benhnhan = Tim(mabn);
         if (benhnhan != null) {
             try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-                Class.forName(DRIVER);
                 String query = "INSERT INTO Appointments (AppointmentID, PatientID, DoctorID, AppointmentDate, Reason, Status) VALUES (?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(query)) {
                     ps.setString(1, "AP" + System.currentTimeMillis());
                     ps.setString(2, mabn);
-                    ps.setString(3, "U001"); // Giả định DoctorID
+                    ps.setString(3, "U001");
                     ps.setTimestamp(4, java.sql.Timestamp.valueOf(NgayLichHen.replace("YYYY", "yyyy")));
                     ps.setString(5, "Lịch hẹn định kỳ");
                     ps.setString(6, "Cho xac nhan");
                     ps.executeUpdate();
                 }
 
-                // Cập nhật lịch hẹn trong đối tượng
                 LocalDate lichHen = java.sql.Timestamp.valueOf(NgayLichHen.replace("YYYY", "yyyy"))
                         .toLocalDateTime().toLocalDate();
                 benhnhan.setLichHen(lichHen);
                 System.out.println("Lịch hẹn đã được đặt cho bệnh nhân " + benhnhan.getHoten() + " vào " + NgayLichHen);
-            } catch (SQLException | ClassNotFoundException e) {
+            } catch (SQLException e) {
                 ExceptionUtils.handleGeneralException(parentPanel, e);
                 throw new Exception("Lỗi khi đặt lịch hẹn: " + e.getMessage());
             }
@@ -257,29 +269,32 @@ public class Demo1 {
     public void GhiChuBS(String mabn, String GhiChumoi) throws Exception {
         BENHNHAN benhnhan = Tim(mabn);
         if (benhnhan != null) {
-            try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-                Class.forName(DRIVER);
-                String query = "INSERT INTO MedicalRecords (RecordID, PatientID, DoctorID, Diagnosis, Treatment, RecordDate, Notes) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(query)) {
-                    ps.setString(1, "MR" + System.currentTimeMillis());
-                    ps.setString(2, mabn);
-                    ps.setString(3, "U001"); // Giả định DoctorID
-                    ps.setString(4, "N/A"); // Giả định chẩn đoán
-                    ps.setString(5, "N/A"); // Giả định điều trị
-                    ps.setDate(6, java.sql.Date.valueOf(LocalDate.now()));
-                    ps.setString(7, GhiChumoi);
-                    ps.executeUpdate();
+            MedicalRecord record = medicalRecordService.loadMedicalRecordByPatientId(mabn);
+            if (record != null) {
+                MedicalRecord.MedicalEntry entry = new MedicalRecord.MedicalEntry(
+                        UUID.randomUUID().toString(),
+                        LocalDateTime.now(),
+                        "U001",
+                        "",
+                        "N/A",
+                        "N/A",
+                        "",
+                        "",
+                        GhiChumoi,
+                        GhiChumoi,
+                        ""
+                );
+                try {
+                    medicalRecordService.saveMedicalEntry(entry, mabn);
+                    record.addMedicalEntry(entry);
+                    benhnhan.setGhiChu(GhiChumoi);
+                    System.out.println("Ghi chú của Bác Sĩ: " + benhnhan.getGhiChu());
+                } catch (SQLException e) {
+                    ExceptionUtils.handleGeneralException(parentPanel, e);
+                    throw new Exception("Lỗi khi ghi chú: " + e.getMessage());
                 }
-            } catch (SQLException | ClassNotFoundException e) {
-                ExceptionUtils.handleGeneralException(parentPanel, e);
-                throw new Exception("Lỗi khi ghi chú: " + e.getMessage());
-            }
-
-            benhnhan.setGhiChu(GhiChumoi);
-            if (benhnhan.getGhiChu() != null && !benhnhan.getGhiChu().isEmpty()) {
-                System.out.println("Ghi chú của Bác Sĩ: " + benhnhan.getGhiChu());
             } else {
-                System.out.println("Không có ghi chú của Bác Sĩ");
+                throw new Exception("Không thể tải hồ sơ y tế cho bệnh nhân: " + mabn);
             }
         } else {
             throw new Exception("Bệnh nhân không tồn tại");
@@ -288,7 +303,6 @@ public class Demo1 {
 
     public void TongLichHen() {
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
-            Class.forName(DRIVER);
             String query = "SELECT COUNT(*) FROM Appointments WHERE Status = 'Da xac nhan' OR Status = 'Cho xac nhan'";
             try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
                 if (rs.next()) {
@@ -296,7 +310,7 @@ public class Demo1 {
                     System.out.println("Tổng lịch hẹn đã được đặt: " + tong);
                 }
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             ExceptionUtils.handleGeneralException(parentPanel, e);
         }
     }

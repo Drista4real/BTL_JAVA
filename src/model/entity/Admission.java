@@ -12,8 +12,9 @@ public class Admission {
     private String roomId;
     private LocalDate dischargeDate;
     private String notes;
+    private String recordId; // Liên kết với MedicalRecord
 
-    public Admission() {
+    public Admission(String admissionId, String patientId, String admissionDateStr, String doctorId, String roomId, String notes) {
         this.admissionId = "";
         this.patientId = "";
         this.admissionDate = null;
@@ -21,6 +22,7 @@ public class Admission {
         this.roomId = "";
         this.dischargeDate = null;
         this.notes = "";
+        this.recordId = null;
     }
 
     public Admission(String admissionId, String patientId, LocalDate admissionDate,
@@ -32,6 +34,7 @@ public class Admission {
         this.roomId = roomId != null ? roomId : "";
         this.notes = notes != null ? notes : "";
         this.dischargeDate = null;
+        this.recordId = null;
     }
 
     public Admission(String admissionId, String patientId, LocalDate admissionDate,
@@ -43,6 +46,7 @@ public class Admission {
         this.roomId = roomId != null ? roomId : "";
         this.dischargeDate = dischargeDate;
         this.notes = notes != null ? notes : "";
+        this.recordId = null;
     }
 
     public Admission(String admissionId, String patientId, String admissionDateStr,
@@ -52,6 +56,7 @@ public class Admission {
         this.doctorId = doctorId != null ? doctorId : "";
         this.roomId = roomId != null ? roomId : "";
         this.notes = notes != null ? notes : "";
+        this.recordId = null;
 
         if (admissionDateStr != null && !admissionDateStr.trim().isEmpty()) {
             this.admissionDate = LocalDate.parse(admissionDateStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -69,14 +74,15 @@ public class Admission {
         }
     }
 
-    // Getters
     public String getAdmissionId() { return admissionId; }
     public String getPatientId() { return patientId; }
-    public LocalDate getAdmissionDate() { return admissionDate; } // Fixed getter
+    public LocalDate getAdmissionDate() { return admissionDate; }
     public String getDoctorId() { return doctorId; }
     public String getRoomId() { return roomId; }
     public LocalDate getDischargeDate() { return dischargeDate; }
     public String getNotes() { return notes; }
+    public String getRecordId() { return recordId; }
+    public void setRecordId(String recordId) { this.recordId = recordId; }
 
     public String getAdmissionDateString() {
         return admissionDate != null ? admissionDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
@@ -86,7 +92,6 @@ public class Admission {
         return dischargeDate != null ? dischargeDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
     }
 
-    // Setters
     public void setAdmissionId(String admissionId) {
         if (admissionId == null || admissionId.trim().isEmpty()) {
             throw new IllegalArgumentException("Mã nhập viện không được để trống");
@@ -194,6 +199,7 @@ public class Admission {
                 ", roomId='" + roomId + '\'' +
                 ", dischargeDate=" + getDischargeDateString() +
                 ", notes='" + notes + '\'' +
+                ", recordId='" + recordId + '\'' +
                 '}';
     }
 }

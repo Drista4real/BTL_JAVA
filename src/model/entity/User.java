@@ -14,7 +14,7 @@ public class User {
     private String illnessInfo; // Added for UserService compatibility
 
     public User(String userName, String storedPassword, String fullName, String email, String phoneNumber, Role role) {
-        this.userId = "";
+        this.userId = ""; // Mặc định, cần setUserId() sau khi tạo
         this.username = userName != null ? userName : "";
         this.password = storedPassword != null ? storedPassword : "";
         this.fullName = fullName != null ? fullName : "";
@@ -24,8 +24,12 @@ public class User {
         this.note = "";
         this.illnessInfo = "";
     }
+
     public User(String userId, String username, String password, String fullName, String email, String phoneNumber, Role role) {
-        this.userId = userId != null ? userId : "";
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("User ID cannot be empty");
+        }
+        this.userId = userId;
         this.username = username != null ? username : "";
         this.password = password != null ? password : "";
         this.fullName = fullName != null ? fullName : "";

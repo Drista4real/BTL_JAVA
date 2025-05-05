@@ -1,8 +1,8 @@
 package model.entity;
 
 public enum Role {
-    PATIENT("Benh nhan"),
-    DOCTOR("Bac si");
+    DOCTOR("Bac si"),
+    PATIENT("Benh nhan");
 
     private final String displayName;
 

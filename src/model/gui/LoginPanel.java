@@ -232,12 +232,12 @@ public class LoginPanel extends JPanel {
             System.out.println("Đang tìm kiếm người dùng: " + username);
             ResultSet rs = stmt.executeQuery();
 
-
             if (rs.next()) {
                 String storedPassword = rs.getString("Password");
                 if (password.equals(storedPassword)) {
                     Role role = Role.valueOf(mapRoleToEnum(rs.getString("Role")));
                     User user = new User(
+                            rs.getString("UserID"), // Sử dụng UserID từ cơ sở dữ liệu
                             rs.getString("UserName"),
                             storedPassword,
                             rs.getString("FullName"),
@@ -349,34 +349,24 @@ public class LoginPanel extends JPanel {
 
     private String mapRoleToEnum(String dbRole) {
         System.out.println("Vai trò từ DB: " + dbRole);
-
-        // Kiểm tra nếu chuỗi chứa 'Bác' hoặc 'bác' ở bất kỳ định dạng nào
-        if (dbRole != null && (dbRole.contains("ác") || dbRole.toLowerCase().contains("bac") ||
-                dbRole.contains("B") || dbRole.contains("s"))) {
-            System.out.println("Xác định là bác sĩ");
-            return "DOCTOR";
+        if (dbRole == null) {
+            throw new IllegalArgumentException("Vai trò không hợp lệ: null");
         }
-        // Kiểm tra nếu chuỗi chứa 'Bệnh' hoặc 'bệnh' ở bất kỳ định dạng nào
-        else if (dbRole != null && (dbRole.contains("ệnh") || dbRole.toLowerCase().contains("benh") ||
-                dbRole.contains("nhân") || dbRole.toLowerCase().contains("nhan"))) {
-            System.out.println("Xác định là bệnh nhân");
-            return "PATIENT";
-        } else {
-            // Trong trường hợp không thể xác định, kiểm tra mã byte
-            System.out.println("Không xác định được vai trò, hiển thị mã byte:");
-            for (byte b : dbRole.getBytes()) {
-                System.out.print(b + " ");
-            }
-            System.out.println();
-
-            // Thử dựa vào ký tự đầu tiên để phân biệt
-            char firstChar = dbRole.charAt(0);
-            if (firstChar == 'B' || firstChar == 'b') {
-                System.out.println("Giả định là bác sĩ dựa vào ký tự đầu");
+        switch (dbRole) {
+            case "DOCTOR":
+                System.out.println("Xác định là bác sĩ");
                 return "DOCTOR";
-            } else {
+            case "PATIENT":
+                System.out.println("Xác định là bệnh nhân");
+                return "PATIENT";
+            case "Bac si":
+                System.out.println("Xác định là bác sĩ");
+                return "DOCTOR";
+            case "Benh nhan":
+                System.out.println("Xác định là bệnh nhân");
+                return "PATIENT";
+            default:
                 throw new IllegalArgumentException("Vai trò không hợp lệ: " + dbRole);
-            }
         }
     }
 }

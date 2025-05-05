@@ -1,4 +1,3 @@
-
 package model.entity;
 
 import java.time.LocalDate;
@@ -11,12 +10,12 @@ public class Appointment {
     private LocalDate date;
     private LocalTime time;
     private String doctor;
-    private String patient; // username hoặc tên bệnh nhân
+    private String patient;
     private String reason;
     private AppointmentStatus status;
     private PaymentStatus paymentStatus;
+    private String entryId; // Liên kết với MedicalEntry
 
-    // Enum cho trạng thái cuộc hẹn
     public enum AppointmentStatus {
         PENDING("Chờ khám"),
         COMPLETED("Đã khám"),
@@ -42,7 +41,6 @@ public class Appointment {
         }
     }
 
-    // Enum cho trạng thái thanh toán
     public enum PaymentStatus {
         PAID("Đã thanh toán"),
         UNPAID("Chưa thanh toán");
@@ -67,11 +65,10 @@ public class Appointment {
         }
     }
 
-    // Constructor mặc định
     public Appointment() {
+        this.entryId = null;
     }
 
-    // Constructor đầy đủ với kiểu dữ liệu chuỗi (để tương thích ngược)
     public Appointment(String id, String dateStr, String timeStr, String doctor, String patient, String reason,
                        String statusStr, String paymentStatusStr) {
         this.id = id;
@@ -82,9 +79,9 @@ public class Appointment {
         this.reason = reason;
         this.status = AppointmentStatus.fromString(statusStr);
         this.paymentStatus = PaymentStatus.fromString(paymentStatusStr);
+        this.entryId = null;
     }
 
-    // Constructor với kiểu dữ liệu mới
     public Appointment(String id, LocalDate date, LocalTime time, String doctor, String patient, String reason,
                        AppointmentStatus status, PaymentStatus paymentStatus) {
         this.id = id;
@@ -95,9 +92,9 @@ public class Appointment {
         this.reason = reason;
         this.status = status;
         this.paymentStatus = paymentStatus;
+        this.entryId = null;
     }
 
-    // Getters
     public String getId() { return id; }
     public LocalDate getDate() { return date; }
     public LocalTime getTime() { return time; }
@@ -106,20 +103,20 @@ public class Appointment {
     public String getReason() { return reason; }
     public AppointmentStatus getStatus() { return status; }
     public PaymentStatus getPaymentStatus() { return paymentStatus; }
+    public String getEntryId() { return entryId; }
+    public void setEntryId(String entryId) { this.entryId = entryId; }
 
-    // Getters để lấy giá trị hiển thị của status
     public String getStatusDisplay() { return status != null ? status.getDisplayValue() : null; }
     public String getPaymentStatusDisplay() { return paymentStatus != null ? paymentStatus.getDisplayValue() : null; }
 
-    // Getters để lấy date và time dưới dạng String (cho tương thích ngược)
     public String getDateString() {
         return date != null ? date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : null;
     }
+
     public String getTimeString() {
         return time != null ? time.format(DateTimeFormatter.ofPattern("HH:mm")) : null;
     }
 
-    // Setters với validation
     public void setId(String id) {
         if (id == null || id.trim().isEmpty()) {
             throw new IllegalArgumentException("ID không được để trống");
@@ -199,7 +196,6 @@ public class Appointment {
         this.paymentStatus = PaymentStatus.fromString(paymentStatusStr);
     }
 
-    // equals và hashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -213,7 +209,6 @@ public class Appointment {
         return Objects.hash(id);
     }
 
-    // toString
     @Override
     public String toString() {
         return "Appointment{" +
@@ -225,6 +220,7 @@ public class Appointment {
                 ", reason='" + reason + '\'' +
                 ", status=" + getStatusDisplay() +
                 ", paymentStatus=" + getPaymentStatusDisplay() +
+                ", entryId='" + entryId + '\'' +
                 '}';
     }
 }
