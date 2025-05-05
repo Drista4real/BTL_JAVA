@@ -1,10 +1,10 @@
-
 package model.entity;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.UUID;
 
 public class Appointment {
     private String id;
@@ -69,6 +69,11 @@ public class Appointment {
 
     // Constructor mặc định
     public Appointment() {
+        this.id = UUID.randomUUID().toString(); // Tạo ID ngẫu nhiên cho cuộc hẹn mới
+        this.date = LocalDate.now();
+        this.time = LocalTime.now();
+        this.status = AppointmentStatus.PENDING;
+        this.paymentStatus = PaymentStatus.UNPAID;
     }
 
     // Constructor đầy đủ với kiểu dữ liệu chuỗi (để tương thích ngược)
@@ -95,6 +100,18 @@ public class Appointment {
         this.reason = reason;
         this.status = status;
         this.paymentStatus = paymentStatus;
+    }
+    
+    // Constructor đơn giản hơn cho việc tạo cuộc hẹn mới
+    public Appointment(LocalDate date, LocalTime time, String doctor, String patient, String reason) {
+        this.id = UUID.randomUUID().toString();
+        this.date = date;
+        this.time = time;
+        this.doctor = doctor;
+        this.patient = patient;
+        this.reason = reason;
+        this.status = AppointmentStatus.PENDING;
+        this.paymentStatus = PaymentStatus.UNPAID;
     }
 
     // Getters

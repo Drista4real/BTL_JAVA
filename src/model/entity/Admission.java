@@ -87,6 +87,13 @@ public class Admission {
             this.dischargeDate = null;
         }
     }
+    
+    /**
+     * Constructor mặc định không tham số
+     */
+    public Admission() {
+        // Constructor mặc định để tạo đối tượng trống
+    }
 
     // Getters
     public String getAdmissionId() {
