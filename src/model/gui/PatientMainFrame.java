@@ -319,7 +319,7 @@ public class PatientMainFrame extends JFrame {
         infoGrid.add(createInfoRow("Mã bệnh nhân:", patientID));
         infoGrid.add(createInfoRow("Ngày sinh:", "01/01/1990"));
         infoGrid.add(createInfoRow("Giới tính:", "Nam"));
-        infoGrid.add(createInfoRow("Số điện thoại:", currentUser.getPhone() != null ? currentUser.getPhone() : "Chưa cập nhật"));
+        infoGrid.add(createInfoRow("Số điện thoại:", currentUser.getPhoneNumber() != null ? currentUser.getPhoneNumber() : "Chưa cập nhật"));
         infoGrid.add(createInfoRow("Địa chỉ:", currentUser.getAddress() != null ? currentUser.getAddress() : "Chưa cập nhật"));
         infoGrid.add(createInfoRow("Chiều cao:", "170 cm"));
         infoGrid.add(createInfoRow("Cân nặng:", "65 kg"));
@@ -385,7 +385,7 @@ public class PatientMainFrame extends JFrame {
 
         // Sử dụng thông tin mẫu thay vì từ SQL
         String fullName = currentUser.getFullName();
-        String phone = currentUser.getPhone() != null ? currentUser.getPhone() : "";
+        String phone = currentUser.getPhoneNumber() != null ? currentUser.getPhoneNumber() : "";
         String address = currentUser.getAddress() != null ? currentUser.getAddress() : "";
 
         // Tạo các trường chỉnh sửa với dữ liệu mẫu
@@ -450,7 +450,11 @@ public class PatientMainFrame extends JFrame {
         saveButton.addActionListener(e -> {
             // Cập nhật thông tin (ở đây chỉ cập nhật thông tin người dùng trong bộ nhớ)
             currentUser.setFullName(nameField.getText());
-            currentUser.setPhone(phoneField.getText());
+            // If the User class has a setter with a different name, use it instead
+            // For example, if it's called setPhoneNumber:
+            currentUser.setPhoneNumber(phoneField.getText());
+            // Or if you need to add the method to User class:
+            // Alternatively, you might need to modify the User class to include this method
             currentUser.setAddress(addressField.getText());
 
             JOptionPane.showMessageDialog(dialog,
@@ -719,7 +723,7 @@ public class PatientMainFrame extends JFrame {
         gbc.gridy++;
         addFormField(contentPanel, gbc, "Địa chỉ:", new JLabel(currentUser.getAddress()));
         gbc.gridy++;
-        addFormField(contentPanel, gbc, "Số điện thoại:", new JLabel(currentUser.getPhone()));
+        addFormField(contentPanel, gbc, "Số điện thoại:", new JLabel(currentUser.getPhoneNumber()));
         gbc.gridy++;
         addFormField(contentPanel, gbc, "Email:", new JLabel(currentUser.getEmail()));
         gbc.gridy++;
@@ -903,10 +907,11 @@ public class PatientMainFrame extends JFrame {
         userLabel.setForeground(Color.WHITE);
         userLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel roleLabel = new JLabel("Bệnh nhân");
-        roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        roleLabel.setForeground(Color.WHITE);
+        JLabel roleLabel = new JLabel(currentUser.getRole().getDisplayName());
+        roleLabel.setForeground(Color.LIGHT_GRAY);
+        roleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         roleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
 
         userPanel.add(Box.createVerticalStrut(20));
         userPanel.add(avatarPanel);
@@ -1606,7 +1611,7 @@ public class PatientMainFrame extends JFrame {
         testUser.setDateOfBirth("01/01/1990");
         testUser.setGender("Nam");
         testUser.setAddress("123 Đường Nguyễn Văn A, Quận 1, TP.HCM");
-        testUser.setPhone("0987654321");
+        testUser.setPhoneNumber("0987654321");
         testUser.setEmail("benhnhan@example.com");
         testUser.setHasInsurance(true);
         testUser.setInsuranceId("BH12345678");

@@ -110,35 +110,6 @@ MedicalRecordPanel extends JPanel {
                 "Bệnh nhân cần tư vấn chế độ ăn hợp lý"
         );
 
-        // Thêm vài lần khám mẫu
-        MedicalEntry entry1 = new MedicalEntry(
-                UUID.randomUUID().toString(),
-                LocalDateTime.now().minusMonths(6),
-                "DOCTOR001",
-                "Đau đầu, sốt nhẹ, ho khan",
-                "Viêm đường hô hấp trên",
-                "Nghỉ ngơi, uống nhiều nước, dùng thuốc theo chỉ định",
-                "Paracetamol 500mg (3 lần/ngày), Loratadine 10mg (1 lần/ngày)",
-                "Không có",
-                "Tái khám sau 7 ngày nếu không thuyên giảm",
-                "Tránh thức khuya và ăn đồ lạnh"
-        );
-
-        MedicalEntry entry2 = new MedicalEntry(
-                UUID.randomUUID().toString(),
-                LocalDateTime.now().minusMonths(2),
-                "DOCTOR002",
-                "Đau bụng, buồn nôn, tiêu chảy",
-                "Viêm dạ dày cấp",
-                "Ăn nhẹ, tránh thức ăn cay nóng, dùng thuốc theo chỉ định",
-                "Omeprazole 20mg (2 lần/ngày), Domperidone 10mg (3 lần/ngày)",
-                "Xét nghiệm máu: WBC tăng nhẹ",
-                "Tái khám sau 10 ngày",
-                "Kiêng bia rượu 1 tháng"
-        );
-
-        medicalRecord.addMedicalEntry(entry1);
-        medicalRecord.addMedicalEntry(entry2);
     }
 
     /**

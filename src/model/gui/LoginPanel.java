@@ -2,6 +2,7 @@ package model.gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -74,9 +75,24 @@ public class LoginPanel extends JPanel {
 
     private void loadBackgroundImage() {
         try {
-            backgroundImage = new ImageIcon("resource/images/ảnh_nền_login.jpg").getImage();
+            // Tải hình ảnh từ resources
+            java.net.URL imageUrl = getClass().getClassLoader().getResource("main/background_login.jpg");
+            if (imageUrl != null) {
+                backgroundImage = new ImageIcon(imageUrl).getImage();
+                System.out.println("Tải hình ảnh thành công");
+            } else {
+                System.out.println("Không tìm thấy file hình nền");
+
+                // In thông tin debug để kiểm tra classpath
+                System.out.println("ClassLoader path: " + getClass().getClassLoader().getResource(""));
+
+                // Kiểm tra đường dẫn tuyệt đối
+                File projectDir = new File(".");
+                System.out.println("Thư mục hiện tại: " + projectDir.getAbsolutePath());
+            }
         } catch (Exception e) {
             System.out.println("Không thể tải hình nền: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -180,7 +196,12 @@ public class LoginPanel extends JPanel {
         forgotPasswordButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         loginButton.addActionListener(e -> login());
-        forgotPasswordButton.addActionListener(e -> showForgotPasswordDialog());
+        forgotPasswordButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this,
+                "Vui lòng liên hệ quản trị viên để đặt lại mật khẩu.",
+                "Quên mật khẩu",
+                JOptionPane.INFORMATION_MESSAGE);
+        });
 
         buttonPanel.add(loginButton);
 
@@ -209,6 +230,20 @@ public class LoginPanel extends JPanel {
         SwingUtilities.invokeLater(() -> usernameField.requestFocus());
     }
 
+    /**
+     * Styles a button with consistent look and feel
+     * @param button The button to style
+     */
+    private void styleButton(JButton button) {
+        button.setBackground(new Color(0, 87, 146));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setPreferredSize(new Dimension(120, 35));
+    }
+
     private void login() {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
@@ -220,37 +255,121 @@ public class LoginPanel extends JPanel {
 
         System.out.println("Thực hiện đăng nhập với username: " + username);
         System.out.println("Role hiện tại: " + currentRole.getDbValue());
-        
+
         // Debug kết nối database trước khi authenticate
-        checkDatabase();
-        
+        try {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            System.out.println("Kết nối cơ sở dữ liệu thành công!");
+            conn.close();
+        } catch (SQLException ex) {
+            System.out.println("Lỗi kết nối cơ sở dữ liệu: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
         // Use the new authenticate method
         authenticate(username, password);
     }
 
     // Added the authenticate method
+
     private void authenticate(String username, String password) {
         try {
-            User user = new User(username, password, currentRole);
-            boolean authSuccess = user.authenticate(username, password, currentRole);
-            
-            if (authSuccess) {
-                if (currentRole == Role.PATIENT) {
-                    // For patient role, use the patient-specific login handler
-                    mainFrame.handlePatientLogin(user);
+            // Kết nối đến cơ sở dữ liệu
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+
+            // In thông tin debug để kiểm tra
+            System.out.println("Đang xác thực: Username=" + username + ", Role=" + currentRole);
+
+            // Truy vấn SQL chỉ kiểm tra username và password, không kiểm tra vai trò
+            String sql = "SELECT * FROM UserAccounts WHERE UserName = ? AND Password = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+
+            System.out.println("SQL Query: " + sql);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // Lấy thông tin người dùng
+                String userId = rs.getString("UserID");
+                String fullName = rs.getString("FullName");
+                String email = rs.getString("Email");
+                String phone = rs.getString("PhoneNumber");
+                String dbRole = rs.getString("Role");
+
+                System.out.println("Tìm thấy người dùng: " + fullName);
+                System.out.println("Vai trò trong DB: " + dbRole);
+                System.out.println("Vai trò đang chọn: " + currentRole);
+
+                // So sánh vai trò - kiểm tra mọi trường hợp có thể
+                boolean roleMatched = false;
+
+                // Trường hợp 1: Vai trò trong DB là "DOCTOR"/"PATIENT"
+                if (dbRole.equals(currentRole.name())) {
+                    roleMatched = true;
+                    System.out.println("Khớp vai trò theo name()");
+                }
+                // Trường hợp 2: Vai trò trong DB là "Bac si"/"Benh nhan"
+                else if (dbRole.equals(currentRole.getDisplayName())) {
+                    roleMatched = true;
+                    System.out.println("Khớp vai trò theo displayName");
+                }
+                // Trường hợp 3: Có thể là các trường hợp khác (kiểm tra không phân biệt hoa thường)
+                else if (dbRole.equalsIgnoreCase(currentRole.name()) ||
+                        dbRole.equalsIgnoreCase(currentRole.getDisplayName())) {
+                    roleMatched = true;
+                    System.out.println("Khớp vai trò không phân biệt hoa thường");
+                }
+
+                if (roleMatched) {
+                    // Tạo đối tượng Role phù hợp dựa trên currentRole
+                    Role actualRole = currentRole;
+
+                    // Tạo đối tượng User
+                    User user = new User(userId, username, password, fullName, email, phone, actualRole);
+
+                    // Chuyển hướng dựa trên vai trò
+                    if (currentRole == Role.DOCTOR) {
+                        System.out.println("Đăng nhập với vai trò bác sĩ thành công");
+                        // Tạo và hiển thị giao diện bác sĩ
+                        this.mainFrame.dispose(); // Đóng cửa sổ hiện tại
+                        DoctorMainFrame doctorFrame = new DoctorMainFrame(user);
+                        doctorFrame.setVisible(true);
+                    } else if (currentRole == Role.PATIENT) {
+                        System.out.println("Đăng nhập với vai trò bệnh nhân thành công");
+                        // Tạo và hiển thị giao diện bệnh nhân
+                        this.mainFrame.dispose(); // Đóng cửa sổ hiện tại
+                        PatientMainFrame patientFrame = new PatientMainFrame(user);
+                        patientFrame.setVisible(true);
+                    }
                 } else {
-                    // For doctor role, use the existing setup
-                    mainFrame.setCurrentUser(user);
-                    mainFrame.showMainContent();
+                    // Vai trò không khớp
+                    System.out.println("Vai trò không khớp: DB=" + dbRole + ", Selected=" + currentRole);
+                    JOptionPane.showMessageDialog(this,
+                            "Tài khoản này không có quyền đăng nhập với vai trò " + currentRole.getDisplayName(),
+                            "Không có quyền truy cập",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc mật khẩu không đúng", 
-                    "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+                // Không tìm thấy người dùng
+                System.out.println("Không tìm thấy người dùng với username=" + username);
+                JOptionPane.showMessageDialog(this,
+                        "Tên đăng nhập hoặc mật khẩu không đúng!",
+                        "Đăng nhập thất bại",
+                        JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu: " + ex.getMessage(), 
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+
+            rs.close();
+            pstmt.close();
+            conn.close();
+        } catch (SQLException e) {
+            System.out.println("Lỗi SQL: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 
@@ -324,35 +443,44 @@ public class LoginPanel extends JPanel {
     }
 
     private String mapRoleToEnum(String dbRole) {
-        if (dbRole == null) {
-            throw new IllegalArgumentException("Vai trò không được để trống!");
+        System.out.println("Vai trò từ DB: " + dbRole);
+
+        // Kiểm tra nếu chuỗi chứa 'Bác' hoặc 'bác' ở bất kỳ định dạng nào
+        if (dbRole != null && (dbRole.contains("ác") || dbRole.toLowerCase().contains("bac") ||
+                dbRole.contains("B") || dbRole.contains("s"))) {
+            System.out.println("Xác định là bác sĩ");
+            return "DOCTOR";
         }
-        switch (dbRole.trim()) {
-            case "Bac si":
+        // Kiểm tra nếu chuỗi chứa 'Bệnh' hoặc 'bệnh' ở bất kỳ định dạng nào
+        else if (dbRole != null && (dbRole.contains("ệnh") || dbRole.toLowerCase().contains("benh") ||
+                dbRole.contains("nhân") || dbRole.toLowerCase().contains("nhan"))) {
+            System.out.println("Xác định là bệnh nhân");
+            return "PATIENT";
+        } else {
+            // Trong trường hợp không thể xác định, kiểm tra mã byte
+            System.out.println("Không xác định được vai trò, hiển thị mã byte:");
+            for (byte b : dbRole.getBytes()) {
+                System.out.print(b + " ");
+            }
+            System.out.println();
+
+            // Thử dựa vào ký tự đầu tiên để phân biệt
+            char firstChar = dbRole.charAt(0);
+            if (firstChar == 'B' || firstChar == 'b') {
+                System.out.println("Giả định là bác sĩ dựa vào ký tự đầu");
                 return "DOCTOR";
-            case "Benh nhan":
-                return "PATIENT";
-            default:
+            } else {
                 throw new IllegalArgumentException("Vai trò không hợp lệ: " + dbRole);
+            }
         }
     }
 
-    private void styleButton(JButton button) {
-        Color btnColor = new Color(41, 128, 185);
-        button.setBackground(btnColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(btnColor.darker(), 1, true));
-        button.setPreferredSize(new Dimension(120, 36));
-    }
-    
     // Utility method to check database connection
     private void checkDatabase() {
         System.out.println("--------- KIỂM TRA CƠ SỞ DỮ LIỆU ---------");
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             System.out.println("1. Kết nối thành công đến: " + DB_URL);
-            
+
             // Kiểm tra bảng UserAccounts
             String query = "SELECT COUNT(*) AS total FROM UserAccounts";
             try (PreparedStatement stmt = conn.prepareStatement(query);
@@ -362,7 +490,7 @@ public class LoginPanel extends JPanel {
                     System.out.println("2. Tổng số bản ghi trong UserAccounts: " + total);
                 }
             }
-            
+
             // Kiểm tra tài khoản bệnh nhân
             query = "SELECT UserName, Password, Role FROM UserAccounts WHERE Role = 'PATIENT'";
             try (PreparedStatement stmt = conn.prepareStatement(query);
@@ -374,14 +502,14 @@ public class LoginPanel extends JPanel {
                     String userName = rs.getString("UserName");
                     String password = rs.getString("Password");
                     String role = rs.getString("Role");
-                    System.out.println("   " + count + ". UserName: " + userName + 
+                    System.out.println("   " + count + ". UserName: " + userName +
                                        ", Password: " + password + ", Role: " + role);
                 }
                 if (count == 0) {
                     System.out.println("   Không tìm thấy tài khoản bệnh nhân nào!");
                 }
             }
-            
+
             // Kiểm tra bảng trong cơ sở dữ liệu
             DatabaseMetaData meta = conn.getMetaData();
             ResultSet tables = meta.getTables(null, null, "%", new String[] {"TABLE"});
@@ -394,7 +522,7 @@ public class LoginPanel extends JPanel {
             if (tableCount == 0) {
                 System.out.println("   Không tìm thấy bảng nào trong cơ sở dữ liệu!");
             }
-            
+
         } catch (SQLException e) {
             System.out.println("LỖI KẾT NỐI CƠ SỞ DỮ LIỆU: " + e.getMessage());
             e.printStackTrace();

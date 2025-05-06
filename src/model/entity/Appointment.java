@@ -1,3 +1,4 @@
+
 package model.entity;
 
 import java.time.LocalDate;
@@ -11,10 +12,11 @@ public class Appointment {
     private LocalDate date;
     private LocalTime time;
     private String doctor;
-    private String patient; // username hoặc tên bệnh nhân
+    private String patient;
     private String reason;
     private AppointmentStatus status;
     private PaymentStatus paymentStatus;
+    private String entryId; // Liên kết với MedicalEntry
 
     // Enum cho trạng thái cuộc hẹn
     public enum AppointmentStatus {
@@ -69,11 +71,7 @@ public class Appointment {
 
     // Constructor mặc định
     public Appointment() {
-        this.id = UUID.randomUUID().toString(); // Tạo ID ngẫu nhiên cho cuộc hẹn mới
-        this.date = LocalDate.now();
-        this.time = LocalTime.now();
-        this.status = AppointmentStatus.PENDING;
-        this.paymentStatus = PaymentStatus.UNPAID;
+        this.entryId = null;
     }
 
     // Constructor đầy đủ với kiểu dữ liệu chuỗi (để tương thích ngược)
@@ -87,6 +85,7 @@ public class Appointment {
         this.reason = reason;
         this.status = AppointmentStatus.fromString(statusStr);
         this.paymentStatus = PaymentStatus.fromString(paymentStatusStr);
+        this.entryId = null;
     }
 
     // Constructor với kiểu dữ liệu mới
@@ -100,8 +99,9 @@ public class Appointment {
         this.reason = reason;
         this.status = status;
         this.paymentStatus = paymentStatus;
+        this.entryId = null;
     }
-    
+
     // Constructor đơn giản hơn cho việc tạo cuộc hẹn mới
     public Appointment(LocalDate date, LocalTime time, String doctor, String patient, String reason) {
         this.id = UUID.randomUUID().toString();
@@ -123,6 +123,8 @@ public class Appointment {
     public String getReason() { return reason; }
     public AppointmentStatus getStatus() { return status; }
     public PaymentStatus getPaymentStatus() { return paymentStatus; }
+    public String getEntryId() { return entryId; }
+    public void setEntryId(String entryId) { this.entryId = entryId; }
 
     // Getters để lấy giá trị hiển thị của status
     public String getStatusDisplay() { return status != null ? status.getDisplayValue() : null; }
@@ -132,6 +134,7 @@ public class Appointment {
     public String getDateString() {
         return date != null ? date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : null;
     }
+
     public String getTimeString() {
         return time != null ? time.format(DateTimeFormatter.ofPattern("HH:mm")) : null;
     }
@@ -242,6 +245,7 @@ public class Appointment {
                 ", reason='" + reason + '\'' +
                 ", status=" + getStatusDisplay() +
                 ", paymentStatus=" + getPaymentStatusDisplay() +
+                ", entryId='" + entryId + '\'' +
                 '}';
     }
 }

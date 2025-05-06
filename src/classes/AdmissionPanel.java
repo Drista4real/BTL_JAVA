@@ -1,69 +1,65 @@
 package classes;
 
+import model.entity.Admission;
+import model.entity.BENHNHAN;
+import model.entity.BENHNHANBAOHIEMYTE;
+import model.entity.User;
+import model.gui.PatientManagementDAO;
 
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import model.entity.Admission;
-import model.entity.User;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 
-/**
- * AdmissionPanel - Panel quản lý thông tin nhập viện của bệnh nhân
- * Cho phép xem, thêm, sửa và xóa thông tin nhập viện
- */
 public class AdmissionPanel extends JPanel {
     private JTextField admissionIdField;
     private JTextField patientIdField;
+    private JTextField patientNameField;
     private JTextField admissionDateField;
     private JTextField doctorIdField;
     private JTextField roomIdField;
     private JTextField dischargeDateField;
+    private JTextField insuranceNumberField;
+    private JComboBox<String> insuranceTypeComboBox;
+    private JTextField hospitalFeeField;
     private JTextArea notesArea;
     private JList<Admission> admissionList;
     private DefaultListModel<Admission> admissionListModel;
     private User currentUser;
+    private JButton dischargeButton; // Added to access in saveAdmissionDetails
 
-    /**
-     * Constructor AdmissionPanel với tham số user
-     * @param user Người dùng hiện tại đang đăng nhập
-     */
     public AdmissionPanel(User user) {
         this.currentUser = user;
         initComponents();
+        loadAdmissions();
     }
 
-    /**
-     * Khởi tạo các thành phần giao diện
-     */
     private void initComponents() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Panel chính
         JPanel mainContent = new JPanel(new BorderLayout(10, 10));
 
-        // === Panel bên trái - danh sách bệnh nhân nhập viện ===
+        // Panel bên trái - danh sách bệnh nhân nhập viện
         JPanel leftPanel = new JPanel(new BorderLayout(5, 5));
         leftPanel.setBorder(BorderFactory.createTitledBorder("Danh sách bệnh nhân nhập viện"));
 
-        // Khởi tạo model và danh sách
         admissionListModel = new DefaultListModel<>();
-
-        // Tạo JList với renderer tùy chỉnh
         admissionList = new JList<>(admissionListModel);
         admissionList.setCellRenderer(new AdmissionListCellRenderer());
         admissionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Panel tìm kiếm
         JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
         JTextField searchField = new JTextField(15);
         JButton searchButton = new JButton("Tìm");
+        searchButton.setBackground(new Color(41, 128, 185));
+        searchButton.setForeground(Color.WHITE);
         searchPanel.add(new JLabel("Tìm kiếm:"), BorderLayout.WEST);
         searchPanel.add(searchField, BorderLayout.CENTER);
         searchPanel.add(searchButton, BorderLayout.EAST);
 
-        // Panel nút chức năng
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         JButton addButton = new JButton("Thêm mới");
         JButton deleteButton = new JButton("Xóa");
@@ -72,7 +68,6 @@ public class AdmissionPanel extends JPanel {
         buttonPanel.add(deleteButton);
         buttonPanel.add(refreshButton);
 
-        // Thêm các component vào panel bên trái
         JPanel leftTopPanel = new JPanel(new BorderLayout(0, 5));
         leftTopPanel.add(searchPanel, BorderLayout.NORTH);
         leftTopPanel.add(buttonPanel, BorderLayout.CENTER);
@@ -80,11 +75,10 @@ public class AdmissionPanel extends JPanel {
         leftPanel.add(leftTopPanel, BorderLayout.NORTH);
         leftPanel.add(new JScrollPane(admissionList), BorderLayout.CENTER);
 
-        // === Panel bên phải - Chi tiết thông tin nhập viện ===
+        // Panel bên phải - chi tiết thông tin nhập viện
         JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
         rightPanel.setBorder(BorderFactory.createTitledBorder("Chi tiết thông tin nhập viện"));
 
-        // Form nhập liệu
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -93,19 +87,23 @@ public class AdmissionPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Khởi tạo các trường nhập liệu
         admissionIdField = new JTextField(15);
         patientIdField = new JTextField(15);
+        patientNameField = new JTextField(15);
+        patientNameField.setEditable(false);
         admissionDateField = new JTextField(15);
         doctorIdField = new JTextField(15);
         roomIdField = new JTextField(15);
         dischargeDateField = new JTextField(15);
+        insuranceNumberField = new JTextField(15);
+        insuranceTypeComboBox = new JComboBox<>(new String[]{"Không có", "BHYT"});
+        hospitalFeeField = new JTextField(15);
+        hospitalFeeField.setEditable(false);
         notesArea = new JTextArea(5, 20);
         notesArea.setLineWrap(true);
         notesArea.setWrapStyleWord(true);
         JScrollPane notesScrollPane = new JScrollPane(notesArea);
 
-        // Thêm các trường vào panel
         gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("Mã nhập viện:"), gbc);
         gbc.gridx = 1; gbc.gridy = 0; formPanel.add(admissionIdField, gbc);
 
@@ -118,11 +116,14 @@ public class AdmissionPanel extends JPanel {
         patientPanel.add(selectPatientBtn, BorderLayout.EAST);
         formPanel.add(patientPanel, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(new JLabel("Ngày nhập viện:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; formPanel.add(admissionDateField, gbc);
+        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(new JLabel("Tên bệnh nhân:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 2; formPanel.add(patientNameField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3; formPanel.add(new JLabel("Mã bác sĩ:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 3;
+        gbc.gridx = 0; gbc.gridy = 3; formPanel.add(new JLabel("Ngày nhập viện:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 3; formPanel.add(admissionDateField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 4; formPanel.add(new JLabel("Mã bác sĩ:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 4;
         JPanel doctorPanel = new JPanel(new BorderLayout(5, 0));
         doctorPanel.add(doctorIdField, BorderLayout.CENTER);
         JButton selectDoctorBtn = new JButton("...");
@@ -130,110 +131,87 @@ public class AdmissionPanel extends JPanel {
         doctorPanel.add(selectDoctorBtn, BorderLayout.EAST);
         formPanel.add(doctorPanel, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4; formPanel.add(new JLabel("Mã phòng:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 4; formPanel.add(roomIdField, gbc);
+        gbc.gridx = 0; gbc.gridy = 5; formPanel.add(new JLabel("Mã phòng:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 5; formPanel.add(roomIdField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5; formPanel.add(new JLabel("Ngày xuất viện:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 5; formPanel.add(dischargeDateField, gbc);
+        gbc.gridx = 0; gbc.gridy = 6; formPanel.add(new JLabel("Ngày xuất viện:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 6; formPanel.add(dischargeDateField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 6; formPanel.add(new JLabel("Ghi chú:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 6; gbc.gridheight = 3; formPanel.add(notesScrollPane, gbc);
+        gbc.gridx = 0; gbc.gridy = 7; formPanel.add(new JLabel("Loại bảo hiểm:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 7; formPanel.add(insuranceTypeComboBox, gbc);
 
-        // Panel nút lưu
+        gbc.gridx = 0; gbc.gridy = 8; formPanel.add(new JLabel("Mã số bảo hiểm:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 8; formPanel.add(insuranceNumberField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 9; formPanel.add(new JLabel("Phí viện:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 9; formPanel.add(hospitalFeeField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 10; formPanel.add(new JLabel("Ghi chú:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 10; gbc.gridheight = 3; formPanel.add(notesScrollPane, gbc);
+
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveButton = new JButton("Lưu thông tin");
         saveButton.setBackground(new Color(46, 139, 87));
         saveButton.setForeground(Color.WHITE);
         saveButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        JButton dischargeButton = new JButton("Xuất viện");
+        dischargeButton = new JButton("Xuất viện");
         dischargeButton.setBackground(new Color(70, 130, 180));
         dischargeButton.setForeground(Color.WHITE);
 
         actionPanel.add(dischargeButton);
         actionPanel.add(saveButton);
 
-        // Thêm các panel vào panel bên phải
         rightPanel.add(formPanel, BorderLayout.CENTER);
         rightPanel.add(actionPanel, BorderLayout.SOUTH);
 
-        // === Xử lý các sự kiện ===
-
-        // Sự kiện khi chọn một bệnh nhân trong danh sách
+        // Xử lý sự kiện
         admissionList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && admissionList.getSelectedValue() != null) {
                 Admission selectedAdmission = admissionList.getSelectedValue();
                 displayAdmissionDetails(selectedAdmission);
-
-                // Cập nhật trạng thái nút xuất viện
-                dischargeButton.setEnabled(selectedAdmission.getDischargeDate() == null);
+                dischargeButton.setEnabled(!selectedAdmission.isDischarged());
             }
         });
 
-        // Sự kiện khi nhấn nút lưu
         saveButton.addActionListener(e -> {
             try {
                 saveAdmissionDetails();
-                JOptionPane.showMessageDialog(this,
-                        "Lưu thông tin thành công!",
-                        "Thành công",
-                        JOptionPane.INFORMATION_MESSAGE);
+                loadAdmissions();
+                JOptionPane.showMessageDialog(this, "Lưu thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Lỗi: " + ex.getMessage(),
-                        "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // Sự kiện nút xuất viện
         dischargeButton.addActionListener(e -> {
             if (admissionList.getSelectedValue() != null) {
                 try {
                     Admission selectedAdmission = admissionList.getSelectedValue();
-                    if (selectedAdmission.getDischargeDate() != null) {
-                        JOptionPane.showMessageDialog(this,
-                                "Bệnh nhân này đã xuất viện!",
-                                "Thông báo",
-                                JOptionPane.INFORMATION_MESSAGE);
+                    if (selectedAdmission.isDischarged()) {
+                        JOptionPane.showMessageDialog(this, "Bệnh nhân này đã xuất viện!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                         return;
                     }
 
-                    // Cập nhật ngày xuất viện là ngày hiện tại
                     dischargeDateField.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-
-                    // Tự động lưu
                     saveAdmissionDetails();
-                    JOptionPane.showMessageDialog(this,
-                            "Đã cập nhật trạng thái xuất viện!",
-                            "Thành công",
-                            JOptionPane.INFORMATION_MESSAGE);
-
-                    // Cập nhật trạng thái nút
+                    loadAdmissions();
+                    JOptionPane.showMessageDialog(this, "Đã cập nhật trạng thái xuất viện!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     dischargeButton.setEnabled(false);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this,
-                            "Lỗi: " + ex.getMessage(),
-                            "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
 
-        // Sự kiện khi nhấn nút thêm mới
         addButton.addActionListener(e -> {
             clearForm();
-            admissionIdField.setText("ADM" + String.format("%03d", admissionListModel.getSize() + 1));
+            admissionIdField.setText("ADM" + String.format("%03d", System.currentTimeMillis() % 1000));
             admissionDateField.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-
-            // Bỏ chọn phần tử đang chọn
             admissionList.clearSelection();
-
-            // Focus vào trường mã bệnh nhân
             patientIdField.requestFocus();
         });
 
-        // Sự kiện khi nhấn nút xóa
         deleteButton.addActionListener(e -> {
             if (admissionList.getSelectedValue() != null) {
                 int confirm = JOptionPane.showConfirmDialog(this,
@@ -242,109 +220,118 @@ public class AdmissionPanel extends JPanel {
                         JOptionPane.YES_NO_OPTION);
 
                 if (confirm == JOptionPane.YES_OPTION) {
-                    admissionListModel.removeElement(admissionList.getSelectedValue());
-                    clearForm();
-                    JOptionPane.showMessageDialog(this,
-                            "Đã xóa thông tin nhập viện!",
-                            "Thành công",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    Admission selectedAdmission = admissionList.getSelectedValue();
+                    boolean success = PatientManagementDAO.deleteAdmission(selectedAdmission.getAdmissionId());
+                    if (success) {
+                        loadAdmissions();
+                        clearForm();
+                        JOptionPane.showMessageDialog(this, "Đã xóa thông tin nhập viện!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Lỗi khi xóa thông tin nhập viện!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             } else {
-                JOptionPane.showMessageDialog(this,
-                        "Vui lòng chọn một hồ sơ nhập viện để xóa!",
-                        "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một hồ sơ nhập viện để xóa!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
-        // Sự kiện tìm kiếm
         searchButton.addActionListener(e -> {
             String searchTerm = searchField.getText().trim().toLowerCase();
             if (searchTerm.isEmpty()) {
-                // Thông báo nếu không có từ khóa tìm kiếm
-                JOptionPane.showMessageDialog(this,
-                        "Vui lòng nhập từ khóa tìm kiếm!",
-                        "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập từ khóa tìm kiếm!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
 
-            // Tìm kiếm trong danh sách hiện tại
-            boolean found = false;
-            for (int i = 0; i < admissionListModel.getSize(); i++) {
-                Admission admission = admissionListModel.getElementAt(i);
-                // Tìm kiếm theo mã, id bệnh nhân, hoặc bác sĩ
+            admissionListModel.clear();
+            List<Admission> admissions = PatientManagementDAO.getAllAdmissions();
+            for (Admission admission : admissions) {
+                BENHNHAN patient = PatientManagementDAO.getPatientById(admission.getPatientId());
+                String patientName = patient != null ? patient.getHoten().toLowerCase() : "";
                 if (admission.getAdmissionId().toLowerCase().contains(searchTerm) ||
                         admission.getPatientId().toLowerCase().contains(searchTerm) ||
-                        admission.getDoctorId().toLowerCase().contains(searchTerm)) {
-                    admissionList.setSelectedIndex(i);
-                    admissionList.ensureIndexIsVisible(i);
-                    found = true;
-                    break;
+                        admission.getDoctorId().toLowerCase().contains(searchTerm) ||
+                        patientName.contains(searchTerm)) {
+                    admissionListModel.addElement(admission);
                 }
             }
 
-            // Thông báo kết quả
-            if (!found) {
-                JOptionPane.showMessageDialog(this,
-                        "Không tìm thấy kết quả nào phù hợp!",
-                        "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE);
+            if (admissionListModel.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả nào phù hợp!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
-        // Sự kiện làm mới
         refreshButton.addActionListener(e -> {
             searchField.setText("");
             clearForm();
             admissionList.clearSelection();
+            loadAdmissions();
         });
 
-        // Sự kiện chọn bệnh nhân
         selectPatientBtn.addActionListener(e -> {
-            String patientId = JOptionPane.showInputDialog(this,
-                    "Nhập mã bệnh nhân cần tìm:",
-                    "Tìm bệnh nhân",
-                    JOptionPane.QUESTION_MESSAGE);
+            List<User> patients = PatientManagementDAO.getAllPatients();
+            if (patients.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không có bệnh nhân nào trong hệ thống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
 
-            if (patientId != null && !patientId.trim().isEmpty()) {
+            String[] patientOptions = patients.stream()
+                    .map(p -> p.getUserId() + " - " + p.getFullName())
+                    .toArray(String[]::new);
+            String selected = (String) JOptionPane.showInputDialog(this,
+                    "Chọn bệnh nhân:",
+                    "Danh sách bệnh nhân",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    patientOptions,
+                    patientOptions[0]);
+
+            if (selected != null) {
+                String patientId = selected.split(" - ")[0];
                 patientIdField.setText(patientId);
+                updatePatientInfo(patientId);
             }
         });
 
-        // Sự kiện chọn bác sĩ
         selectDoctorBtn.addActionListener(e -> {
-            String[] doctors = {"DOC001", "DOC002", "DOC003", "DOC004"};
+            List<User> doctors = PatientManagementDAO.getAllDoctors();
+            if (doctors.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không có bác sĩ nào trong hệ thống!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
 
-            String selectedDoctor = (String) JOptionPane.showInputDialog(this,
+            String[] doctorOptions = doctors.stream()
+                    .map(d -> d.getUserId() + " - " + d.getFullName())
+                    .toArray(String[]::new);
+            String selected = (String) JOptionPane.showInputDialog(this,
                     "Chọn bác sĩ phụ trách:",
                     "Danh sách bác sĩ",
                     JOptionPane.QUESTION_MESSAGE,
                     null,
-                    doctors,
-                    doctors[0]);
+                    doctorOptions,
+                    doctorOptions[0]);
 
-            if (selectedDoctor != null) {
-                doctorIdField.setText(selectedDoctor);
+            if (selected != null) {
+                String doctorId = selected.split(" - ")[0];
+                doctorIdField.setText(doctorId);
             }
         });
 
-        // Tạo SplitPane để chia không gian
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
         splitPane.setDividerLocation(400);
         mainContent.add(splitPane, BorderLayout.CENTER);
 
-        // Thêm tất cả vào panel chính
         add(mainContent, BorderLayout.CENTER);
-
-        // Thiết lập trạng thái ban đầu
         clearForm();
     }
 
-    /**
-     * Hiển thị chi tiết thông tin nhập viện lên form
-     * @param admission Đối tượng Admission cần hiển thị
-     */
+    private void loadAdmissions() {
+        admissionListModel.clear();
+        List<Admission> admissions = PatientManagementDAO.getAllAdmissions();
+        for (Admission admission : admissions) {
+            admissionListModel.addElement(admission);
+        }
+    }
+
     private void displayAdmissionDetails(Admission admission) {
         admissionIdField.setText(admission.getAdmissionId());
         patientIdField.setText(admission.getPatientId());
@@ -353,90 +340,140 @@ public class AdmissionPanel extends JPanel {
         roomIdField.setText(admission.getRoomId());
         dischargeDateField.setText(admission.getDischargeDateString());
         notesArea.setText(admission.getNotes());
+        updatePatientInfo(admission.getPatientId());
     }
 
-    /**
-     * Lưu thông tin nhập viện từ form
-     * @throws Exception Nếu có lỗi trong quá trình lưu
-     */
-    private void saveAdmissionDetails() throws Exception {
-        // Kiểm tra các trường bắt buộc
-        if (admissionIdField.getText().trim().isEmpty() ||
-                patientIdField.getText().trim().isEmpty() ||
-                admissionDateField.getText().trim().isEmpty() ||
-                doctorIdField.getText().trim().isEmpty() ||
-                roomIdField.getText().trim().isEmpty()) {
-            throw new Exception("Vui lòng nhập đầy đủ thông tin các trường bắt buộc!");
+    private void updatePatientInfo(String patientId) {
+        BENHNHAN patient = PatientManagementDAO.getPatientById(patientId);
+        if (patient instanceof BENHNHANBAOHIEMYTE) {
+            BENHNHANBAOHIEMYTE bhytPatient = (BENHNHANBAOHIEMYTE) patient;
+            patientNameField.setText(bhytPatient.getHoten());
+            insuranceNumberField.setText(bhytPatient.getMSBH());
+            insuranceTypeComboBox.setSelectedItem(bhytPatient.getLoaiBH() == 'y' ? "BHYT" : "Không có");
+            hospitalFeeField.setText(String.format("%,.0f VNĐ", bhytPatient.TinhhoadonVP()));
+        } else {
+            patientNameField.setText("");
+            insuranceNumberField.setText("");
+            insuranceTypeComboBox.setSelectedItem("Không có");
+            hospitalFeeField.setText("");
         }
+    }
 
-        int selectedIndex = admissionList.getSelectedIndex();
-
+    private void saveAdmissionDetails() {
         try {
-            // Tạo đối tượng Admission từ dữ liệu form
-            Admission updatedAdmission = new Admission(
-                    admissionIdField.getText().trim(),
-                    patientIdField.getText().trim(),
-                    admissionDateField.getText().trim(),
-                    doctorIdField.getText().trim(),
-                    roomIdField.getText().trim(),
-                    dischargeDateField.getText().trim().isEmpty() ? null : dischargeDateField.getText().trim(),
-                    notesArea.getText().trim()
+            // Validate input
+            if (admissionIdField.getText().trim().isEmpty()) {
+                throw new IllegalArgumentException("Mã nhập viện không được để trống");
+            }
+            if (patientIdField.getText().trim().isEmpty()) {
+                throw new IllegalArgumentException("Mã bệnh nhân không được để trống");
+            }
+            if (doctorIdField.getText().trim().isEmpty()) {
+                throw new IllegalArgumentException("Mã bác sĩ không được để trống");
+            }
+            if (roomIdField.getText().trim().isEmpty()) {
+                throw new IllegalArgumentException("Mã phòng không được để trống");
+            }
+            if (admissionDateField.getText().trim().isEmpty()) {
+                throw new IllegalArgumentException("Ngày nhập viện không được để trống");
+            }
+
+            // Xử lý ngày tháng
+            LocalDate admissionDate;
+            try {
+                admissionDate = LocalDate.parse(admissionDateField.getText(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Ngày nhập viện không hợp lệ (định dạng: dd/MM/yyyy)");
+            }
+
+            LocalDate dischargeDate = null;
+            if (!dischargeDateField.getText().trim().isEmpty()) {
+                try {
+                    dischargeDate = LocalDate.parse(dischargeDateField.getText(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    if (dischargeDate.isBefore(admissionDate)) {
+                        throw new IllegalArgumentException("Ngày xuất viện không thể trước ngày nhập viện");
+                    }
+                } catch (DateTimeParseException e) {
+                    throw new IllegalArgumentException("Ngày xuất viện không hợp lệ (định dạng: dd/MM/yyyy)");
+                }
+            }
+
+            // Tạo hoặc cập nhật đối tượng Admission
+            Admission admission = new Admission(
+                    admissionIdField.getText(),
+                    patientIdField.getText(),
+                    admissionDate,
+                    doctorIdField.getText(),
+                    roomIdField.getText(),
+                    dischargeDate,
+                    notesArea.getText()
             );
 
-            if (selectedIndex >= 0) {
-                // Cập nhật thông tin
-                admissionListModel.set(selectedIndex, updatedAdmission);
-            } else {
-                // Thêm mới
-                admissionListModel.addElement(updatedAdmission);
-                // Chọn phần tử vừa thêm
-                admissionList.setSelectedIndex(admissionListModel.getSize() - 1);
+            // Lưu thông tin bảo hiểm
+            String insuranceNumber = insuranceNumberField.getText().trim();
+            String insuranceType = (String) insuranceTypeComboBox.getSelectedItem();
+            if (!insuranceNumber.isEmpty() && insuranceType.equals("BHYT")) {
+                PatientManagementDAO.saveInsurance(admission.getPatientId(), insuranceNumber);
             }
+
+            // Lưu Admission vào cơ sở dữ liệu
+            boolean success = PatientManagementDAO.saveAdmission(admission);
+            if (!success) {
+                throw new RuntimeException("Không thể lưu thông tin nhập viện");
+            }
+
+            // Cập nhật thông tin bệnh nhân
+            BENHNHAN patient = PatientManagementDAO.getPatientById(admission.getPatientId());
+            if (patient instanceof BENHNHANBAOHIEMYTE) {
+                BENHNHANBAOHIEMYTE bhytPatient = (BENHNHANBAOHIEMYTE) patient;
+                bhytPatient.setLoaiBH(insuranceType.equals("BHYT") ? 'y' : 'n');
+                bhytPatient.setMSBH(insuranceNumber);
+                bhytPatient.setAdmission(admission);
+                bhytPatient.setPhongTYC(admission.getRoomId().equals("R002"));
+                // Update patient in database if needed
+                // Assuming Demo1 or another mechanism handles patient updates
+            }
+
+            // Cập nhật trạng thái nút "Xuất viện"
+            dischargeButton.setEnabled(dischargeDate == null);
         } catch (Exception e) {
-            throw new Exception("Lỗi định dạng dữ liệu: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi lưu thông tin: " + e.getMessage());
         }
     }
 
-    /**
-     * Xóa dữ liệu trên form
-     */
     private void clearForm() {
         admissionIdField.setText("");
         patientIdField.setText("");
+        patientNameField.setText("");
         admissionDateField.setText("");
         doctorIdField.setText("");
         roomIdField.setText("");
         dischargeDateField.setText("");
+        insuranceNumberField.setText("");
+        insuranceTypeComboBox.setSelectedItem("Không có");
+        hospitalFeeField.setText("");
         notesArea.setText("");
+        dischargeButton.setEnabled(true);
     }
 
-    /**
-     * Lớp tùy chỉnh hiển thị các phần tử trong JList
-     */
     private class AdmissionListCellRenderer extends DefaultListCellRenderer {
         @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value instanceof Admission) {
                 Admission admission = (Admission) value;
+                BENHNHAN patient = PatientManagementDAO.getPatientById(admission.getPatientId());
+                String patientName = patient != null ? patient.getHoten() : admission.getPatientId();
                 String displayText = String.format("%s - %s - %s",
-                        admission.getAdmissionId(),
-                        admission.getPatientId(),
-                        admission.getAdmissionDateString());
+                        admission.getAdmissionId(), patientName, admission.getAdmissionDateString());
 
-                // Thêm thông tin xuất viện nếu có
-                if (admission.getDischargeDate() != null) {
+                if (admission.isDischarged()) {
                     displayText += " (Đã xuất viện)";
                 }
 
-                Component c = super.getListCellRendererComponent(
-                        list, displayText, index, isSelected, cellHasFocus);
-
-                // Đổi màu cho các bệnh nhân đã xuất viện
-                if (admission.getDischargeDate() != null) {
-                    setForeground(isSelected ? Color.WHITE : new Color(100, 149, 237)); // Màu xanh dương nhạt
+                Component c = super.getListCellRendererComponent(list, displayText, index, isSelected, cellHasFocus);
+                if (admission.isDischarged()) {
+                    setForeground(isSelected ? Color.WHITE : new Color(100, 149, 237));
                 }
-
                 return c;
             }
             return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

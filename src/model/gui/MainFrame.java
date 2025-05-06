@@ -212,7 +212,30 @@ public class MainFrame extends JFrame {
             patientFrame.setVisible(true);
         });
     }
+    // Thêm phương thức xử lý đăng nhập cho người dùng dựa trên vai trò
+    public void handleUserLogin(User user) {
+        // Đóng frame hiện tại
+        this.dispose();
 
+        // Mở giao diện tương ứng dựa trên vai trò
+        if (user.getRole() == Role.DOCTOR) {
+            DoctorMainFrame doctorFrame = new DoctorMainFrame(user);
+            doctorFrame.setVisible(true);
+        } else if (user.getRole() == Role.PATIENT) {
+            PatientMainFrame patientFrame = new PatientMainFrame(user);
+            patientFrame.setVisible(true);
+        } else {
+            // Trường hợp vai trò không xác định
+            JOptionPane.showMessageDialog(null,
+                    "Vai trò người dùng không hợp lệ!",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+
+            // Quay lại màn hình đăng nhập
+            MainFrame loginFrame = new MainFrame();
+            loginFrame.setVisible(true);
+        }
+    }
     public void showLoginScreen() {
         if (navPanel != null) {
             navPanel.setVisible(false);
