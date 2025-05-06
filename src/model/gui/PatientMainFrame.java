@@ -99,16 +99,16 @@ public class PatientMainFrame extends JFrame {
     private JPanel createPatientDashboard() {
         updateDashboardStats();
 
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
         JPanel welcomePanel = new JPanel(new BorderLayout());
         JLabel welcomeLabel = new JLabel("Xin chào, " + currentUser.getFullName());
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
         welcomePanel.add(welcomeLabel, BorderLayout.CENTER);
 
-        JPanel statsPanel = new JPanel(new GridLayout(1, 4, 10, 0));
-        statsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        JPanel statsPanel = new JPanel(new GridLayout(1, 4, 5, 0));
+        statsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         statsPanel.add(createInfoCard("Lịch hẹn sắp tới", String.valueOf(upcomingAppointmentCount), new Color(0, 102, 204)));
         statsPanel.add(createInfoCard("Đơn thuốc hiện tại", String.valueOf(currentPrescriptionCount), new Color(0, 102, 204)));
         statsPanel.add(createInfoCard("Hồ sơ khám bệnh", String.valueOf(medicalRecordCount), new Color(0, 102, 204)));
@@ -116,7 +116,7 @@ public class PatientMainFrame extends JFrame {
 
         JPanel personalInfoBoxPanel = createPersonalInfoBox();
 
-        JPanel contentPanel = new JPanel(new BorderLayout(0, 20));
+        JPanel contentPanel = new JPanel(new BorderLayout(0, 10));
         contentPanel.add(statsPanel, BorderLayout.NORTH);
         contentPanel.add(personalInfoBoxPanel, BorderLayout.CENTER);
 
@@ -132,16 +132,27 @@ public class PatientMainFrame extends JFrame {
     private void updateDashboardStats() {
         try {
             Connection connection = getDBConnection();
-            if (connection == null) return;
+            if (connection == null) {
+                System.err.println("Không thể kết nối đến cơ sở dữ liệu trong updateDashboardStats");
+                return;
+            }
 
             String patientID = currentUser.getPatientId();
 
             // Upcoming appointments
-            String appointmentQuery = "SELECT COUNT(*) FROM Appointments WHERE PatientID = ? AND AppointmentDate >= CURRENT_DATE AND Status != 'Huy'";
+            String appointmentQuery = "SELECT COUNT(*) FROM Appointments WHERE PatientID = ? AND AppointmentDate >= NOW() AND Status != 'Huy'";
             try (PreparedStatement pstmt = connection.prepareStatement(appointmentQuery)) {
                 pstmt.setString(1, patientID);
                 ResultSet rs = pstmt.executeQuery();
-                if (rs.next()) upcomingAppointmentCount = rs.getInt(1);
+                if (rs.next()) {
+                    upcomingAppointmentCount = rs.getInt(1);
+                } else {
+                    System.err.println("Không có kết quả trả về từ truy vấn lịch hẹn");
+                    upcomingAppointmentCount = 0;
+                }
+            } catch (SQLException e) {
+                System.err.println("Lỗi SQL khi lấy lịch hẹn sắp tới: " + e.getMessage());
+                upcomingAppointmentCount = 0;
             }
 
             // Current prescriptions
@@ -149,7 +160,15 @@ public class PatientMainFrame extends JFrame {
             try (PreparedStatement pstmt = connection.prepareStatement(prescriptionQuery)) {
                 pstmt.setString(1, patientID);
                 ResultSet rs = pstmt.executeQuery();
-                if (rs.next()) currentPrescriptionCount = rs.getInt(1);
+                if (rs.next()) {
+                    currentPrescriptionCount = rs.getInt(1);
+                } else {
+                    System.err.println("Không có kết quả trả về từ truy vấn đơn thuốc");
+                    currentPrescriptionCount = 0;
+                }
+            } catch (SQLException e) {
+                System.err.println("Lỗi SQL khi lấy đơn thuốc hiện tại: " + e.getMessage());
+                currentPrescriptionCount = 0;
             }
 
             // Medical records
@@ -157,7 +176,15 @@ public class PatientMainFrame extends JFrame {
             try (PreparedStatement pstmt = connection.prepareStatement(medicalRecordQuery)) {
                 pstmt.setString(1, patientID);
                 ResultSet rs = pstmt.executeQuery();
-                if (rs.next()) medicalRecordCount = rs.getInt(1);
+                if (rs.next()) {
+                    medicalRecordCount = rs.getInt(1);
+                } else {
+                    System.err.println("Không có kết quả trả về từ truy vấn hồ sơ khám bệnh");
+                    medicalRecordCount = 0;
+                }
+            } catch (SQLException e) {
+                System.err.println("Lỗi SQL khi lấy hồ sơ khám bệnh: " + e.getMessage());
+                medicalRecordCount = 0;
             }
 
             // Unpaid bills
@@ -165,7 +192,15 @@ public class PatientMainFrame extends JFrame {
             try (PreparedStatement pstmt = connection.prepareStatement(unpaidBillQuery)) {
                 pstmt.setString(1, patientID);
                 ResultSet rs = pstmt.executeQuery();
-                if (rs.next()) unpaidBillCount = rs.getInt(1);
+                if (rs.next()) {
+                    unpaidBillCount = rs.getInt(1);
+                } else {
+                    System.err.println("Không có kết quả trả về từ truy vấn hóa đơn chưa thanh toán");
+                    unpaidBillCount = 0;
+                }
+            } catch (SQLException e) {
+                System.err.println("Lỗi SQL khi lấy hóa đơn chưa thanh toán: " + e.getMessage());
+                unpaidBillCount = 0;
             }
 
             connection.close();
@@ -476,7 +511,6 @@ public class PatientMainFrame extends JFrame {
             }
         };
 
-
         prescriptionsTable = new JTable(model);
         setupTable(prescriptionsTable);
         JScrollPane scrollPane = new JScrollPane(prescriptionsTable);
@@ -645,7 +679,6 @@ public class PatientMainFrame extends JFrame {
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new BoxLayout(userPanel, BoxLayout.Y_AXIS));
         userPanel.setOpaque(false);
-        // Set maximum width to fit content (avatar is 100px, labels may be wider)
         userPanel.setMaximumSize(new Dimension(250, 200));
         userPanel.setPreferredSize(new Dimension(250, 200));
         userPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -708,6 +741,7 @@ public class PatientMainFrame extends JFrame {
             setActiveButton(homeButton);
         });
         appointmentButton = createNavButton("Lịch hẹn khám bệnh", e -> {
+            updateAppointmentsTable();
             setActiveButton(appointmentButton);
             cardLayout.show(mainPanel, "APPOINTMENTS");
         });
@@ -768,10 +802,14 @@ public class PatientMainFrame extends JFrame {
 
     private void setActiveButton(JButton button) {
         if (activeButton != null) {
-            activeButton.setBackground(new Color(52, 73, 94));
+            activeButton.setBackground(new Color(41, 128, 185, 0));
             activeButton.setForeground(Color.WHITE);
         }
-        button.setBackground(new Color(41, 128, 185));
+        if (button != logoutButton) {
+            button.setBackground(new Color(52, 152, 219)); // Brighter active color
+        } else {
+            button.setBackground(new Color(236, 100, 75)); // Brighter red for logout
+        }
         button.setForeground(Color.WHITE);
         activeButton = button;
     }
@@ -792,7 +830,15 @@ public class PatientMainFrame extends JFrame {
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (button != activeButton) {
+                if (button == activeButton) {
+                    if (button != logoutButton) {
+                        // Lighter shade for active button hover
+                        button.setBackground(new Color(70, 165, 230));
+                    } else {
+                        // Lighter shade for active logout button hover
+                        button.setBackground(new Color(241, 120, 90));
+                    }
+                } else {
                     if (button != logoutButton) {
                         button.setBackground(new Color(52, 152, 219));
                     } else {
@@ -803,7 +849,13 @@ public class PatientMainFrame extends JFrame {
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                if (button != activeButton) {
+                if (button == activeButton) {
+                    if (button != logoutButton) {
+                        button.setBackground(new Color(52, 152, 219));
+                    } else {
+                        button.setBackground(new Color(236, 100, 75));
+                    }
+                } else {
                     if (button != logoutButton) {
                         button.setBackground(new Color(41, 128, 185, 0));
                     } else {
