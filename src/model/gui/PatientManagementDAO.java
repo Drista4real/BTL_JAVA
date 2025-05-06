@@ -11,6 +11,7 @@ public class PatientManagementDAO {
     private static final String URL = "jdbc:mysql://localhost:3306/PatientManagement?allowPublicKeyRetrieval=true&useSSL=false";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "Pha2k5@";
+    private static final UserService userService = new UserService();
 
     public static List<Admission> getAllAdmissions() {
         List<Admission> admissions = new ArrayList<>();
@@ -187,18 +188,13 @@ public class PatientManagementDAO {
         List<User> patients = new ArrayList<>();
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
             Class.forName(DRIVER);
-            String query = "SELECT * FROM UserAccounts WHERE Role = 'Benh nhan'";
+            String query = "SELECT UserID FROM UserAccounts WHERE Role = 'Benh nhan'";
             try (PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    patients.add(new User(
-                            rs.getString("UserID"),
-                            rs.getString("UserName"),
-                            rs.getString("Password"),
-                            rs.getString("FullName"),
-                            rs.getString("Email"),
-                            rs.getString("PhoneNumber"),
-                            Role.PATIENT
-                    ));
+                    User user = userService.getUserById(rs.getString("UserID"));
+                    if (user != null) {
+                        patients.add(user);
+                    }
                 }
             }
         } catch (SQLException | ClassNotFoundException e) {
@@ -211,18 +207,13 @@ public class PatientManagementDAO {
         List<User> doctors = new ArrayList<>();
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
             Class.forName(DRIVER);
-            String query = "SELECT * FROM UserAccounts WHERE Role = 'Bac si'";
+            String query = "SELECT UserID FROM UserAccounts WHERE Role = 'Bac si'";
             try (PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    doctors.add(new User(
-                            rs.getString("UserID"),
-                            rs.getString("UserName"),
-                            rs.getString("Password"),
-                            rs.getString("FullName"),
-                            rs.getString("Email"),
-                            rs.getString("PhoneNumber"),
-                            Role.DOCTOR
-                    ));
+                    User user = userService.getUserById(rs.getString("UserID"));
+                    if (user != null) {
+                        doctors.add(user);
+                    }
                 }
             }
         } catch (SQLException | ClassNotFoundException e) {
