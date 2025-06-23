@@ -107,7 +107,7 @@ public class DrugReponsitory {
         }
     }
     private List<Drug> drugs = new ArrayList<>();
-//phần của Lam làm
+    //phần của Lam làm
     public DrugReponsitory() {
         loadDrugsFromDatabase();
     }
@@ -195,5 +195,46 @@ public class DrugReponsitory {
             e.printStackTrace();
             return false;
         }
+    }
+    // Method tìm kiếm thuốc theo từ khóa
+    public static List<Object[]> findDrugs(String keyword) {
+        List<Object[]> results = new ArrayList<>();
+        DecimalFormat formatter = new DecimalFormat("#,###");
+
+        try (Connection conn = JDBCUtil.getConnection()) {
+            String query = "SELECT * FROM Drug WHERE " +
+                    "name LIKE ? OR " +
+                    "description LIKE ? OR " +
+                    "CAST(id AS CHAR) LIKE ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+
+            String searchPattern = "%" + keyword + "%";
+            stmt.setString(1, searchPattern);
+            stmt.setString(2, searchPattern);
+            stmt.setString(3, searchPattern);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                String description = rs.getString("description");
+                double price = rs.getDouble("price");
+                int stockQuantity = rs.getInt("stockQuantity");
+
+                Object[] row = {
+                        id,
+                        name,
+                        description,
+                        formatter.format(price) + " VND",
+                        stockQuantity
+                };
+                results.add(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return results;
     }
 }

@@ -1,4 +1,4 @@
-package controller.durgStore;
+package controller.drugStore;
 
 import view.listPanelMain.MainFrame;
 

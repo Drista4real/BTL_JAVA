@@ -90,4 +90,40 @@ public class ServiceReponsitory {
         }
         return list;
     }
+
+    // Method tìm kiếm dịch vụ theo từ khóa
+    public static List<Object[]> findServices(String keyword) {
+        List<Object[]> results = new ArrayList<>();
+        DecimalFormat formatter = new DecimalFormat("#,###");
+
+        try (Connection conn = JDBCUtil.getConnection()) {
+            String query = "SELECT * FROM Service WHERE " +
+                    "name LIKE ? OR " +
+                    "CAST(id AS CHAR) LIKE ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+
+            String searchPattern = "%" + keyword + "%";
+            stmt.setString(1, searchPattern);
+            stmt.setString(2, searchPattern);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                double price = rs.getDouble("price");
+
+                Object[] row = {
+                        id,
+                        name,
+                        formatter.format(price) + " VND"
+                };
+                results.add(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return results;
+    }
 }

@@ -2,10 +2,11 @@ package view.listPanelMain;
 
 import controller.admin.*;
 import controller.doctor.*;
-import controller.durgStore.ButtonPaymentController;
-import controller.durgStore.DrugMenuController;
-import controller.durgStore.ListBillRadioButtonController;
-import controller.durgStore.ListBillTableController;
+import controller.drugStore.ButtonPaymentController;
+import controller.drugStore.DrugMenuController;
+import controller.drugStore.ListBillRadioButtonController;
+import controller.drugStore.ListBillTableController;
+import controller.drugStore.ListDrugSearchController;
 import controller.login.LoginButtonController;
 import controller.receptionist.ReceptionTableController;
 import controller.receptionist.ReceptionistLableController;
@@ -153,6 +154,9 @@ public class MainFrame extends JFrame {
         this.drugStorePanel.getDrugStoreMenuPanel().getLblBill().addMouseListener(dmct);
         this.drugStorePanel.getDrugStoreMenuPanel().getLblListDrug().addMouseListener(dmct);
         this.drugStorePanel.getDentistTaskbar().getLblDoctorName().addMouseListener(dmct);
+        this.drugStorePanel.getListDrugPanel().getTfSearch().getDocument().addDocumentListener(
+                new ListDrugSearchController(this.drugStorePanel.getListDrugPanel())
+        );
         dmct.setLabelEvent(this.drugStorePanel.getDrugStoreMenuPanel().getLblHome(),
                 this.drugStorePanel.getDrugStoreMenuPanel().getLblBill(),
                 this.drugStorePanel.getDrugStoreMenuPanel().getLblListDrug());
@@ -194,8 +198,16 @@ public class MainFrame extends JFrame {
         this.adminPanel.getAdminEmployeeEdit().getBtnConf().addActionListener(ebtc);
         this.adminPanel.getAdminEmployeeAdd().getBtnAdd().addActionListener(ebtc);
 
+        // Patient search controller
+        this.adminPanel.getAdminPatient().getTfSearch().getDocument().addDocumentListener(
+                new PatientSearchController(this.adminPanel.getAdminPatient())
+        );
+
         ServiceButtonController sbtc=new ServiceButtonController(this);
         this.adminPanel.getAdminService().getBtnAdd().addActionListener(sbtc);
+        this.adminPanel.getAdminService().getTfSearch().getDocument().addDocumentListener(
+                new ServiceSearchController(this.adminPanel.getAdminService())
+        );
         this.adminPanel.getAdminServiceInfo().getBtnDelete().addActionListener(sbtc);
         this.adminPanel.getAdminServiceInfo().getBtnEdit().addActionListener(sbtc);
         this.adminPanel.getAdminServiceEdit().getBtnConf().addActionListener(sbtc);
@@ -203,6 +215,9 @@ public class MainFrame extends JFrame {
 
         DrugButtonController dbcl=new DrugButtonController(this);
         this.adminPanel.getAdminDrug().getBtnAdd().addActionListener(dbcl);
+        this.adminPanel.getAdminDrug().getTfSearch().getDocument().addDocumentListener(
+                new DrugSearchController(this.adminPanel.getAdminDrug())
+        );
         this.adminPanel.getAdminDrugInfo().getBtnDelete().addActionListener(dbcl);
         this.adminPanel.getAdminDrugEdit().getBtnConf().addActionListener(dbcl);
         this.adminPanel.getAdminDrugInfo().getBtnEdit().addActionListener(dbcl);

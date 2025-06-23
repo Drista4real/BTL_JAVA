@@ -1,4 +1,4 @@
-package controller.durgStore;
+package controller.drugStore;
 
 import reponsitory.Doctor2Reponsitory;
 import view.listPanelMain.MainFrame;

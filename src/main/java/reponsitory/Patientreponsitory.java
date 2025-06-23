@@ -525,4 +525,50 @@ public class Patientreponsitory {
             return rs.next();
         }
     }
+
+    // Method tìm kiếm bệnh nhân cho Admin Panel
+    public static List<Object[]> findPatientsForAdmin(String keyword) {
+        List<Object[]> results = new ArrayList<>();
+
+        try (Connection conn = JDBCUtil.getConnection()) {
+            String query = "SELECT * FROM Patient WHERE " +
+                    "name LIKE ? OR " +
+                    "phoneNumber LIKE ? OR " +
+                    "address LIKE ? OR " +
+                    "CAST(id AS CHAR) LIKE ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+
+            String searchPattern = "%" + keyword + "%";
+            stmt.setString(1, searchPattern);
+            stmt.setString(2, searchPattern);
+            stmt.setString(3, searchPattern);
+            stmt.setString(4, searchPattern);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                String phoneNumber = rs.getString("phoneNumber");
+                int genderInt = rs.getInt("gender");
+                String gender = (genderInt == 1) ? "Nam" : "Nữ";
+                Date birthDate = rs.getDate("birthDate");
+                String address = rs.getString("address");
+
+                Object[] row = {
+                        id,
+                        name,
+                        phoneNumber,
+                        gender,
+                        birthDate,
+                        address
+                };
+                results.add(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return results;
+    }
 }

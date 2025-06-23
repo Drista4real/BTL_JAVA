@@ -2,6 +2,8 @@ package view.listPanelMain;
 
 import view.admin.*;
 import view.doctorPanel.*;
+import view.receptionistPanel.ReceptionistCalendarPanel;
+import view.receptionistPanel.ReceptionistMenuPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,10 +11,10 @@ import java.awt.*;
 public class AdminPanel extends Panel {
     private JPanel centerPanel;
     private CardLayout cardLayout;
-    private DoctorTaskbar doctorTaskbar;
+    private DoctorTaskbar dentistTaskbar;
     private AdminMenuPanel adminMenuPanel;
     // Thêm các Panel khác ở đây, khi cần thì xóa panel cũ rồi add mới vào, vị trí nó nằm ở center
-    private DoctorIntroducePanel doctorIntroducePanel;
+    private DoctorIntroducePanel dentistIntroducePanel;
 
 
     private AdminDrug adminDrug;
@@ -43,8 +45,8 @@ public class AdminPanel extends Panel {
     private void initComponents() {
 
         // Khởi tạo các thành phần
-        doctorTaskbar = new DoctorTaskbar();
-        doctorIntroducePanel = new DoctorIntroducePanel();
+        dentistTaskbar = new DoctorTaskbar();
+        dentistIntroducePanel = new DoctorIntroducePanel();
 
         adminDrug = new AdminDrug();
         adminDrugAdd = new AdminDrugAdd();
@@ -72,15 +74,15 @@ public class AdminPanel extends Panel {
         add(adminMenuPanel, BorderLayout.WEST);
 
         // Taskbar trên cùng
-        doctorTaskbar.setPreferredSize(new Dimension(125, 40));
-        add(doctorTaskbar, BorderLayout.NORTH);
+        dentistTaskbar.setPreferredSize(new Dimension(125, 40));
+        add(dentistTaskbar, BorderLayout.NORTH);
 
         // Cài đặt centerPanel với CardLayout
         cardLayout = new CardLayout();
         centerPanel = new JPanel(cardLayout);
         centerPanel.setPreferredSize(new Dimension(700, 300));
 
-        centerPanel.add(doctorIntroducePanel, "Introduce");
+        centerPanel.add(dentistIntroducePanel, "Introduce");
         centerPanel.add(adminDrug,"adminDrug");
         centerPanel.add(adminDrugAdd,"adminDrugAdd");
         centerPanel.add(adminDrugEdit, "adminDrugEdit");
@@ -120,11 +122,11 @@ public class AdminPanel extends Panel {
     }
 
     public DoctorTaskbar getDentistTaskbar() {
-        return doctorTaskbar;
+        return dentistTaskbar;
     }
 
-    public void setDentistTaskbar(DoctorTaskbar doctorTaskbar) {
-        this.doctorTaskbar = doctorTaskbar;
+    public void setDentistTaskbar(DoctorTaskbar dentistTaskbar) {
+        this.dentistTaskbar = dentistTaskbar;
     }
 
     public AdminMenuPanel getAdminMenuPanel() {
@@ -136,11 +138,11 @@ public class AdminPanel extends Panel {
     }
 
     public DoctorIntroducePanel getDentistIntroducePanel() {
-        return doctorIntroducePanel;
+        return dentistIntroducePanel;
     }
 
-    public void setDentistIntroducePanel(DoctorIntroducePanel doctorIntroducePanel) {
-        this.doctorIntroducePanel = doctorIntroducePanel;
+    public void setDentistIntroducePanel(DoctorIntroducePanel dentistIntroducePanel) {
+        this.dentistIntroducePanel = dentistIntroducePanel;
     }
 
     public AdminDrug getAdminDrug() {

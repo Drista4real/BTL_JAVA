@@ -2,6 +2,7 @@ package view.listPanelMain;
 
 import view.doctorPanel.*;
 import view.receptionistPanel.ReceptionistCalendarPanel;
+import view.receptionistPanel.ReceptionistMenuPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,11 +10,11 @@ import java.awt.*;
 public class DentistPanel extends Panel {
     private JPanel centerPanel;
     private CardLayout cardLayout;
-    private DoctorMenuPanel doctorMenuPanel;
-    private DoctorTaskbar doctorTaskbar;
+    private DoctorMenuPanel dentistMenuPanel;
+    private DoctorTaskbar dentistTaskbar;
     // Thêm các Panel khác ở đây, khi cần thì xóa panel cũ rồi add mới vào, vị trí nó nằm ở center
-    private DoctorIntroducePanel doctorIntroducePanel;
-    private DoctorExaminationPanel doctorExaminationPanel;
+    private DoctorIntroducePanel dentistIntroducePanel;
+    private DoctorExaminationPanel dentistExaminationPanel;
     private DoctorListPatient1Panel dentistListPatient;
     private DoctorListPatient2Panel dentistListPatient2;
     private ReceptionistCalendarPanel receptionistCalendarPanel;
@@ -27,12 +28,12 @@ public class DentistPanel extends Panel {
 
     private void initComponents() {
         // Khởi tạo các thành phần
-        doctorMenuPanel = new DoctorMenuPanel();
-        doctorTaskbar = new DoctorTaskbar();
+        dentistMenuPanel = new DoctorMenuPanel();
+        dentistTaskbar = new DoctorTaskbar();
 
         dentistListPatient = new DoctorListPatient1Panel();
-        doctorExaminationPanel = new DoctorExaminationPanel();
-        doctorIntroducePanel = new DoctorIntroducePanel();
+        dentistExaminationPanel = new DoctorExaminationPanel();
+        dentistIntroducePanel = new DoctorIntroducePanel();
         dentistListPatient2 = new DoctorListPatient2Panel();
         receptionistCalendarPanel = new ReceptionistCalendarPanel();
         addPrescriptionPanel = new AddPrescriptionPanel();
@@ -42,23 +43,23 @@ public class DentistPanel extends Panel {
         setLayout(new BorderLayout());
 
         // Menu bên trái
-        doctorMenuPanel.setPreferredSize(new Dimension(170, 450));
-        doctorMenuPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(102, 102, 102)));
-        add(doctorMenuPanel, BorderLayout.WEST);
+        dentistMenuPanel.setPreferredSize(new Dimension(170, 450));
+        dentistMenuPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(102, 102, 102)));
+        add(dentistMenuPanel, BorderLayout.WEST);
 
         // Taskbar trên cùng
-        doctorTaskbar.setPreferredSize(new Dimension(125, 40));
-        add(doctorTaskbar, BorderLayout.NORTH);
+        dentistTaskbar.setPreferredSize(new Dimension(125, 40));
+        add(dentistTaskbar, BorderLayout.NORTH);
 
         // Cài đặt centerPanel với CardLayout
         cardLayout = new CardLayout();
         centerPanel = new JPanel(cardLayout);
         centerPanel.setPreferredSize(new Dimension(700, 300));
 
-        centerPanel.add(doctorIntroducePanel, "Introduce");
+        centerPanel.add(dentistIntroducePanel, "Introduce");
         centerPanel.add(dentistListPatient, "Patient1");
         centerPanel.add(dentistListPatient2, "Patient2");
-        centerPanel.add(doctorExaminationPanel, "Examination");
+        centerPanel.add(dentistExaminationPanel, "Examination");
         centerPanel.add(addPrescriptionPanel, "addPrescriptionPanel");
         centerPanel.add(servicePanel, "servicePanel");
         // sau này cần add thêm ExaminationPanel hoặc CalendarPanel thì add luôn ở đây
@@ -67,35 +68,35 @@ public class DentistPanel extends Panel {
     }
 
     public DoctorMenuPanel getDentistMenuPanel() {
-        return doctorMenuPanel;
+        return dentistMenuPanel;
     }
 
-    public void setDentistMenuPanel(DoctorMenuPanel doctorMenuPanel) {
-        this.doctorMenuPanel = doctorMenuPanel;
+    public void setDentistMenuPanel(DoctorMenuPanel dentistMenuPanel) {
+        this.dentistMenuPanel = dentistMenuPanel;
     }
 
     public DoctorTaskbar getDentistTaskbar() {
-        return doctorTaskbar;
+        return dentistTaskbar;
     }
 
-    public void setDentistTaskbar(DoctorTaskbar doctorTaskbar) {
-        this.doctorTaskbar = doctorTaskbar;
+    public void setDentistTaskbar(DoctorTaskbar dentistTaskbar) {
+        this.dentistTaskbar = dentistTaskbar;
     }
 
     public DoctorIntroducePanel getDentistIntroducePanel() {
-        return doctorIntroducePanel;
+        return dentistIntroducePanel;
     }
 
-    public void setDentistIntroducePanel(DoctorIntroducePanel doctorIntroducePanel) {
-        this.doctorIntroducePanel = doctorIntroducePanel;
+    public void setDentistIntroducePanel(DoctorIntroducePanel dentistIntroducePanel) {
+        this.dentistIntroducePanel = dentistIntroducePanel;
     }
 
     public DoctorExaminationPanel getDentistExaminationPanel() {
-        return doctorExaminationPanel;
+        return dentistExaminationPanel;
     }
 
-    public void setDentistExaminationPanel(DoctorExaminationPanel doctorExaminationPanel) {
-        this.doctorExaminationPanel = doctorExaminationPanel;
+    public void setDentistExaminationPanel(DoctorExaminationPanel dentistExaminationPanel) {
+        this.dentistExaminationPanel = dentistExaminationPanel;
     }
 
     public DoctorListPatient1Panel getDentistListPatient() {
