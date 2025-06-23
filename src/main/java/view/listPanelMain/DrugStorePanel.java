@@ -1,8 +1,8 @@
 package view.listPanelMain;
 
 import Utils.ZaloPayQRPanel;
-import view.dentistPanel.DentistIntroducePanel;
-import view.dentistPanel.DentistTaskbar;
+import view.doctorPanel.DoctorIntroducePanel;
+import view.doctorPanel.DoctorTaskbar;
 import view.durgStore.*;
 
 import javax.swing.*;
@@ -11,13 +11,13 @@ import java.awt.*;
 public class DrugStorePanel extends JPanel {
     private JPanel centerPanel;
     private CardLayout cardLayout;
-    private DentistTaskbar dentistTaskbar;
+    private DoctorTaskbar doctorTaskbar;
     private DrugStoreMenuPanel drugStoreMenuPanel;
     private ListDrugPanel listDrugPanel;
     private ListBillPanel listBillPanel;
     private DrugBillPanel billPanel;
     private DrugBillConfPanel billConfPanel;
-    private DentistIntroducePanel dentistIntroducePanel;
+    private DoctorIntroducePanel doctorIntroducePanel;
     private ZaloPayQRPanel zaloPayQRPanel;
 
     public DrugStorePanel() {
@@ -27,13 +27,13 @@ public class DrugStorePanel extends JPanel {
     private void initComponents() {
         // Khởi tạo các thành phần
         drugStoreMenuPanel=new DrugStoreMenuPanel();
-        dentistTaskbar = new DentistTaskbar();
+        doctorTaskbar = new DoctorTaskbar();
 
         listBillPanel = new ListBillPanel();
         listDrugPanel=new ListDrugPanel();
         billPanel=new DrugBillPanel();
         billConfPanel  =new DrugBillConfPanel();
-        dentistIntroducePanel=new DentistIntroducePanel();
+        doctorIntroducePanel =new DoctorIntroducePanel();
         zaloPayQRPanel=new ZaloPayQRPanel(2000,"Thanh toán hóa đơn #1");
         // Layout chính
         setLayout(new BorderLayout());
@@ -44,15 +44,15 @@ public class DrugStorePanel extends JPanel {
         add(drugStoreMenuPanel, BorderLayout.WEST);
 
         // Taskbar trên cùng
-        dentistTaskbar.setPreferredSize(new Dimension(125, 40));
-        add(dentistTaskbar, BorderLayout.NORTH);
+        doctorTaskbar.setPreferredSize(new Dimension(125, 40));
+        add(doctorTaskbar, BorderLayout.NORTH);
 
         // Cài đặt centerPanel với CardLayout
         cardLayout = new CardLayout();
         centerPanel = new JPanel(cardLayout);
         centerPanel.setPreferredSize(new Dimension(700, 300));
 
-        centerPanel.add(dentistIntroducePanel,"IntroducePanel");
+        centerPanel.add(doctorIntroducePanel,"IntroducePanel");
         centerPanel.add(listBillPanel,"Bills");
         centerPanel.add(listDrugPanel,"Drugs");
         centerPanel.add(billPanel,"Bill");
@@ -80,12 +80,12 @@ public class DrugStorePanel extends JPanel {
         this.cardLayout = cardLayout;
     }
 
-    public DentistTaskbar getDentistTaskbar() {
-        return dentistTaskbar;
+    public DoctorTaskbar getDentistTaskbar() {
+        return doctorTaskbar;
     }
 
-    public void setDentistTaskbar(DentistTaskbar dentistTaskbar) {
-        this.dentistTaskbar = dentistTaskbar;
+    public void setDentistTaskbar(DoctorTaskbar doctorTaskbar) {
+        this.doctorTaskbar = doctorTaskbar;
     }
 
     public DrugStoreMenuPanel getDrugStoreMenuPanel() {
@@ -136,11 +136,11 @@ public class DrugStorePanel extends JPanel {
         this.zaloPayQRPanel = zaloPayQRPanel;
     }
 
-    public DentistIntroducePanel getDentistIntroducePanel() {
-        return dentistIntroducePanel;
+    public DoctorIntroducePanel getDentistIntroducePanel() {
+        return doctorIntroducePanel;
     }
 
-    public void setDentistIntroducePanel(DentistIntroducePanel dentistIntroducePanel) {
-        this.dentistIntroducePanel = dentistIntroducePanel;
+    public void setDentistIntroducePanel(DoctorIntroducePanel doctorIntroducePanel) {
+        this.doctorIntroducePanel = doctorIntroducePanel;
     }
 }

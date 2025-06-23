@@ -1,9 +1,9 @@
-package view.dentistPanel;
+package view.doctorPanel;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class DentistExaminationPanel extends JPanel {
+public class DoctorExaminationPanel extends JPanel {
 
     private JLabel lblTitle, lblName, lblAge, lblSymptom, lblDiagnosis, lblTreatment;
     private JTextField tfName, tfAge, tfSymptom, tfDiagnosis, tfTreatment;
@@ -16,7 +16,7 @@ public class DentistExaminationPanel extends JPanel {
     private String symptom;
     private String diagnosis;
     private String treatment;
-    public DentistExaminationPanel() {
+    public DoctorExaminationPanel() {
         initComponents();
     }
 

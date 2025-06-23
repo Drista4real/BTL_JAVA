@@ -1,6 +1,6 @@
 package controller.login;
 
-import reponsitory.DentistReponsitory;
+import reponsitory.Doctor2Reponsitory;
 import view.listPanelMain.MainFrame;
 
 import javax.swing.*;
@@ -26,7 +26,7 @@ public class LoginButtonController implements ActionListener {
             }else {
                 view.getLoginPanel().getEmployee().showInfo();
                 swicthPanel();
-                view.getMainPanel().getDentistListPatient().setId_doctor(DentistReponsitory.getIdDentistLogin(view.getLoginPanel().getAcc(),view.getLoginPanel().getPass())+"");
+                view.getMainPanel().getDentistListPatient().setId_doctor(Doctor2Reponsitory.getIdDentistLogin(view.getLoginPanel().getAcc(),view.getLoginPanel().getPass())+"");
             }
         }
     }

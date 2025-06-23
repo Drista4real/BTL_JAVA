@@ -1,14 +1,14 @@
-package view.dentistPanel;
+package view.doctorPanel;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class DentistTaskbar extends JPanel {
+public class DoctorTaskbar extends JPanel {
 
     private JLabel lblDoctorName;
     private JLabel lblLanguage;
 
-    public DentistTaskbar() {
+    public DoctorTaskbar() {
         initComponents();
     }
 

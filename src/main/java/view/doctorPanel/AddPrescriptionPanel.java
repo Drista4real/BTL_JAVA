@@ -1,4 +1,4 @@
-package view.dentistPanel;
+package view.doctorPanel;
 
 import Utils.CustomDocumentFilter;
 import reponsitory.DrugReponsitory;

@@ -1,6 +1,6 @@
-package view.dentistPanel;
+package view.doctorPanel;
 
-import reponsitory.DentistReponsitory;
+import reponsitory.Doctor2Reponsitory;
 import reponsitory.Patientreponsitory;
 
 import javax.swing.*;
@@ -11,7 +11,7 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.util.List;
 
-public class DentistListPatient1Panel extends JPanel {
+public class DoctorListPatient1Panel extends JPanel {
 
     private JPanel headerPanel;
     private JLabel lblTitle, lblSearch;
@@ -29,7 +29,7 @@ public class DentistListPatient1Panel extends JPanel {
         this.id_doctor = id_doctor;
     }
 
-    public DentistListPatient1Panel() {
+    public DoctorListPatient1Panel() {
         initComponents();
     }
 
@@ -231,7 +231,7 @@ public class DentistListPatient1Panel extends JPanel {
         this.data = data;
     }
     public void reloadTableData(String acc, String pass) {
-        int dentistId = DentistReponsitory.getIdDentistLogin(acc, pass);
+        int dentistId = Doctor2Reponsitory.getIdDentistLogin(acc, pass);
         List<Object[]> list = Patientreponsitory.getPatientOfDentist(String.valueOf(dentistId));
 
         data = list.toArray(new Object[0][]);
@@ -259,7 +259,7 @@ public class DentistListPatient1Panel extends JPanel {
             JFrame frame = new JFrame("Danh sách bệnh nhân của bác sĩ");
 
             // Tạo instance panel
-            DentistListPatient1Panel panel = new DentistListPatient1Panel();
+            DoctorListPatient1Panel panel = new DoctorListPatient1Panel();
 
             // Nếu cần, gán id bác sĩ
             panel.setId_doctor("1"); // hoặc giá trị phù hợp

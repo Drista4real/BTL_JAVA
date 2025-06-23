@@ -1,4 +1,4 @@
-package controller.dentist;
+package controller.doctor;
 
 import view.listPanelMain.MainFrame;
 
@@ -6,9 +6,9 @@ import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class DentistManagerTableController extends MouseAdapter{
+public class DoctorManagerTableController extends MouseAdapter{
     private MainFrame view;
-    public DentistManagerTableController(MainFrame view) {
+    public DoctorManagerTableController(MainFrame view) {
         this.view = view;
     }
     @Override

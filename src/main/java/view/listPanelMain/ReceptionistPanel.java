@@ -1,6 +1,6 @@
 package view.listPanelMain;
 
-import view.dentistPanel.*;
+import view.doctorPanel.*;
 import view.receptionistPanel.*;
 
 import javax.swing.*;
@@ -10,14 +10,14 @@ public class ReceptionistPanel extends JPanel{
     private JPanel centerPanel;
     private CardLayout cardLayout;
     private ReceptionistMenuPanel receptionistMenuPanel;
-    private DentistTaskbar dentistTaskbar;
+    private DoctorTaskbar doctorTaskbar;
     // Thêm các Panel khác ở đây, khi cần thì xóa panel cũ rồi add mới vào, vị trí nó nằm ở center
     private ReceptionistCalendarPanel receptionistCalendarPanel;
     private AddPatientPanel addPatientPanel;
     private ShowPatientsReceptionistPanel showPatientsReceptionistPanel;
     private FollowupPanel followupPanel;
     private NewAppointmentPanel newAppointmentPanel;
-    private DentistIntroducePanel dentistIntroducePanel;
+    private DoctorIntroducePanel doctorIntroducePanel;
 
     public ReceptionistPanel() {
         initComponents();
@@ -26,14 +26,14 @@ public class ReceptionistPanel extends JPanel{
     private void initComponents() {
         // Khởi tạo các thành phần
         receptionistMenuPanel = new ReceptionistMenuPanel();
-        dentistTaskbar = new DentistTaskbar();
+        doctorTaskbar = new DoctorTaskbar();
 
         receptionistCalendarPanel = new ReceptionistCalendarPanel();
         addPatientPanel= new AddPatientPanel();
         showPatientsReceptionistPanel = new ShowPatientsReceptionistPanel();
         followupPanel = new FollowupPanel();
         newAppointmentPanel = new NewAppointmentPanel();
-        dentistIntroducePanel = new DentistIntroducePanel();
+        doctorIntroducePanel = new DoctorIntroducePanel();
 
         // Layout chính
         setLayout(new BorderLayout());
@@ -44,15 +44,15 @@ public class ReceptionistPanel extends JPanel{
         add(receptionistMenuPanel, BorderLayout.WEST);
 
         // Taskbar trên cùng
-        dentistTaskbar.setPreferredSize(new Dimension(125, 40));
-        add(dentistTaskbar, BorderLayout.NORTH);
+        doctorTaskbar.setPreferredSize(new Dimension(125, 40));
+        add(doctorTaskbar, BorderLayout.NORTH);
 
         // Cài đặt centerPanel với CardLayout
         cardLayout = new CardLayout();
         centerPanel = new JPanel(cardLayout);
         centerPanel.setPreferredSize(new Dimension(700, 300));
 
-        centerPanel.add(dentistIntroducePanel,"DentistIntroduce");
+        centerPanel.add(doctorIntroducePanel,"DentistIntroduce");
         centerPanel.add(receptionistCalendarPanel,"Calendar");
         centerPanel.add(addPatientPanel,"AddPatient");
         centerPanel.add(showPatientsReceptionistPanel,"ShowPatientsReceptionist");
@@ -64,12 +64,12 @@ public class ReceptionistPanel extends JPanel{
         add(centerPanel, BorderLayout.CENTER); //Chỉ add centerPanel
     }
 
-    public DentistTaskbar getDentistTaskbar() {
-        return dentistTaskbar;
+    public DoctorTaskbar getDentistTaskbar() {
+        return doctorTaskbar;
     }
 
-    public void setDentistTaskbar(DentistTaskbar dentistTaskbar) {
-        this.dentistTaskbar = dentistTaskbar;
+    public void setDentistTaskbar(DoctorTaskbar doctorTaskbar) {
+        this.doctorTaskbar = doctorTaskbar;
     }
 
     public ReceptionistMenuPanel getReceptionistMenuPanel() {

@@ -1,4 +1,4 @@
-package controller.dentist;
+package controller.doctor;
 
 import view.listPanelMain.MainFrame;
 
@@ -8,9 +8,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-public class DentistManagerLableController implements MouseListener {
+public class DoctorManagerLableController implements MouseListener {
     private MainFrame view;
-    public DentistManagerLableController(MainFrame view) {
+    public DoctorManagerLableController(MainFrame view) {
         this.view = view;
     }
 

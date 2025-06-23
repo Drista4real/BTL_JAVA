@@ -1,4 +1,4 @@
-package view.dentistPanel;
+package view.doctorPanel;
 
 import reponsitory.Patientreponsitory;
 
@@ -10,7 +10,7 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.util.List;
 
-public class DentistListPatient2Panel extends JPanel {
+public class DoctorListPatient2Panel extends JPanel {
 
     private JPanel headerPanel;
     private JLabel lblTitle, lblSearch;
@@ -19,7 +19,7 @@ public class DentistListPatient2Panel extends JPanel {
     private JScrollPane scrollPane;
     Object[][] data;
 
-    public DentistListPatient2Panel() {
+    public DoctorListPatient2Panel() {
         initComponents();
     }
 
@@ -246,7 +246,7 @@ public class DentistListPatient2Panel extends JPanel {
             JFrame frame = new JFrame("Danh sách bệnh nhân");
 
             // Tạo panel
-            DentistListPatient2Panel panel = new DentistListPatient2Panel();
+            DoctorListPatient2Panel panel = new DoctorListPatient2Panel();
 
             // Gắn panel vào frame
             frame.setContentPane(panel);

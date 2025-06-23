@@ -1,4 +1,4 @@
-package controller.dentist;
+package controller.doctor;
 
 import Utils.JDBCUtil;
 import model.DrugDose;
@@ -19,11 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class DentistManagerButtonController implements ActionListener {
+public class DoctorManagerButtonController implements ActionListener {
     private MainFrame view;
     private int id_pre;
 
-    public DentistManagerButtonController(MainFrame view) {
+    public DoctorManagerButtonController(MainFrame view) {
         this.view = view;
     }
 
@@ -52,7 +52,7 @@ public class DentistManagerButtonController implements ActionListener {
 
             switchDentistPatient1Panel();
             int id_patient = Patientreponsitory.getIdPatient(view.getMainPanel().getDentistExaminationPanel().getSdtPatient());
-            int id_doctor = DentistReponsitory.getIdDentistLogin(view.getLoginPanel().getAcc(), view.getLoginPanel().getPass());
+            int id_doctor = Doctor2Reponsitory.getIdDentistLogin(view.getLoginPanel().getAcc(), view.getLoginPanel().getPass());
             ExamReponsitory.updateExam(id_doctor + "", id_patient + "");
             ExportToPDF.prescriptionToPDF(id_pre + "");
         } else if (command.equals("Hủy")) {
@@ -88,7 +88,7 @@ public class DentistManagerButtonController implements ActionListener {
     public void switchDentistPatient1Panel() {
         //them vao co so du lieu
         int id_patient = Patientreponsitory.getIdPatient(view.getMainPanel().getDentistExaminationPanel().getSdtPatient());
-        int id_doctor = DentistReponsitory.getIdDentistLogin(view.getLoginPanel().getAcc(), view.getLoginPanel().getPass());
+        int id_doctor = Doctor2Reponsitory.getIdDentistLogin(view.getLoginPanel().getAcc(), view.getLoginPanel().getPass());
         String symptom = view.getMainPanel().getDentistExaminationPanel().getSymptom();
         String diagnosis = view.getMainPanel().getDentistExaminationPanel().getDiagnosis();
         String treatment = view.getMainPanel().getDentistExaminationPanel().getTreatment();

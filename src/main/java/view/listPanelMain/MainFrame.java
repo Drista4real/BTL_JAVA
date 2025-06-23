@@ -1,7 +1,7 @@
 package view.listPanelMain;
 
 import controller.admin.*;
-import controller.dentist.*;
+import controller.doctor.*;
 import controller.durgStore.ButtonPaymentController;
 import controller.durgStore.DrugMenuController;
 import controller.durgStore.ListBillRadioButtonController;
@@ -73,7 +73,7 @@ public class MainFrame extends JFrame {
         this.mainPanel.getDentistMenuPanel().getLblFeature2().setName("Feature 2");
 
         //add xử lí cho menu
-        DentistManagerLableController ml = new DentistManagerLableController(this);
+        DoctorManagerLableController ml = new DoctorManagerLableController(this);
         this.mainPanel.getDentistTaskbar().getLblDoctorName().addMouseListener(ml);
         this.mainPanel.getDentistMenuPanel().getLblHome().addMouseListener(ml);
         this.mainPanel.getDentistMenuPanel().getLblSchedule().addMouseListener(ml);
@@ -87,15 +87,15 @@ public class MainFrame extends JFrame {
                 this.mainPanel.getDentistMenuPanel().getLblFeature2());
 
         //add xử lí khi ấn vào bệnh nhân có trong lịch
-        DentistManagerTableController ma=new DentistManagerTableController(this);
+        DoctorManagerTableController ma=new DoctorManagerTableController(this);
         this.mainPanel.getDentistListPatient().getTblPatients().addMouseListener(ma);
 //        this.mainPanel.getDentistListPatient2().getTblPatients().addMouseListener(ma);
         //add xử lí khi tìm kiếm
         this.mainPanel.getDentistListPatient().getTfSearch().getDocument().addDocumentListener(
-                new DentistPatientSearch1Controller(this.mainPanel.getDentistListPatient())
+                new DoctorPatientSearch1Controller(this.mainPanel.getDentistListPatient())
         );
         this.mainPanel.getDentistListPatient2().getTfSearch().getDocument().addDocumentListener(
-                new DentistPatient2SearchController(this.mainPanel.getDentistListPatient2())
+                new DoctorPatient2SearchController(this.mainPanel.getDentistListPatient2())
         );
         this.receptionistPanel.getShowPatientsReceptionistPanel().getTxtSearch().getDocument().addDocumentListener(
                 new ReceptionistSearchController(this.receptionistPanel.getShowPatientsReceptionistPanel())
@@ -122,7 +122,7 @@ public class MainFrame extends JFrame {
                 this.receptionistPanel.getReceptionistMenuPanel().getLblFeature1());
 
         //add xử lí khi button dentist bị ấn
-        ActionListener ald=new DentistManagerButtonController(this);
+        ActionListener ald=new DoctorManagerButtonController(this);
         this.mainPanel.getDentistExaminationPanel().getBtnAddService().addActionListener(ald);
         this.mainPanel.getDentistExaminationPanel().getBtnCancel().addActionListener(ald);
         this.mainPanel.getServicePanel().getBtnAddDrugs().addActionListener(ald);

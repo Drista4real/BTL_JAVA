@@ -1,12 +1,9 @@
-package view.dentistPanel;
-
-import controller.dentist.DentistManagerLableController;
-import view.admin.AdminMenuPanel;
+package view.doctorPanel;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class DentistMenuPanel extends JPanel {
+public class DoctorMenuPanel extends JPanel {
 
     private JLabel lblHome;
     private JLabel lblSchedule;
@@ -14,7 +11,7 @@ public class DentistMenuPanel extends JPanel {
     private JLabel lblFeature1;
     private JLabel lblFeature2;
 
-    public DentistMenuPanel() {
+    public DoctorMenuPanel() {
         initComponents();
     }
 
