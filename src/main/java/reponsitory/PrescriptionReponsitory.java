@@ -13,7 +13,7 @@ public class PrescriptionReponsitory {
             Statement st=con.createStatement();
             ResultSet rs=st.executeQuery("SELECT AUTO_INCREMENT\n" +
                     "FROM INFORMATION_SCHEMA.TABLES\n" +
-                    "WHERE TABLE_SCHEMA = 'phongkhamnhakhoa'\n" +
+                    "WHERE TABLE_SCHEMA = 'phongkhamdakhoa'\n" +
                     "  AND TABLE_NAME = 'Prescription';");
             rs.next();
             return rs.getInt(1);

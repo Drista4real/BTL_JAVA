@@ -47,9 +47,9 @@ public class DoctorIntroducePanel extends JPanel {
         contactInfoPanel.setBackground(Color.WHITE);
 
         lblPhone = new JLabel("0980092876");
-        lblFacebook = new JLabel("NhaKhoaLMK");
-        lblTikTok = new JLabel("@nhakhoalmk");
-        lblEmail = new JLabel("nhakhoalmk@gmail.com");
+        lblFacebook = new JLabel("DaKhoaLMK");
+        lblTikTok = new JLabel("@dakhoalmk");
+        lblEmail = new JLabel("dakhoalmk@gmail.com");
 
         setLabelIcon(lblPhone, "/img/phone.png", 18, 18);
         setLabelIcon(lblFacebook, "/img/face.png", 18, 18);

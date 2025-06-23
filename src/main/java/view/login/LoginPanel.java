@@ -29,27 +29,27 @@ public class LoginPanel extends JPanel {
 
         // Logo
         ImageIcon icon = new ImageIcon(getClass().getResource("/img/iconhome.png"));
-        Image scaledImage = icon.getImage().getScaledInstance(150, 121, Image.SCALE_SMOOTH);
+        Image scaledImage = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
         JLabel logo = new JLabel(new ImageIcon(scaledImage));
-        logo.setBounds(125, 10, 150, 121);
+        logo.setBounds(125, 0, 150, 121);
         leftPanel.add(logo);
 
         // Tiêu đề Đăng nhập
         JLabel loginTitle = new JLabel("ĐĂNG NHẬP", JLabel.CENTER);
         loginTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
         loginTitle.setForeground(new Color(0, 102, 204));
-        loginTitle.setBounds(100, 110, 200, 30);
+        loginTitle.setBounds(100, 130, 200, 30);
         leftPanel.add(loginTitle);
 
         // Icon user
         ImageIcon userIconRaw = new ImageIcon(getClass().getResource("/img/username.png"));
         Image scaledUser = userIconRaw.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
         JLabel userIcon = new JLabel(new ImageIcon(scaledUser));
-        userIcon.setBounds(74, 143, 24, 24);
+        userIcon.setBounds(74, 163, 24, 24);
         leftPanel.add(userIcon);
 
          usernameField = new JTextField();
-        usernameField.setBounds(100, 140, 220, 32);
+        usernameField.setBounds(100, 160, 220, 32);
         usernameField.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLUE));
         leftPanel.add(usernameField);
 
@@ -57,12 +57,12 @@ public class LoginPanel extends JPanel {
         ImageIcon passIconRaw = new ImageIcon(getClass().getResource("/img/padlock.png"));
         Image scaledPass = passIconRaw.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
         JLabel passIcon = new JLabel(new ImageIcon(scaledPass));
-        passIcon.setBounds(74, 185, 24, 24);
+        passIcon.setBounds(74, 205, 24, 24);
         leftPanel.add(passIcon);
 
         // Password field
          passwordField = new JPasswordField();
-        passwordField.setBounds(100, 180, 200, 32);
+        passwordField.setBounds(100, 200, 200, 32);
         passwordField.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLUE));
         leftPanel.add(passwordField);
 
@@ -70,7 +70,7 @@ public class LoginPanel extends JPanel {
         ImageIcon eyeIconRaw = new ImageIcon(getClass().getResource("/img/eye.png"));
         Image scaledEye = eyeIconRaw.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
         JLabel eyeIcon = new JLabel(new ImageIcon(scaledEye));
-        eyeIcon.setBounds(300, 185, 23, 23);
+        eyeIcon.setBounds(300, 205, 23, 23);
         eyeIcon.setCursor(new Cursor(Cursor.HAND_CURSOR)); // Đổi chuột thành bàn tay
         leftPanel.add(eyeIcon);
 
@@ -91,7 +91,7 @@ public class LoginPanel extends JPanel {
 
         // Nút Đăng nhập
         loginButton = new JButton("Đăng nhập");
-        loginButton.setBounds(125, 240, 150, 40);
+        loginButton.setBounds(125, 260, 150, 40);
         loginButton.setBackground(new Color(0, 206, 209));
         loginButton.setForeground(Color.WHITE);
         loginButton.setFont(new Font("SansSerif", Font.BOLD, 14));
