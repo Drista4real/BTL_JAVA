@@ -1,0 +1,7 @@
+/dist/
+*.class
+/build/
+nbproject/private/
+out/
+.idea/
+*.iml
