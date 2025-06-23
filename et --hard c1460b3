@@ -1,0 +1,93 @@
+[33mc7dda59[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mnew_branch_Pha[m[33m)[m merge nhanh moi
+[33mc1460b3[m chinh sua
+[33m425ee80[m merge nhanh moi
+[33mea94a7a[m[33m ([m[1;31morigin/new_branch_Pha[m[33m)[m chinh sua project
+[33m22b8e54[m[33m ([m[1;31morigin/New-branch---Vinh[m[33m, [m[1;32mNew-branch---Vinh[m[33m)[m Thêm dự án QLBN_NEW vào nhánh New-branch---Vinh
+[33m6bfbb06[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/New-brach-Phi[m[33m, [m[1;32mNew-brach-Phi[m[33m)[m  chinh sua mot vai chi tiet trong giao dien
+[33m835a161[m xu ly xung dot
+[33mb13e6fe[m merge voi nhanh Vinh
+[33mc36f50a[m[33m ([m[1;31morigin/Vinh[m[33m)[m Merge branch 'origin/Vinh' into Vinh
+[33me33618f[m  chinh sua giao dien
+[33m33067c7[m cập nhật tất cả giao diện (thiếu 2)
+[33mf376401[m[33m ([m[1;31morigin/ALPha[m[33m)[m chinh sua giao dien va fix loi
+[33mefe8e09[m fix loi khong the su dung chuc nang o giao dien benh nhan
+[33m8dc4ec7[m fix lỗi đăng nhập, xây dựng giao diện cơ bản
+[33macb7702[m  update patient
+[33m42eb76f[m bắt ngoại lệ cho login
+[33m35a916c[m  fix login
+[33m2f7b31b[m  big update trang login
+[33m213d287[m  thêm chi tiết cho giao diện patient
+[33mbeb2692[m đẩy lại cập nhật 1 giao diện và sửa lỗi hiển thị
+[33m1b3fe67[m merge nhánh Vinh
+[33m028df9d[m fix
+[33m82aec7c[m chinh sửa database
+[33m83d975b[m Cập nhật code cho nhánh Vinh
+[33m209284c[m Merge VInh va Phi
+[33m03c5c56[m  chinh sua code
+[33m191dd75[m  chinnh sua code
+[33mffa13a5[m  chinh sua code
+[33m8761d87[m  chinh sua code
+[33ma929a39[m  chinh sua code
+[33m94bc497[m  chinh sua code
+[33m2913482[m  chinh sua code
+[33m7d9524a[m  chinh sua code
+[33mf85887a[m Add PatientManagement.sql, update database properties, remove BENHNHANBAOHIEMXAHOI, and update GUI and backend files
+[33m7c6f9e6[m  chinh sua code
+[33m183fb33[m  chinh sua code
+[33m354785c[m  chinh sua code
+[33m061d746[m  chinh sua code
+[33m8b1f054[m  chinh sua code
+[33m6363e03[m  chỉnh sửa code
+[33mf1d127b[m chinh sua code
+[33mf106e09[m  chinh sua code
+[33m60d9695[m  chinh sua code
+[33med29dbf[m  chỉnh sưa code
+[33mbd7df5a[m  chinh sưa code
+[33me69b0e7[m thêm thông tin cá nhân
+[33m7ce9042[m update PatientMainFrame
+[33md86cf5c[m  chinh sua code
+[33m83bac25[m  chinh sua code
+[33m8c8201b[m  chỉnh sua code
+[33me45ff4b[m  chinh sua code
+[33ma53c7b3[m  chinh sua code
+[33mf60f0fd[m  chinh sua code
+[33m696cbc6[m  chinh sua code
+[33m3bad5d8[m  chỉnh sua code
+[33m9b43e7b[m  chinh sua code
+[33m1d06f12[m  chinh sua code
+[33m2e1b927[m  chinh suat code
+[33mb9567a5[m  chinh sưa code
+[33m7e9d522[m  chinh sưa code
+[33m2c94827[m  chinh sưa code
+[33m2cc59cc[m  anh Vinh đẹp trai
+[33m2c52155[m  anh Vinh đẹp trai
+[33m67eeead[m  anh Vinh đẹp trai
+[33m5aa8b9c[m  chinh sửa code
+[33m4e530f0[m Cập nhật: sửa lỗi các file mới
+[33mce4e284[m Cập nhật .gitignore để bỏ qua file .class và nbproject/private
+[33m916699b[m Giải quyết xung đột khi hợp nhất nhánh main
+[33m00252fa[m Vinh sua lai cac file
+[33m7c698ed[m Save progress before checkout
+[33mf26fe8a[m Resolve merge conflict
+[33m9611fc4[m chỉnh sửa giao diện của người dùng
+[33m22e21c8[m Remove compiled class file from git
+[33m103b2f3[m Bỏ các file/thư mục build và cấu hình IDE khỏi git
+[33mf1623ad[m Update data file, config file và LoginPanel
+[33m10460bd[m Resolved merge conflicts
+[33m6fea047[m Commit changes before switching branches
+[33m9fa7c13[m Merge branch 'development' of https://github.com/Drista4real/BTL_JAVA into development
+[33mbe842ec[m Update: thêm chức năng phân quyền, chỉnh sửa giao diện, thêm entity mới
+[33m3801fc1[m Merge remote-tracking branch 'origin/development'
+[33m3f74f18[m Update: đồng bộ dữ liệu, UI phân quyền, fix login chuyển frame đúng vai trò
+[33m66577a2[m update code
+[33m3ac85c7[m chinh sua
+[33m82a70f5[m thêm màu
+[33md28130d[m thêm tý màu mè
+[33mcfaf21a[m feat: Thêm chức năng đăng nhập, đăng ký
+[33ma5a5bcf[m Cập nhật giao diện Dashboard: thêm bảng thống kê và lịch hẹn
+[33m2067027[m chỉnh sửa
+[33m056f0db[m Thêm ExceptionUtils và cập nhật xử lý lỗi
+[33m61e5df9[m Cập nhật giao diện và dịch comment sang tiếng Việt
+[33m80e79d5[m chia nhỏ giao diện thành các trang
+[33meb8d95a[m Initial commit - Upload Java project
+[33me8c25cd[m Initial commit
